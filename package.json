@@ -1,0 +1,41 @@
+{
+  "name": "divvy-ts",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "docs": "typedoc src",
+    "test": "ts-mocha **/*.spec.ts --paths src -p ./tsconfig.json",
+    "lint": "eslint . --ext .ts && prettier -c src",
+    "format": "prettier -w",
+    "test:coverage": "nyc --reporter=html --reporter=text --reporter=text-summary npm test",
+    "ci": "npm run lint && npm run test:coverage"
+  },
+  "license": "MPL-2",
+  "dependencies": {
+    "@guildofweavers/galois": "^0.4.22",
+    "aes-cmac": "^1.0.3",
+    "hpke": "^0.2.1"
+  },
+  "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "@tsconfig/node18": "^1.0.0",
+    "@types/expect": "^24.3.0",
+    "@types/mocha": "^9.1.1",
+    "@types/node": "^17.0.27",
+    "@typescript-eslint/eslint-plugin": "^5.22.0",
+    "@typescript-eslint/parser": "^5.22.0",
+    "eslint": "^8.15.0",
+    "eslint-config-prettier": "^8.5.0",
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0",
+    "prettier": "^2.6.2",
+    "source-map-support": "^0.5.21",
+    "ts-node": "^10.7.0",
+    "tsconfig-paths": "^4.0.0",
+    "typedoc": "^0.22.15",
+    "typescript": "^4.6.4",
+    "typescript-eslint-language-service": "^5.0.0"
+  }
+}

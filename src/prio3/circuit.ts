@@ -1,0 +1,67 @@
+import { Field, Vector } from "field";
+import { Gadget } from "prio3/gadget";
+import { nextPowerOf2 } from "common";
+
+export interface GenericCircuit {
+  field: Field;
+  jointRandLen: number;
+  inputLen: number;
+  outputLen: number;
+  proveRandLen: number;
+  queryRandLen: number;
+  proofLen: number;
+  verifierLen: number;
+  gadgets: Gadget[];
+  gadgetCalls: number[];
+
+  eval(input: Vector, jointRand: Vector, shares: number): bigint;
+  encode(measurement: unknown): Vector;
+  truncate(input: Vector): Vector;
+}
+
+export abstract class Circuit<M> implements GenericCircuit {
+  abstract field: Field;
+  abstract jointRandLen: number;
+  abstract inputLen: number;
+  abstract outputLen: number;
+  abstract gadgets: Gadget[];
+  abstract gadgetCalls: number[];
+
+  abstract eval(input: Vector, jointRand: Vector, shares: number): bigint;
+  abstract encode(measurement: M): Vector;
+  abstract truncate(input: Vector): Vector;
+
+  get proveRandLen(): number {
+    return this.gadgets.reduce((sum, gadget) => sum + gadget.arity, 0);
+  }
+
+  get queryRandLen(): number {
+    return this.gadgets.length;
+  }
+
+  get proofLen(): number {
+    return this.gadgets.reduce((length, gadget, i) => {
+      const calls = this.gadgetCalls[i];
+      const p = nextPowerOf2(calls + 1);
+      return length + gadget.arity + gadget.degree * (p - 1) + 1;
+    }, 0);
+  }
+
+  get verifierLen(): number {
+    return this.gadgets.reduce((sum, gadget) => sum + gadget.arity + 1, 1);
+  }
+
+  ensureValidEval(input: Vector, jointRand: Vector) {
+    if (input.length != this.inputLen) {
+      throw new Error(
+        `expected input length to be ${this.inputLen} but it was ${input.length}`
+      );
+    }
+
+    if (jointRand.length != this.jointRandLen) {
+      throw new Error(
+        `expected joint rand length to be ${this.jointRandLen} but it was ${jointRand.length}`
+      );
+    }
+  }
+}

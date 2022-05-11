@@ -1,0 +1,23 @@
+{
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "ES2022",
+    "lib": ["dom", "es2020"],
+    "preserveConstEnums": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "baseUrl": "src",
+    "esModuleInterop": true,
+    "plugins": [
+      {
+        "name": "typescript-eslint-language-service"
+      }
+    ]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+}
