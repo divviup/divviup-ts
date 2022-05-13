@@ -136,9 +136,11 @@ describe("DAP", () => {
       });
 
       const client = new DAPClient(buildParams(), fetch);
-
       const [a, b] = await client.fetchKeyConfiguration();
       assert.equal(fetch.calls.length, 2);
+      assert.deepEqual(fetch.calls[1][1], {
+        headers: { Accept: "message/dap-hpke-config" },
+      });
       assert.deepEqual(a, hpkeConfig1);
       assert.deepEqual(b, hpkeConfig2);
       assert.deepEqual(client.aggregators[0].hpkeConfig, hpkeConfig1);

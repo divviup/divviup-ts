@@ -54,8 +54,10 @@ export const ROUTES = Object.freeze({
   upload: "/upload",
 });
 
+export const VERSION = "dap-00";
+
 export const INPUT_SHARE_ASCII = Object.freeze([
-  ...Buffer.from("dap-00 input share", "ascii"),
+  ...Buffer.from(`${VERSION} input share`, "ascii"),
   1,
 ]);
 
@@ -134,7 +136,8 @@ export class DAPClient<M, PP> implements Parameters<M, PP> {
     return Promise.all(
       this.aggregators.map(async (aggregator) => {
         const response = await this.fetch(
-          new URL(ROUTES.keyConfig, aggregator.url).toString()
+          new URL(ROUTES.keyConfig, aggregator.url).toString(),
+          { headers: { Accept: CONTENT_TYPES.HPKE_CONFIG } }
         );
         if (!response.ok) {
           throw new Error(
