@@ -124,12 +124,12 @@ describe("DAP", () => {
     it("can succeed", async () => {
       const [hpkeConfig1, hpkeConfig2] = [buildHpkeConfig(), buildHpkeConfig()];
       const fetch = mockFetch({
-        "https://a.example.com/key_config": {
+        "https://a.example.com/hpke_config": {
           body: hpkeConfig1.encode(),
           contentType: "message/dap-hpke-config",
         },
 
-        "https://b.example.com/key_config": {
+        "https://b.example.com/hpke_config": {
           body: hpkeConfig2.encode(),
           contentType: "message/dap-hpke-config",
         },
@@ -149,8 +149,8 @@ describe("DAP", () => {
 
     it("throws an error if the status is not 200", async () => {
       const fetch = mockFetch({
-        "https://a.example.com/key_config": { status: 418 },
-        "https://b.example.com/key_config": { status: 500 },
+        "https://a.example.com/hpke_config": { status: 418 },
+        "https://b.example.com/hpke_config": { status: 500 },
       });
       const client = new DAPClient(buildParams(), fetch);
 
@@ -164,8 +164,12 @@ describe("DAP", () => {
 
     it("throws an error if the content type is not correct", async () => {
       const fetch = mockFetch({
-        "https://a.example.com/key_config": { contentType: "application/text" },
-        "https://b.example.com/key_config": { contentType: "application/text" },
+        "https://a.example.com/hpke_config": {
+          contentType: "application/text",
+        },
+        "https://b.example.com/hpke_config": {
+          contentType: "application/text",
+        },
       });
       const client = new DAPClient(buildParams(), fetch);
 
