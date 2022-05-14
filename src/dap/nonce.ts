@@ -9,7 +9,7 @@ export class Nonce implements Encodable {
   }
 
   static generate(): Nonce {
-    return new Nonce(BigInt(Math.round(Date.now() / 1000)), randomBytes(8));
+    return new Nonce(BigInt(Math.floor(Date.now() / 1000)), randomBytes(8));
   }
 
   encode(): Buffer {

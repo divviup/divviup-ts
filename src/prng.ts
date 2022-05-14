@@ -1,8 +1,15 @@
 import { AesCmac } from "aes-cmac";
-import { webcrypto } from "crypto";
 import { Field, Vector } from "field";
 import { nextPowerOf2Big } from "common";
 import { octetStringToInteger } from "common";
+import * as crypto from "crypto";
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const webcrypto = crypto.webcrypto as unknown as { subtle: SubtleCrypto };
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+const subtle = webcrypto.subtle;
 
 const SEED_SIZE = 16;
 
@@ -73,7 +80,7 @@ export const PrgAes128: PrgConstructor = class PrgAes128 extends Prg {
     this.#lengthConsumed = 0;
     const hasher = new AesCmac(seed);
     const key = hasher.calculate(info);
-    this.#cryptoKey = webcrypto.subtle.importKey("raw", key, "AES-CTR", false, [
+    this.#cryptoKey = subtle.importKey("raw", key, "AES-CTR", false, [
       "encrypt",
     ]);
   }
@@ -97,7 +104,7 @@ export const PrgAes128: PrgConstructor = class PrgAes128 extends Prg {
     const counter = new ArrayBuffer(16);
     new DataView(counter).setUint32(12, block, false);
 
-    const encryptedData = (await webcrypto.subtle.encrypt(
+    const encryptedData = (await subtle.encrypt(
       {
         name: "AES-CTR",
         length: 128,

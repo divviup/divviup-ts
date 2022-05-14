@@ -1,4 +1,4 @@
-import { Encodable } from "dap/encoding";
+import { Encodable, encodeOpaque } from "dap/encoding";
 
 export class HpkeCiphertext implements Encodable {
   constructor(
@@ -14,8 +14,8 @@ export class HpkeCiphertext implements Encodable {
   encode(): Buffer {
     return Buffer.concat([
       Buffer.from([this.configId]),
-      this.encapsulatedContext,
-      this.payload,
+      encodeOpaque(this.encapsulatedContext),
+      encodeOpaque(this.payload),
     ]);
   }
 }

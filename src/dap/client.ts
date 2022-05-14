@@ -32,7 +32,6 @@ export type ClientVdaf<M, PP> = Vdaf<
 
 export interface Aggregator {
   url: URL;
-  privateKey: Buffer;
   role: Role;
   hpkeConfig?: HpkeConfig;
 }
@@ -54,7 +53,7 @@ export const ROUTES = Object.freeze({
   upload: "/upload",
 });
 
-export const VERSION = "dap-00";
+export const VERSION = "ppm";
 
 export const INPUT_SHARE_ASCII = Object.freeze([
   ...Buffer.from(`${VERSION} input share`, "ascii"),
@@ -66,7 +65,7 @@ export const CONTENT_TYPES = Object.freeze({
   HPKE_CONFIG: "message/dap-hpke-config",
 });
 
-export class DAPClient<M, PP> implements Parameters<M, PP> {
+export class DAPClient<M, PP> {
   vdaf: ClientVdaf<M, PP>;
   taskId: TaskId;
   minimumBatchSize: number;
@@ -98,21 +97,22 @@ export class DAPClient<M, PP> implements Parameters<M, PP> {
         );
       }
       const share = inputShares[i];
-      const info = Buffer.from([...INPUT_SHARE_ASCII, aggregator.role]);
+
+      const info = Buffer.from([
+        ...this.taskId.encode(), //<-this moves to aad soon
+        ...INPUT_SHARE_ASCII,
+        aggregator.role,
+      ]);
+
       const aad = Buffer.concat([
-        this.taskId.encode(),
+        //        this.taskId.encode(), <- to here
         nonce.encode(),
         encodeArray(this.extensions),
       ]);
       return aggregator.hpkeConfig.seal(info, share, aad);
     });
 
-    return new Report(
-      this.taskId,
-      Nonce.generate(),
-      this.extensions,
-      ciphertexts
-    );
+    return new Report(this.taskId, nonce, this.extensions, ciphertexts);
   }
 
   async sendReport(report: Report) {
@@ -135,10 +135,16 @@ export class DAPClient<M, PP> implements Parameters<M, PP> {
   fetchKeyConfiguration(): Promise<HpkeConfig[]> {
     return Promise.all(
       this.aggregators.map(async (aggregator) => {
-        const response = await this.fetch(
-          new URL(ROUTES.keyConfig, aggregator.url).toString(),
-          { headers: { Accept: CONTENT_TYPES.HPKE_CONFIG } }
+        const url = new URL(ROUTES.keyConfig, aggregator.url);
+        url.searchParams.append(
+          "task_id",
+          this.taskId.buffer.toString("base64url")
         );
+
+        const response = await this.fetch(url, {
+          headers: { Accept: CONTENT_TYPES.HPKE_CONFIG },
+        });
+
         if (!response.ok) {
           throw new Error(
             `makeKeyConfigurationRequest received a ${response.status} response, aborting`
@@ -148,8 +154,11 @@ export class DAPClient<M, PP> implements Parameters<M, PP> {
         const blob = await response.blob();
 
         if (blob.type !== CONTENT_TYPES.HPKE_CONFIG) {
-          throw new Error(
-            `expected ${CONTENT_TYPES.HPKE_CONFIG} content-type header`
+          ///          throw new Error( <- this is the correct behavior, but janus sends a generic content-type currently
+          ///             `expected ${CONTENT_TYPES.HPKE_CONFIG} content-type header, aborting`
+          ///          );
+          console.error(
+            `expected ${CONTENT_TYPES.HPKE_CONFIG} content-type header, continuing for now`
           );
         }
 

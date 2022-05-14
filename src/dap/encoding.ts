@@ -7,8 +7,14 @@ export function encodeArray<T extends Encodable>(items: T[]): Buffer {
     Buffer.alloc(2),
     ...items.map((item) => item.encode()),
   ]);
-  content.writeUint16BE(content.length, 0);
+  content.writeUint16BE(content.length - 2, 0);
   return content;
+}
+
+export function encodeOpaque(buffer: Buffer): Buffer {
+  const returnBuffer = Buffer.concat([Buffer.alloc(2), buffer]);
+  returnBuffer.writeUint16BE(buffer.length, 0);
+  return returnBuffer;
 }
 
 export type Parseable = Parser | ArrayBuffer | Buffer;
@@ -27,12 +33,6 @@ export class Parser {
 
   private increment<T>(bytes: number, fn: (this: Parser) => T): T {
     if (this.index + bytes > this.buffer.length) {
-      console.log({
-        index: this.index,
-        len: this.buffer.length,
-        bytes,
-        buffer: [...this.buffer],
-      });
       throw new Error("attempted to read off end of buffer");
     }
     const ret = fn.call(this);

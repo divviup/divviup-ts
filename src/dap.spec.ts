@@ -40,11 +40,11 @@ function mockFetch(mocks: {
 
 function buildHpkeConfig(): HpkeConfig {
   return new HpkeConfig(
-    Buffer.from(new hpke.Keypair(hpke.Kem.DhP256HkdfSha256).public_key),
     1,
     hpke.Kem.DhP256HkdfSha256,
     hpke.Kdf.Sha256,
-    hpke.Aead.AesGcm128
+    hpke.Aead.AesGcm128,
+    Buffer.from(new hpke.Keypair(hpke.Kem.DhP256HkdfSha256).public_key)
   );
 }
 
@@ -54,7 +54,6 @@ function buildAggregator(
   withHpkeConfig = false
 ): Aggregator {
   return {
-    privateKey: Buffer.alloc(0),
     role,
     url: new URL(`https://${id}.example.com`),
     ...(withHpkeConfig && { hpkeConfig: buildHpkeConfig() }),
@@ -76,22 +75,22 @@ describe("DAP", () => {
   describe("HpkeConfig", () => {
     it("encodes as expected", () => {
       const config = new HpkeConfig(
-        Buffer.from("public key"),
         255,
         hpke.Kem.DhP256HkdfSha256,
         hpke.Kdf.Sha256,
-        hpke.Aead.AesGcm128
+        hpke.Aead.AesGcm128,
+        Buffer.from("public key")
       );
 
       assert.deepEqual(
         [...config.encode()],
         [
-          ...[0, 10], //length of "public key"
-          ...Buffer.from("public key", "ascii"),
           255, //id
           ...[0, 16],
           ...[0, 1],
           ...[0, 1],
+          ...[0, 10], //length of "public key"
+          ...Buffer.from("public key", "ascii"),
         ]
       );
     });
@@ -99,12 +98,12 @@ describe("DAP", () => {
     it("decodes as expected", () => {
       const config = HpkeConfig.parse(
         Buffer.from([
-          ...[0, 10], //length of "public key"
-          ...Buffer.from("public key", "ascii"),
           255, //id
           ...[0, 1],
           ...[0, 2],
           ...[0, 3],
+          ...[0, 10], //length of "public key"
+          ...Buffer.from("public key", "ascii"),
         ])
       );
 
@@ -122,20 +121,22 @@ describe("DAP", () => {
 
   describe("fetching key configuration", () => {
     it("can succeed", async () => {
+      const params = buildParams();
       const [hpkeConfig1, hpkeConfig2] = [buildHpkeConfig(), buildHpkeConfig()];
+      const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        "https://a.example.com/hpke_config": {
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
           body: hpkeConfig1.encode(),
           contentType: "message/dap-hpke-config",
         },
 
-        "https://b.example.com/hpke_config": {
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
           body: hpkeConfig2.encode(),
           contentType: "message/dap-hpke-config",
         },
       });
 
-      const client = new DAPClient(buildParams(), fetch);
+      const client = new DAPClient(params, fetch);
       const [a, b] = await client.fetchKeyConfiguration();
       assert.equal(fetch.calls.length, 2);
       assert.deepEqual(fetch.calls[1][1], {
@@ -148,11 +149,19 @@ describe("DAP", () => {
     });
 
     it("throws an error if the status is not 200", async () => {
+      const params = buildParams();
+      const taskId = params.taskId.buffer.toString("base64url");
+
       const fetch = mockFetch({
-        "https://a.example.com/hpke_config": { status: 418 },
-        "https://b.example.com/hpke_config": { status: 500 },
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
+          status: 418,
+        },
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
+          status: 500,
+        },
       });
-      const client = new DAPClient(buildParams(), fetch);
+
+      const client = new DAPClient(params, fetch);
 
       await assert.rejects(client.fetchKeyConfiguration(), (error: Error) => {
         assert.match(error.message, /418/);
@@ -162,16 +171,18 @@ describe("DAP", () => {
       assert.equal(fetch.calls.length, 2);
     });
 
-    it("throws an error if the content type is not correct", async () => {
+    xit("throws an error if the content type is not correct", async () => {
+      const params = buildParams();
+      const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        "https://a.example.com/hpke_config": {
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
           contentType: "application/text",
         },
-        "https://b.example.com/hpke_config": {
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
           contentType: "application/text",
         },
       });
-      const client = new DAPClient(buildParams(), fetch);
+      const client = new DAPClient(params, fetch);
 
       await assert.rejects(client.fetchKeyConfiguration(), (error: Error) => {
         assert.match(error.message, /message\/dap-hpke-config/);
