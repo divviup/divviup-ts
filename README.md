@@ -1,3 +1,6 @@
+# DivvyUp Typescript Client
+
+```typescript
 import { DAPClient, Role } from "dap/client";
 import { Prio3Aes128Count } from "prio3";
 import { TaskId } from "dap/taskId";
@@ -25,3 +28,4 @@ async function main() {
 }
 
 main().then().catch(console.error);
+```
