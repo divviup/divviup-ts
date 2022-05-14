@@ -12,6 +12,8 @@ import { Vdaf } from "vdaf";
 import { Extension } from "./extension";
 import { encodeArray } from "./encoding";
 
+export { TaskId } from "dap/taskId";
+
 export enum Role {
   Collector = 0,
   Client = 1,
@@ -36,11 +38,17 @@ export interface Aggregator {
   hpkeConfig?: HpkeConfig;
 }
 
+interface AggregatorDefinition {
+  url: URL | string;
+  role: Role | Lowercase<keyof typeof Role>;
+  hpkeConfig?: HpkeConfig;
+}
+
 export interface Parameters<M, PP> {
   vdaf: ClientVdaf<M, PP>;
-  taskId: TaskId;
+  taskId: TaskId | Buffer;
   minimumBatchSize: number;
-  aggregators: Aggregator[];
+  aggregators: AggregatorDefinition[];
 }
 
 type Fetch = (
@@ -65,6 +73,42 @@ export const CONTENT_TYPES = Object.freeze({
   HPKE_CONFIG: "message/dap-hpke-config",
 });
 
+function urlFromDefinition(url: URL | string): URL {
+  return typeof url === "string" ? new URL(url) : url;
+}
+
+function roleFromDefinition(
+  roleDefinition: Role | Lowercase<keyof typeof Role>
+): Role {
+  switch (roleDefinition) {
+    case "client":
+      return Role.Client;
+    case "collector":
+      return Role.Collector;
+    case "helper":
+      return Role.Helper;
+    case "leader":
+      return Role.Leader;
+    default:
+      return roleDefinition;
+  }
+}
+
+function aggregatorFromDefinition(
+  aggregatorDefinition: AggregatorDefinition
+): Aggregator {
+  return {
+    url: urlFromDefinition(aggregatorDefinition.url),
+    role: roleFromDefinition(aggregatorDefinition.role),
+    hpkeConfig: aggregatorDefinition.hpkeConfig,
+  };
+}
+
+function taskIdFromDefinition(taskIdDefinition: Buffer | TaskId): TaskId {
+  if (taskIdDefinition instanceof TaskId) return taskIdDefinition;
+  return new TaskId(taskIdDefinition);
+}
+
 export class DAPClient<M, PP> {
   vdaf: ClientVdaf<M, PP>;
   taskId: TaskId;
@@ -76,9 +120,9 @@ export class DAPClient<M, PP> {
 
   constructor(parameters: Parameters<M, PP>, fetch: Fetch = actualFetch) {
     this.vdaf = parameters.vdaf;
-    this.taskId = parameters.taskId;
+    this.taskId = taskIdFromDefinition(parameters.taskId);
     this.minimumBatchSize = parameters.minimumBatchSize;
-    this.aggregators = parameters.aggregators;
+    this.aggregators = parameters.aggregators.map(aggregatorFromDefinition);
     this.fetch = fetch;
   }
 
