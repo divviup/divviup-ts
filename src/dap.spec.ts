@@ -50,7 +50,7 @@ function buildHpkeConfig(): HpkeConfig {
 
 function buildParams(): ClientParameters<number, null> & { taskId: TaskId } {
   return {
-    vdaf: new Prio3Aes128Sum(3, 16),
+    vdaf: new Prio3Aes128Sum({ shares: 2, bits: 16 }),
     leader: "https://a.example.com",
     helpers: ["https://b.example.com"],
     taskId: TaskId.random(),
