@@ -1,6 +1,6 @@
 import { Vdaf } from "vdaf";
 import { PrgAes128, PrgConstructor } from "prng";
-import { VERSION, arr, xorWith, split, xorInPlace } from "common";
+import { VDAF_VERSION, arr, xorWith, split, xorInPlace } from "common";
 import { Vector, Field } from "field";
 import { FlpGeneric } from "prio3/genericFlp";
 import { Count } from "prio3/circuits/count";
@@ -41,12 +41,12 @@ interface Share {
   blind: Buffer;
   hint: Buffer;
   inputShare: Vector;
-  inputShareSeed?: Buffer;
   proofShare: Vector;
+  inputShareSeed?: Buffer;
   proofShareSeed?: Buffer;
 }
 
-const DST = Buffer.from(`${VERSION} prio3`, "ascii");
+const DOMAIN_SEPARATION_TAG = Buffer.from(`${VDAF_VERSION} prio3`, "ascii");
 
 export class Prio3<Measurement> implements PrioVdaf<Measurement> {
   readonly rounds = 1;
@@ -66,7 +66,9 @@ export class Prio3<Measurement> implements PrioVdaf<Measurement> {
     return prg.expandIntoVec(
       field,
       seed || prg.randomSeed(),
-      typeof info === "number" ? Buffer.from([...DST, info]) : DST,
+      typeof info === "number"
+        ? Buffer.from([...DOMAIN_SEPARATION_TAG, info])
+        : DOMAIN_SEPARATION_TAG,
       len
     );
   }

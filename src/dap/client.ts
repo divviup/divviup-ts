@@ -57,10 +57,10 @@ export const ROUTES = Object.freeze({
   upload: "/upload",
 });
 
-export const VERSION = "ppm";
+export const DAP_VERSION = "ppm";
 
 export const INPUT_SHARE_ASCII = Object.freeze([
-  ...Buffer.from(`${VERSION} input share`, "ascii"),
+  ...Buffer.from(`${DAP_VERSION} input share`, "ascii"),
   1,
 ]);
 

@@ -27,7 +27,7 @@ export function octetStringToInteger(octetString: Uint8Array): bigint {
 }
 
 /** @ignore */
-export const VERSION = "vdaf-00";
+export const VDAF_VERSION = "vdaf-00";
 
 /** @ignore */
 export function arr<T>(n: number, mapper: (n: number) => T): T[] {
