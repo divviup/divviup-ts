@@ -11,7 +11,5 @@ const client = new DAPClient({
   helpers: ["http://localhost:8081"],
 });
 
-await client.fetchKeyConfiguration();
-const report = await client.generateReport(1, null);
-await client.sendReport(report);
+await client.sendMeasurement(1, null);
 ```

@@ -1,7 +1,7 @@
 import { randomBytes as cryptoRandomBytes } from "crypto";
 import util from "util";
 
-/** @ignore */
+/** @internal */
 export function integerToOctetString(i: bigint, len: number): Uint8Array {
   const max = 256n ** BigInt(len);
   if (i >= max) {
@@ -17,7 +17,7 @@ export function integerToOctetString(i: bigint, len: number): Uint8Array {
   return octets;
 }
 
-/** @ignore */
+/** @internal */
 export function octetStringToInteger(octetString: Uint8Array): bigint {
   return Buffer.from(octetString).reduceRight(
     (total, value, index) =>
@@ -26,17 +26,17 @@ export function octetStringToInteger(octetString: Uint8Array): bigint {
   );
 }
 
-/** @ignore */
+/** @internal */
 export const VDAF_VERSION = "vdaf-00";
 
-/** @ignore */
+/** @internal */
 export function arr<T>(n: number, mapper: (n: number) => T): T[] {
   const a = new Array(n) as T[];
   for (let i = 0; i < n; i++) a[i] = mapper(i);
   return a;
 }
 
-/** @ignore */
+/** @internal */
 export function nextPowerOf2(n: number): number {
   if (n > 0) {
     return 2 ** Math.ceil(Math.log2(n));
@@ -45,7 +45,7 @@ export function nextPowerOf2(n: number): number {
   }
 }
 
-/** @ignore */
+/** @internal */
 export function nextPowerOf2Big(n: bigint): bigint {
   if (n === 1n) {
     return 1n;
@@ -56,7 +56,7 @@ export function nextPowerOf2Big(n: bigint): bigint {
   }
 }
 
-/** @ignore */
+/** @internal */
 export function randomBytes(n: number): Buffer {
   if (process.env.TEST_VECTOR) {
     return Buffer.alloc(n, 1);
@@ -65,18 +65,20 @@ export function randomBytes(n: number): Buffer {
   }
 }
 
-/** @ignore */
+/** @internal */
 export function dbg(o: unknown) {
   console.log(util.inspect(o, { depth: null }));
 }
 
+/** @internal */
 export function zip<A, B>(a: A[], b: B[]): [A, B][] {
   if (a.length !== b.length)
     throw new Error("could not zip two unequal arrays");
   return arr(a.length, (i) => [a[i], b[i]]);
 }
 
-export function xorWith(a: Buffer, b: Buffer) {
+/** @internal */
+export function xor(a: Buffer, b: Buffer) {
   if (a.length !== b.length)
     throw new Error("cannot xor two buffers of unequal length");
   const returnBuffer = Buffer.alloc(a.length);
@@ -84,6 +86,7 @@ export function xorWith(a: Buffer, b: Buffer) {
   return returnBuffer;
 }
 
+/** @internal */
 export function xorInPlace(
   bufferThatChanges: Buffer,
   bufferThatIsUnchanged: Buffer
@@ -95,6 +98,7 @@ export function xorInPlace(
     bufferThatChanges[i] ^= bufferThatIsUnchanged[i];
 }
 
+/** @internal */
 export function split<T extends { slice(start: number, end?: number): T }>(
   sliceable: T,
   index: number

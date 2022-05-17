@@ -1,6 +1,6 @@
 import { Vdaf } from "vdaf";
 import { PrgAes128, PrgConstructor } from "prng";
-import { VDAF_VERSION, arr, xorWith, split, xorInPlace } from "common";
+import { VDAF_VERSION, arr, xor, split, xorInPlace } from "common";
 import { Vector, Field } from "field";
 import { FlpGeneric } from "prio3/genericFlp";
 import { Count } from "prio3/circuits/count";
@@ -151,7 +151,7 @@ export class Prio3<Measurement> implements PrioVdaf<Measurement> {
         share.blind,
         Buffer.from([j, ...encoded])
       );
-      jointRandSeed = xorWith(share.hint, shareJointRandSeed);
+      jointRandSeed = xor(share.hint, shareJointRandSeed);
       jointRand = await this.pseudorandom(flp.jointRandLen, jointRandSeed);
     } else {
       jointRand = field.vec([]);

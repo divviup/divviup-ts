@@ -49,3 +49,13 @@ export interface Vdaf<
 
   testVectorVerifyParams(verifyParams: VerifyParameter[]): [number, string][];
 }
+
+export interface ClientVdaf<Measurement, PublicParameter> {
+  shares: number;
+  rounds: number;
+
+  measurementToInputShares(
+    publicParam: PublicParameter,
+    measurement: Measurement
+  ): Promise<Buffer[]>;
+}

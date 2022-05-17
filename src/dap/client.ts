@@ -2,7 +2,7 @@ import { TaskId } from "dap/taskId";
 import { Nonce } from "dap/nonce";
 import { Report } from "dap/report";
 import { HpkeConfig } from "dap/hpkeConfig";
-import { Vdaf } from "vdaf";
+import { ClientVdaf } from "vdaf";
 import { Extension } from "dap/extension";
 import { encodeArray } from "dap/encoding";
 import { DAPError } from "dap/errors";
@@ -16,34 +16,49 @@ import {
   Response,
 } from "undici";
 
-export enum Role {
+enum Role {
   Collector = 0,
   Client = 1,
   Leader = 2,
   Helper = 3,
 }
 
-export type ClientVdaf<M, PP> = Vdaf<
-  M,
-  PP,
-  unknown,
-  unknown,
-  unknown,
-  unknown,
-  unknown,
-  unknown
->;
-
-export interface Aggregator {
+interface Aggregator {
   url: URL;
   role: Role;
   hpkeConfig?: HpkeConfig;
 }
 
-export interface Parameters<M, PP> {
-  vdaf: ClientVdaf<M, PP>;
+/**
+   Parameters from which to build a DAPClient
+   @typeParam Measurement The Measurement for the provided vdaf, usually inferred from the vdaf.
+   @typeParam PublicParameter The PublicParameter for the provided vdaf, usually inferred from the vdaf.
+*/
+export interface ClientParameters<Measurement, PublicParameter> {
+  /**
+     A {@linkcode ClientVdaf} that this {@linkcode DAPClient} will use to
+     generate reports. The measurement and public parameter passed to
+     generateReport must be the `Measurement` and `PublicParameter` that
+     this ClientVdaf supports.
+  */
+
+  vdaf: ClientVdaf<Measurement, PublicParameter>;
+
+  /**
+     The task identifier for this {@linkcode DAPClient}. This can be specified
+     either as a Buffer, a {@linkcode TaskId} or a base64url-encoded
+     string
+  **/
   taskId: TaskId | Buffer | string;
+  /**
+     the url of the leader aggregator, specified as either a string
+     or a {@linkcode URL}
+  */
   leader: string | URL;
+  /**
+     the url of the helper aggregators, specified as an array of either
+     strings or {@linkcode URL}s.
+  */
   helpers: (string | URL)[];
 }
 
@@ -52,102 +67,126 @@ type Fetch = (
   init?: RequestInit | undefined
 ) => Promise<Response>;
 
-export const ROUTES = Object.freeze({
+const ROUTES = Object.freeze({
   keyConfig: "/hpke_config",
   upload: "/upload",
 });
 
-export const DAP_VERSION = "ppm";
+/**
+   The protocol version for this DAP implementation. Usually of the
+   form `dap-{nn}`.
+*/
+const DAP_VERSION = "ppm";
 
-export const INPUT_SHARE_ASCII = Object.freeze([
+/** A Buffer that will always equal `${DAP_VERSION} input share\x01` */
+const INPUT_SHARE_ASCII = Object.freeze([
   ...Buffer.from(`${DAP_VERSION} input share`, "ascii"),
   1,
 ]);
 
-export const CONTENT_TYPES = Object.freeze({
+const CONTENT_TYPES = Object.freeze({
   REPORT: "message/dap-report",
   HPKE_CONFIG: "message/dap-hpke-config",
 });
 
-function aggregatorsFromParameters<M, PP>({
-  leader,
-  helpers,
-}: Parameters<M, PP>): Aggregator[] {
-  return [
-    {
-      url: new URL(leader),
-      role: Role.Leader,
-    },
-    ...helpers.map((url) => ({
-      url: new URL(url),
-      role: Role.Helper,
-    })),
-  ];
-}
+/**
+   A client for interacting with DAP servers, as specified by
+   [draft-ietf-ppm-dap-00](https://datatracker.ietf.org/doc/html/draft-ietf-ppm-dap). Instances
+   of this class contain all of the necessary functionality to
+   generate a privacy-preserving measurement report for the provided
+   {@linkcode ClientVdaf}, such as an implementation of Prio3, as specified by
+   [draft-irtf-cfrg-vdaf-00](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf).
+*/
+export class DAPClient<Measurement, PublicParameter> {
+  #vdaf: ClientVdaf<Measurement, PublicParameter>;
+  #taskId: TaskId;
+  #aggregators: Aggregator[];
+  #extensions: Extension[] = [];
+  #fetch: Fetch = actualFetch;
 
-function taskIdFromDefinition(
-  taskIdDefinition: Buffer | TaskId | string
-): TaskId {
-  if (typeof taskIdDefinition === "string")
-    taskIdDefinition = Buffer.from(taskIdDefinition, "base64url");
+  /** the protocol version for this client, usually in the form `dap-{nn}` */
+  static readonly protocolVersion = DAP_VERSION;
 
-  if (taskIdDefinition instanceof TaskId) return taskIdDefinition;
-
-  return new TaskId(taskIdDefinition);
-}
-
-export class DAPClient<M, PP> {
-  vdaf: ClientVdaf<M, PP>;
-  taskId: TaskId;
-  aggregators: Aggregator[];
-  fetch: Fetch;
-  keyConfig?: HpkeConfig[];
-  extensions: Extension[] = [];
-
-  constructor(parameters: Parameters<M, PP>, fetch: Fetch = actualFetch) {
-    this.vdaf = parameters.vdaf;
-    this.taskId = taskIdFromDefinition(parameters.taskId);
-    this.aggregators = aggregatorsFromParameters(parameters);
-    this.fetch = fetch;
+  /**
+     Builds a new DAPClient from the {@linkcode ClientParameters} provided. 
+   */
+  constructor(parameters: ClientParameters<Measurement, PublicParameter>) {
+    this.#vdaf = parameters.vdaf;
+    this.#taskId = taskIdFromDefinition(parameters.taskId);
+    this.#aggregators = aggregatorsFromParameters(parameters);
   }
 
-  async generateReport(measurement: M, publicParam: PP): Promise<Report> {
-    const inputShares = await this.vdaf.measurementToInputShares(
-      publicParam,
+  /** @internal */
+  //this exists for testing, and should not be considered part of the public api.
+  get aggregators(): Aggregator[] {
+    return this.#aggregators;
+  }
+
+  /** @internal */
+  //this exists for testing, and should not be considered part of the public api.
+  set fetch(fetch: Fetch) {
+    this.#fetch = fetch;
+  }
+
+  /**
+     Produce a {@linkcode Report} from the supplied Measurement and PublicParameter.
+     
+     This method depends on the key configuration already having been
+     fetched with {@linkcode DAPClient.fetchKeyConfiguration}. It will
+     throw an error if you attempt to call it without having
+     previously fetched key configuration.
+
+     @param measurement The type of this argument will be determined by the Vdaf that this client is constructed for.
+     @param publicParameter The type of this argument will be determined by the Vdaf that this client is constructed for.
+     @throws `Error` if there is any issue in generating the report
+   */
+  async generateReport(
+    measurement: Measurement,
+    publicParameter: PublicParameter
+  ): Promise<Report> {
+    const inputShares = await this.#vdaf.measurementToInputShares(
+      publicParameter,
       measurement
     );
 
     const nonce = Nonce.generate();
+    const aad = Buffer.concat([
+      //        this.taskId.encode(), <- soon
+      nonce.encode(),
+      encodeArray(this.#extensions),
+    ]);
 
-    const ciphertexts = this.aggregators.map((aggregator, i) => {
+    const ciphertexts = this.#aggregators.map((aggregator, i) => {
       if (!aggregator.hpkeConfig) {
         throw new Error(
-          "cannot call runVdaf on a DAPClient that has not yet fetched key configuration"
+          "Cannot generate a report before fetching key " +
+            "configuration. Call fetchKeyConfiguration() on this client."
         );
       }
-      const share = inputShares[i];
 
       const info = Buffer.from([
-        ...this.taskId.encode(), //<-this moves to aad soon
+        ...this.#taskId.encode(), //<-this moves to aad soon
         ...INPUT_SHARE_ASCII,
         aggregator.role,
       ]);
 
-      const aad = Buffer.concat([
-        //        this.taskId.encode(), <- to here
-        nonce.encode(),
-        encodeArray(this.extensions),
-      ]);
-      return aggregator.hpkeConfig.seal(info, share, aad);
+      return aggregator.hpkeConfig.seal(info, inputShares[i], aad);
     });
 
-    return new Report(this.taskId, nonce, this.extensions, ciphertexts);
+    return new Report(this.#taskId, nonce, this.#extensions, ciphertexts);
   }
 
+  /**
+     Sends a pregenerated {@linkcode Report} to the leader aggregator.
+     
+     @param report The {@linkcode Report} to send.
+
+     @throws {@linkcode DAPError} if the response is not Ok.
+   */
   async sendReport(report: Report) {
     const body = report.encode();
-    const leader = this.aggregators[0];
-    const response = await this.fetch(
+    const leader = this.#aggregators[0];
+    const response = await this.#fetch(
       new URL(ROUTES.upload, leader.url).toString(),
       {
         method: "POST",
@@ -161,16 +200,51 @@ export class DAPClient<M, PP> {
     }
   }
 
-  fetchKeyConfiguration(): Promise<HpkeConfig[]> {
-    return Promise.all(
-      this.aggregators.map(async (aggregator) => {
+  private hasKeyConfiguration(): boolean {
+    return this.#aggregators.every((aggregator) => !!aggregator.hpkeConfig);
+  }
+
+  /**
+
+     A convenience function to fetch the key configuration (if
+     needed), generate a report from the provided measurement and
+     public parameter, and send that report to the leader aggregator.
+
+     This is identical to calling {@linkcode
+     DAPClient.fetchKeyConfiguration}, {@linkcode
+     DAPClient.generateReport}, and {@linkcode DAPClient.sendReport}.
+
+     @throws {@linkcode DAPError} if any http response is not Ok or
+     `Error` if there is an issue generating the report
+   */
+  async sendMeasurement(
+    measurement: Measurement,
+    publicParameter: PublicParameter
+  ): Promise<void> {
+    await this.fetchKeyConfiguration();
+    const report = await this.generateReport(measurement, publicParameter);
+    await this.sendReport(report);
+  }
+
+  /**
+     Fetches hpke configuration from the configured aggregators over
+     the network. This will make one http/https request for each
+     aggregator (leader and helpers).
+
+     @throws {@linkcode DAPError} if any response is not Ok.
+     */
+
+  async fetchKeyConfiguration(): Promise<void> {
+    if (this.hasKeyConfiguration()) return;
+    await Promise.all(
+      this.#aggregators.map(async (aggregator) => {
         const url = new URL(ROUTES.keyConfig, aggregator.url);
         url.searchParams.append(
           "task_id",
-          this.taskId.buffer.toString("base64url")
+          this.#taskId.buffer.toString("base64url")
         );
 
-        const response = await this.fetch(url, {
+        const response = await this.#fetch(url, {
           headers: { Accept: CONTENT_TYPES.HPKE_CONFIG },
         });
 
@@ -192,10 +266,35 @@ export class DAPClient<M, PP> {
           );
         }
 
-        const hpkeConfig = HpkeConfig.parse(await blob.arrayBuffer());
-        aggregator.hpkeConfig = hpkeConfig;
-        return hpkeConfig;
+        aggregator.hpkeConfig = HpkeConfig.parse(await blob.arrayBuffer());
       })
     );
   }
+}
+
+function aggregatorsFromParameters<M, PP>({
+  leader,
+  helpers,
+}: ClientParameters<M, PP>): Aggregator[] {
+  return [
+    {
+      url: new URL(leader),
+      role: Role.Leader,
+    },
+    ...helpers.map((url) => ({
+      url: new URL(url),
+      role: Role.Helper,
+    })),
+  ];
+}
+
+function taskIdFromDefinition(
+  taskIdDefinition: Buffer | TaskId | string
+): TaskId {
+  if (typeof taskIdDefinition === "string")
+    taskIdDefinition = Buffer.from(taskIdDefinition, "base64url");
+
+  if (taskIdDefinition instanceof TaskId) return taskIdDefinition;
+
+  return new TaskId(taskIdDefinition);
 }
