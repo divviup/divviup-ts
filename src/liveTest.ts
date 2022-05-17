@@ -4,7 +4,7 @@ import { Prio3Aes128Count } from "prio3";
 async function main() {
   const client = new DAPClient({
     vdaf: new Prio3Aes128Count(2),
-    taskId: Buffer.from(process.argv[2], "base64url"),
+    taskId: process.argv[2],
     leader: "http://localhost:8080",
     helpers: ["http://localhost:8081"],
   });

@@ -4,21 +4,14 @@
 import { DAPClient } from "dap/client";
 import { Prio3Aes128Count } from "prio3";
 
-async function main() {
-  const client = new DAPClient({
-    vdaf: new Prio3Aes128Count(2),
-    aggregators: [
-      { url: "http://localhost:8080", role: "leader" },
-      { url: "http://localhost:8081", role: "helper" },
-    ],
-    minimumBatchSize: 1,
-    taskId: Buffer.from(process.argv[2], "base64url"),
-  });
+const client = new DAPClient({
+  vdaf: new Prio3Aes128Count(2),
+  taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+  leader: "http://localhost:8080",
+  helpers: ["http://localhost:8081"],
+});
 
-  await client.fetchKeyConfiguration();
-  const report = await client.generateReport(1, null);
-  await client.sendReport(report);
-}
-
-main().then().catch(console.error);
+await client.fetchKeyConfiguration();
+const report = await client.generateReport(1, null);
+await client.sendReport(report);
 ```
