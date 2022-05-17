@@ -1,11 +1,11 @@
+import { Prio3 } from "prio3";
 import {
-  Prio3,
   Prio3Aes128Count,
   Prio3Aes128Histogram,
   Prio3Aes128Sum,
-} from "prio3";
-import { PrgAes128 } from "prng";
+} from "prio3/instantiations";
 import { TestFlp128 } from "prio3/flp.spec";
+import { PrgAes128 } from "prng";
 import { testVdaf } from "vdaf.spec";
 
 describe("prio3 vdaf", () => {

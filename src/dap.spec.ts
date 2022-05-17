@@ -1,7 +1,7 @@
 import assert from "assert";
 import { ClientParameters, DAPClient } from "dap/client";
 import { HpkeConfig } from "dap/hpkeConfig";
-import { Prio3Aes128Sum } from "prio3";
+import { Prio3Aes128Sum } from "prio3/instantiations";
 import { RequestInit, RequestInfo, Response, Request } from "undici";
 import * as hpke from "hpke";
 import { TaskId } from "dap/taskId";

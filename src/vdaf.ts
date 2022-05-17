@@ -1,3 +1,6 @@
+/** @internal */
+export const VDAF_VERSION = "vdaf-00";
+
 export interface Vdaf<
   Measurement,
   PublicParameter,

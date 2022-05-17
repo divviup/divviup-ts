@@ -1,5 +1,5 @@
 import { DAPClient } from "dap/client";
-import { Prio3Aes128Count } from "prio3";
+import { Prio3Aes128Count } from "prio3/instantiations";
 
 async function main() {
   await new DAPClient({
