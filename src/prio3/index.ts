@@ -53,7 +53,7 @@ export class Prio3<Measurement> implements PrioVdaf<Measurement> {
     public readonly shares: number
   ) {}
 
-  async pseudorandom(
+  private async pseudorandom(
     len: number,
     seed?: Buffer,
     info?: number
@@ -69,7 +69,7 @@ export class Prio3<Measurement> implements PrioVdaf<Measurement> {
     );
   }
 
-  get field(): Field {
+  private get field(): Field {
     return this.flp.field;
   }
 
