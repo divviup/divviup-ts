@@ -1,6 +1,6 @@
 import { AesCmac } from "aes-cmac";
 import { Field, Vector } from "field";
-import { nextPowerOf2Big } from "common";
+import { nextPowerOf2Big, randomBytes } from "common";
 import { octetStringToInteger } from "common";
 import * as crypto from "crypto";
 
@@ -21,6 +21,10 @@ export abstract class Prg {
     info: Buffer
   ): Promise<Buffer> {
     return new this(seed, info).next(this.seedSize);
+  }
+
+  static randomSeed(this: PrgConstructor): Buffer {
+    return randomBytes(this.seedSize);
   }
 
   static async expandIntoVec(
@@ -47,6 +51,7 @@ export interface PrgConstructor {
   seedSize: number;
   new (seed: Buffer, info: Buffer): Prg;
   deriveSeed(seed: Buffer, info: Buffer): Promise<Buffer>;
+  randomSeed(): Buffer;
   expandIntoVec(
     field: Field,
     seed: Buffer,

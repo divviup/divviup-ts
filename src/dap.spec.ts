@@ -1,5 +1,5 @@
 import assert from "assert";
-import { Parameters, Aggregator, DAPClient, Role } from "dap/client";
+import { Parameters, DAPClient } from "dap/client";
 import { HpkeConfig } from "dap/hpkeConfig";
 import { Prio3Aes128Sum } from "prio3";
 import { RequestInit, RequestInfo, Response, Request } from "undici";
@@ -48,29 +48,22 @@ function buildHpkeConfig(): HpkeConfig {
   );
 }
 
-function buildAggregator(
-  id: string,
-  role: Role,
-  withHpkeConfig = false
-): Aggregator {
-  return {
-    role,
-    url: new URL(`https://${id}.example.com`),
-    ...(withHpkeConfig && { hpkeConfig: buildHpkeConfig() }),
-  };
-}
-
-function buildParams(withHpkeConfig = false): Parameters<number, null> {
+function buildParams(): Parameters<number, null> & { taskId: TaskId } {
   return {
     vdaf: new Prio3Aes128Sum(3, 16),
-    aggregators: [
-      buildAggregator("a", Role.Leader, withHpkeConfig),
-      buildAggregator("b", Role.Helper, withHpkeConfig),
-    ],
-    minimumBatchSize: 1,
+    leader: "https://a.example.com",
+    helpers: ["https://b.example.com"],
     taskId: TaskId.random(),
   };
 }
+
+function withHpkeConfigs<M, PP>(dapClient: DAPClient<M, PP>): DAPClient<M, PP> {
+  for (const aggregator of dapClient.aggregators) {
+    aggregator.hpkeConfig = buildHpkeConfig();
+  }
+  return dapClient;
+}
+
 describe("DAP", () => {
   describe("HpkeConfig", () => {
     it("encodes as expected", () => {
@@ -195,7 +188,7 @@ describe("DAP", () => {
 
   describe("generating reports", () => {
     it("can succeed", async () => {
-      const client = new DAPClient(buildParams(true));
+      const client = withHpkeConfigs(new DAPClient(buildParams()));
       const report = await client.generateReport(21, null);
       assert.equal(report.encryptedInputShares.length, 2);
     });
@@ -206,7 +199,7 @@ describe("DAP", () => {
   describe("sending reports", () => {
     it("can succeed", async () => {
       const fetch = mockFetch({ "https://a.example.com/upload": {} });
-      const client = new DAPClient(buildParams(true), fetch);
+      const client = withHpkeConfigs(new DAPClient(buildParams(), fetch));
       const report = await client.generateReport(100, null);
       await client.sendReport(report);
       assert.equal(fetch.calls.length, 1);
@@ -221,7 +214,7 @@ describe("DAP", () => {
 
     it("throws an error on failure", async () => {
       const fetch = mockFetch({});
-      const client = new DAPClient(buildParams(true), fetch);
+      const client = withHpkeConfigs(new DAPClient(buildParams(), fetch));
       const report = await client.generateReport(100, null);
       await assert.rejects(client.sendReport(report));
       assert.equal(fetch.calls.length, 1);

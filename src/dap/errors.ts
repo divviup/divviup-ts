@@ -1,55 +1,41 @@
-export abstract class DAPError extends Error {
-  abstract urn: string;
-  taskID: string;
-  constructor(description: string, taskID: string) {
-    super(description);
-    this.taskID = taskID;
-  }
+import { Response } from "undici";
 
-  fullyQualifiedURN(): `urn:ietf:params:ppm:error:${typeof this.urn}` {
-    return `urn:ietf:params:ppm:error:${this.urn}`;
-  }
+interface Problem {
+  type: string;
+  title: string;
+  status: string;
+  detail: string;
+  instance: string;
 }
 
-export class UnrecognizedMessageError extends DAPError {
-  urn = "unrecognizedMessage";
-  constructor(taskID: string) {
-    super(
-      "The message type for a response was incorrect or the payload was malformed.",
-      taskID
-    );
-  }
-}
+export class DAPError extends Error {
+  type: string;
+  title: string;
+  status: string;
+  detail: string;
+  instance: string;
+  clientContext: string;
 
-export class UnrecognizedTaskError extends DAPError {
-  urn = "unrecognizedTask";
-  constructor(taskID: string) {
-    super("An endpoint received a message with an unknown task ID.", taskID);
+  constructor(problem: Problem, clientContext: string) {
+    super(`${problem.type}: ${problem.title}`);
+    this.type = problem.type;
+    this.title = problem.title;
+    this.status = problem.status;
+    this.detail = problem.detail;
+    this.instance = problem.instance;
+    this.clientContext = clientContext;
   }
-}
-export class OutdatedConfigError extends DAPError {
-  urn = "outdatedConfig";
-  constructor(taskID: string) {
-    super("The message was generated using an outdated configuration.", taskID);
-  }
-}
 
-export class BatchInvalidError extends DAPError {
-  urn = "batchInvalid";
-  constructor(taskID: string) {
-    super(
-      "A collect or aggregate-share request was made with invalid batch parameters.",
-      taskID
-    );
-  }
-}
+  static async fromResponse(
+    response: Response,
+    description: string
+  ): Promise<DAPError | Error> {
+    const contentType = response.headers.get("Content-Type");
+    if (contentType && contentType.match(/^application\/problem\+json/)) {
+      const body = (await response.json()) as Problem;
+      return new DAPError(body, description);
+    }
 
-export class BatchMismatchError extends DAPError {
-  urn = "batchMismatch";
-  constructor(taskID: string) {
-    super(
-      "Aggregators disagree on the report shares that were aggregated in a batch.",
-      taskID
-    );
+    return new Error(description);
   }
 }

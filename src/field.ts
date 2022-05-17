@@ -99,12 +99,7 @@ export class Field {
   }
 
   fillRandom(length: number): Vector {
-    const values: bigint[] = [];
-    values.length = length;
-    for (let i = 0; i < length; i++) {
-      values[i] = this.#finiteField.rand();
-    }
-    return this.vec(values);
+    return this.vec(arr(length, () => this.#finiteField.rand()));
   }
 }
 

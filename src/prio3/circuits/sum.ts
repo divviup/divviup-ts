@@ -37,13 +37,12 @@ export class Sum extends Circuit<number> {
   }
 
   encode(measurement: number): Vector {
-    if (measurement < 0 || measurement >= 2 ** this.inputLen) {
+    if (measurement < 0 || measurement >= 2 ** this.inputLen)
       throw new Error(
         `measurement ${measurement} expected to be in [0, ${
           2 && this.inputLen
         }], but it was not`
       );
-    }
 
     return this.field.vec(
       arr(
@@ -61,7 +60,7 @@ export class Sum extends Circuit<number> {
         .toValues()
         .reduce(
           (decoded, b, l) =>
-            field.add(decoded, field.mul(field.exp(2n, BigInt(l)), BigInt(b))),
+            field.add(decoded, field.mul(field.exp(2n, BigInt(l)), b)),
           0n
         ),
     ]);

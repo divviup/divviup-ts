@@ -1,305 +1,163 @@
 import { Vdaf } from "vdaf";
 import { PrgAes128, PrgConstructor } from "prng";
-import { VERSION, arr, randomBytes } from "common";
-import { Vector } from "field";
+import { VERSION, arr, xorWith, split, xorInPlace } from "common";
+import { Vector, Field } from "field";
 import { FlpGeneric } from "prio3/genericFlp";
 import { Count } from "prio3/circuits/count";
 import { Histogram } from "prio3/circuits/histogram";
 import { Flp } from "prio3/flp";
 import { Sum } from "prio3/circuits/sum";
 
-type Prep = {
-  outputShare: OutShare;
-  kJointRand: Buffer | null;
+type PrepareMessage = {
+  outputShare: OutputShare;
+  jointRandSeed: Buffer | null;
   outboundMessage: Buffer;
 };
-type PublicParam = null;
-type VerifyParam = [number, Buffer]; /// THIS IS DIFFERENT
-type AggParam = null;
-type AggShare = Vector;
-type AggResult = number[];
-type OutShare = Vector;
+type PublicParameter = null;
+type VerifyParameter = [number, Buffer];
+type AggregationParameter = null;
+type AggregatorShare = Vector;
+type AggregationResult = number[];
+type OutputShare = Vector;
 type PrioVdaf<Measurement> = Vdaf<
   Measurement,
-  PublicParam,
-  VerifyParam,
-  AggParam,
-  Prep,
-  AggShare,
-  AggResult,
-  OutShare
+  PublicParameter,
+  VerifyParameter,
+  AggregationParameter,
+  PrepareMessage,
+  AggregatorShare,
+  AggregationResult,
+  OutputShare
 >;
 
-interface Share {
+interface DecodedShare {
   inputShare: Vector;
   proofShare: Vector;
-  kBlind: Buffer | null;
-  kHint: Buffer | null;
+  blind: Buffer | null;
+  hint: Buffer | null;
 }
 
+interface Share {
+  blind: Buffer;
+  hint: Buffer;
+  inputShare: Vector;
+  inputShareSeed?: Buffer;
+  proofShare: Vector;
+  proofShareSeed?: Buffer;
+}
+
+const DST = Buffer.from(`${VERSION} prio3`, "ascii");
+
 export class Prio3<Measurement> implements PrioVdaf<Measurement> {
-  rounds = 1;
-  prg: PrgConstructor;
-  flp: Flp<Measurement>;
-  shares: number;
-  constructor(prg: PrgConstructor, flp: Flp<Measurement>, shares: number) {
-    this.prg = prg;
-    this.flp = flp;
-    this.shares = shares;
+  readonly rounds = 1;
+
+  constructor(
+    public readonly prg: PrgConstructor,
+    public readonly flp: Flp<Measurement>,
+    public readonly shares: number
+  ) {}
+
+  async pseudorandom(
+    len: number,
+    seed?: Buffer,
+    info?: number
+  ): Promise<Vector> {
+    const { prg, field } = this;
+    return prg.expandIntoVec(
+      field,
+      seed || prg.randomSeed(),
+      typeof info === "number" ? Buffer.from([...DST, info]) : DST,
+      len
+    );
   }
-  setup(): [PublicParam, VerifyParam[]] {
-    const kQueryInit = randomBytes(this.prg.seedSize);
+
+  get field(): Field {
+    return this.flp.field;
+  }
+
+  setup(): [PublicParameter, VerifyParameter[]] {
+    const queryInit = this.prg.randomSeed();
     const verifyParam = arr(
       this.shares,
-      (j) => [j, kQueryInit] as [number, Buffer]
+      (j) => [j, queryInit] as [number, Buffer]
     );
     return [null, verifyParam];
   }
 
   async measurementToInputShares(
-    _publicParam: PublicParam,
+    _publicParam: PublicParameter,
     measurement: Measurement
   ): Promise<Buffer[]> {
-    const dst = Buffer.from(`${VERSION} prio3`, "ascii");
-    const input = this.flp.encode(measurement);
-    const { field } = this.flp;
-    const { seedSize } = this.prg;
-    let kJointRand = Buffer.alloc(seedSize);
+    const { flp, prg, field } = this;
+    const jointRandSeed = Buffer.alloc(prg.seedSize);
+    const helperShares = await this.buildHelperShares();
+    const input = flp.encode(measurement);
+    const leader = await this.buildLeaderShare(input, helperShares);
 
-    let leaderInputShare = input;
-    const kHelperInputShares: Buffer[] = [];
-    const kHelperBlinds: Buffer[] = [];
-    const kHelperHints: Buffer[] = [];
-    for (let j = 0; j < this.shares - 1; j++) {
-      const kBlind = randomBytes(seedSize);
-      const kShare = randomBytes(seedSize);
-      const helperInputShare = await this.prg.expandIntoVec(
-        this.flp.field,
-        kShare,
-        Buffer.from([...dst, j + 1]),
-        this.flp.inputLen
-      );
-
-      leaderInputShare = field.vecSub(leaderInputShare, helperInputShare);
-
-      const encoded = field.encode(helperInputShare);
-
-      const kHint = await this.prg.deriveSeed(
-        kBlind,
-        Buffer.concat([new Uint8Array([j + 1]), encoded])
-      );
-
-      kJointRand = xorWith(kJointRand, kHint);
-      kHelperInputShares.push(kShare);
-      kHelperBlinds.push(kBlind);
-      kHelperHints.push(kHint);
+    for (const share of [leader, ...helperShares]) {
+      xorInPlace(jointRandSeed, share.hint);
     }
 
-    const kLeaderBlind = randomBytes(seedSize);
-    const encoded = field.encode(leaderInputShare);
-    let kLeaderHint = await this.prg.deriveSeed(
-      kLeaderBlind,
-      Buffer.concat([new Uint8Array([0]), encoded])
-    );
-    kJointRand = xorWith(kJointRand, kLeaderHint);
-
-    for (let j = 0; j < this.shares - 1; j++) {
-      kHelperHints[j] = xorWith(kHelperHints[j], kJointRand);
-    }
-    kLeaderHint = xorWith(kLeaderHint, kJointRand);
-
-    const proveRand = await this.prg.expandIntoVec(
-      field,
-      randomBytes(seedSize),
-      dst,
-      this.flp.proveRandLen
-    );
-
-    const jointRand = await this.prg.expandIntoVec(
-      field,
-      kJointRand,
-      dst,
-      this.flp.jointRandLen
-    );
-
-    const proof = this.flp.prove(input, proveRand, jointRand);
-    let leaderProofShare = proof;
-    const kHelperProofShares: Buffer[] = [];
-    for (let j = 0; j < this.shares - 1; j++) {
-      const kShare = randomBytes(seedSize);
-      kHelperProofShares.push(kShare);
-      const helperProofShare = await this.prg.expandIntoVec(
-        field,
-        kShare,
-        Buffer.from([...dst, j + 1]),
-        this.flp.proofLen
-      );
-      leaderProofShare = field.vecSub(leaderProofShare, helperProofShare);
+    for (const share of [leader, ...helperShares]) {
+      xorInPlace(share.hint, jointRandSeed);
     }
 
-    return [
-      this.encodeShare({
-        inputShare: leaderInputShare,
-        proofShare: leaderProofShare,
-        kBlind: kLeaderBlind,
-        kHint: kLeaderHint,
-      }),
-      ...arr(this.shares - 1, (j) =>
-        this.encodeShare({
-          inputShare: kHelperInputShares[j],
-          proofShare: kHelperProofShares[j],
-          kBlind: kHelperBlinds[j],
-          kHint: kHelperHints[j],
-        })
+    const proof = flp.prove(
+      input,
+      await this.pseudorandom(flp.proveRandLen),
+      await this.pseudorandom(flp.jointRandLen, jointRandSeed)
+    );
+
+    const leaderShare = {
+      ...leader,
+      proofShare: helperShares.reduce(
+        (proofShare, helper) => field.vecSub(proofShare, helper.proofShare),
+        proof
       ),
-    ];
+    };
+
+    return this.encodeShares([leaderShare, ...helperShares]);
   }
 
-  decodeLeaderShare(encoded: Buffer): Share {
-    let encodedInputShare: Buffer;
-    [encodedInputShare, encoded] = split(
-      encoded,
-      this.flp.field.encodedSize * this.flp.inputLen
-    );
-    const inputShare = this.flp.field.decode(encodedInputShare);
-
-    let encodedProofShare: Buffer;
-    [encodedProofShare, encoded] = split(
-      encoded,
-      this.flp.field.encodedSize * this.flp.proofLen
-    );
-    const proofShare = this.flp.field.decode(encodedProofShare);
-
-    let kBlind: Buffer | null = null;
-    let kHint: Buffer | null = null;
-
-    if (this.flp.jointRandLen > 0) {
-      [kBlind, encoded] = split(encoded, this.prg.seedSize);
-      [kHint, encoded] = split(encoded, this.prg.seedSize);
-    }
-
-    if (encoded.length) {
-      throw new Error("unexpected extra leader share bytes");
-    }
-
-    return { inputShare, proofShare, kBlind, kHint };
-  }
-
-  encodeShare({
-    inputShare,
-    proofShare,
-    kBlind,
-    kHint,
-  }: {
-    inputShare: Buffer | Vector;
-    proofShare: Buffer | Vector;
-    kBlind: Buffer | null;
-    kHint: Buffer | null;
-  }): Buffer {
-    const encodedParts = [
-      Buffer.isBuffer(inputShare)
-        ? inputShare
-        : this.flp.field.encode(inputShare),
-
-      Buffer.isBuffer(proofShare)
-        ? proofShare
-        : this.flp.field.encode(proofShare),
-    ];
-    if (this.flp.jointRandLen > 0 && kBlind && kHint) {
-      encodedParts.push(kBlind);
-      encodedParts.push(kHint);
-    }
-    return Buffer.concat(encodedParts);
-  }
-
-  async decodeHelperShare(
-    dst: Buffer,
-    j: number,
-    encoded: Buffer
-  ): Promise<Share> {
-    let kInputShare;
-    [kInputShare, encoded] = split(encoded, this.prg.seedSize);
-    const inputShare = await this.prg.expandIntoVec(
-      this.flp.field,
-      kInputShare,
-      Buffer.from([...dst, j]),
-      this.flp.inputLen
-    );
-
-    let kProofShare;
-    [kProofShare, encoded] = split(encoded, this.prg.seedSize);
-    const proofShare = await this.prg.expandIntoVec(
-      this.flp.field,
-      kProofShare,
-      Buffer.from([...dst, j]),
-      this.flp.proofLen
-    );
-
-    let kBlind = null;
-    let kHint = null;
-    if (this.flp.jointRandLen > 0) {
-      [kBlind, encoded] = split(encoded, this.prg.seedSize);
-      [kHint, encoded] = split(encoded, this.prg.seedSize);
-    }
-
-    if (encoded.length) {
-      throw new Error("unused bytes in decoding helper share");
-    }
-
-    return { inputShare, proofShare, kBlind, kHint };
-  }
-
-  async prepInit(
-    verifyParam: VerifyParam,
-    _aggParam: AggParam,
+  async initialPrepareMessage(
+    verifyParam: VerifyParameter,
+    _aggParam: AggregationParameter,
     nonce: Buffer,
-    inputShare: Buffer
-  ): Promise<Prep> {
-    const dst = `${VERSION} prio3`;
-    const [j, kQueryInit] = verifyParam;
-    const share = await this.decodeShare(
-      Buffer.from(dst, "ascii"),
-      j,
-      inputShare
-    );
+    encodedInputShare: Buffer
+  ): Promise<PrepareMessage> {
+    const { prg, flp, field } = this;
+    const [j, queryInit] = verifyParam;
 
-    const outputShare = this.flp.truncate(share.inputShare);
+    const share = await this.decodeShare(j, encodedInputShare);
 
-    const kQueryRand = await this.prg.deriveSeed(
-      kQueryInit,
+    const outputShare = flp.truncate(share.inputShare);
+
+    const queryRandSeed = await prg.deriveSeed(
+      queryInit,
       Buffer.from([255, ...nonce])
     );
 
-    const queryRand = await this.prg.expandIntoVec(
-      this.flp.field,
-      kQueryRand,
-      Buffer.from(dst),
-      this.flp.queryRandLen
-    );
+    const queryRand = await this.pseudorandom(flp.queryRandLen, queryRandSeed);
 
     let jointRand: Vector;
-    let kJointRand: Buffer | null;
-    let kJointRandShare: Buffer | null;
-    if (this.flp.jointRandLen > 0 && share.kBlind && share.kHint) {
-      const encoded = this.flp.field.encode(share.inputShare);
-      kJointRandShare = await this.prg.deriveSeed(
-        share.kBlind,
+    let jointRandSeed: Buffer | null;
+    let shareJointRandSeed: Buffer | null;
+
+    if (flp.jointRandLen > 0 && share.blind && share.hint) {
+      const encoded = field.encode(share.inputShare);
+      shareJointRandSeed = await prg.deriveSeed(
+        share.blind,
         Buffer.from([j, ...encoded])
       );
-      kJointRand = xorWith(share.kHint, kJointRandShare);
-      jointRand = await this.prg.expandIntoVec(
-        this.flp.field,
-        kJointRand,
-        Buffer.from(dst),
-        this.flp.jointRandLen
-      );
+      jointRandSeed = xorWith(share.hint, shareJointRandSeed);
+      jointRand = await this.pseudorandom(flp.jointRandLen, jointRandSeed);
     } else {
-      jointRand = this.flp.field.vec([]);
-      kJointRand = null;
-      kJointRandShare = null;
+      jointRand = field.vec([]);
+      jointRandSeed = null;
+      shareJointRandSeed = null;
     }
 
-    const verifierShare = this.flp.query(
+    const verifierShare = flp.query(
       share.inputShare,
       share.proofShare,
       queryRand,
@@ -309,126 +167,265 @@ export class Prio3<Measurement> implements PrioVdaf<Measurement> {
 
     const outboundMessage = this.encodePrepareMessage(
       verifierShare,
-      kJointRandShare
+      shareJointRandSeed
     );
 
-    return { outputShare, kJointRand, outboundMessage };
+    return { outputShare, jointRandSeed, outboundMessage };
   }
 
-  prepNext(
-    prep: Prep,
+  prepareNext(
+    prepareMessage: PrepareMessage,
     inbound: Buffer | null
-  ): { prep: Prep; prepMessage: Buffer } | { outShare: OutShare } {
+  ):
+    | { prepareMessage: PrepareMessage; prepareShare: Buffer }
+    | { outputShare: OutputShare } {
     if (!inbound) {
-      return { prep, prepMessage: prep.outboundMessage };
+      return { prepareMessage, prepareShare: prepareMessage.outboundMessage };
     }
 
-    const { verifier, kJointRand } = this.decodePrepareMessage(inbound);
+    const { verifier, jointRand } = this.decodePrepareMessage(inbound);
 
-    const kJointRandEquality =
-      (kJointRand &&
-        prep.kJointRand &&
-        0 === Buffer.compare(kJointRand, prep.kJointRand)) ||
-      kJointRand === prep.kJointRand; // both null
+    const jointRandEquality =
+      (jointRand &&
+        prepareMessage.jointRandSeed &&
+        0 === Buffer.compare(jointRand, prepareMessage.jointRandSeed)) ||
+      jointRand === prepareMessage.jointRandSeed; // both null
 
-    if (!kJointRandEquality || !this.flp.decide(verifier)) {
+    if (!jointRandEquality || !this.flp.decide(verifier)) {
       throw new Error("Verify error");
     }
 
-    return { outShare: prep.outputShare };
+    return { outputShare: prepareMessage.outputShare };
   }
 
-  async decodeShare(dst: Buffer, j: number, encoded: Buffer): Promise<Share> {
+  async decodeShare(j: number, encoded: Buffer): Promise<DecodedShare> {
     return j == 0
       ? this.decodeLeaderShare(encoded)
-      : await this.decodeHelperShare(dst, j, encoded);
+      : await this.decodeHelperShare(j, encoded);
   }
 
-  decodePrepareMessage(input: Buffer): {
+  prepSharesToPrepareMessage(
+    _aggParam: AggregationParameter,
+    encodedPrepShares: Buffer[]
+  ): Buffer {
+    const { flp, prg, field } = this;
+    const jointRandCheck = Buffer.alloc(prg.seedSize);
+
+    const verifier = encodedPrepShares.reduce(
+      (verifier, encodedPrepMessage) => {
+        field.vec(flp.verifierLen);
+
+        const { verifier: shareVerifier, jointRand: shareJointRand } =
+          this.decodePrepareMessage(encodedPrepMessage);
+
+        if (flp.jointRandLen > 0 && shareJointRand) {
+          xorInPlace(jointRandCheck, shareJointRand);
+        }
+
+        return field.vecAdd(verifier, shareVerifier);
+      },
+      field.vec(flp.verifierLen)
+    );
+
+    return this.encodePrepareMessage(verifier, jointRandCheck);
+  }
+
+  outputSharesToAggregatorShare(
+    _aggParam: AggregationParameter,
+    outShares: OutputShare[]
+  ): AggregatorShare {
+    const { field, flp } = this;
+    return outShares.reduce(
+      (agg, share) => field.vecAdd(agg, share),
+      field.vec(flp.outputLen)
+    );
+  }
+
+  aggregatorSharesToResult(
+    _aggParam: AggregationParameter,
+    aggShares: AggregatorShare[]
+  ): AggregationResult {
+    const { field, flp } = this;
+    return aggShares
+      .reduce(
+        (agg, share) => field.vecAdd(agg, share),
+        field.vec(flp.outputLen)
+      )
+      .toValues()
+      .map(Number);
+  }
+
+  testVectorVerifyParams(verifyParams: VerifyParameter[]): [number, string][] {
+    return verifyParams.map(([j, queryInit]) => [j, queryInit.toString("hex")]);
+  }
+
+  private decodePrepareMessage(input: Buffer): {
     verifier: Vector;
-    kJointRand: Buffer | null;
+    jointRand: Buffer | null;
   } {
+    const { flp, prg, field } = this;
     // eslint-disable-next-line prefer-const
     let [encodedVerifier, encoded] = split(
       input,
-      this.flp.field.encodedSize * this.flp.verifierLen
+      field.encodedSize * flp.verifierLen
     );
 
-    const verifier = this.flp.field.decode(encodedVerifier);
+    const verifier = field.decode(encodedVerifier);
 
-    let kJointRand: null | Buffer = null;
-    if (this.flp.jointRandLen > 0) {
-      [kJointRand, encoded] = split(encoded, this.prg.seedSize);
+    let jointRand: null | Buffer = null;
+    if (flp.jointRandLen > 0) {
+      [jointRand, encoded] = split(encoded, prg.seedSize);
     }
 
     if (encoded.length) {
       throw new Error("unused bytes at end of prepare message");
     }
 
-    return { verifier, kJointRand };
+    return { verifier, jointRand };
   }
 
-  prepSharesToPrep(_aggParam: AggParam, prepShares: Buffer[]): Buffer {
-    let verifier = this.flp.field.vec(arr(this.flp.verifierLen, () => 0n));
-    let kJointRandCheck = Buffer.alloc(this.prg.seedSize);
-
-    for (const encoded of prepShares) {
-      const { verifier: shareVerifier, kJointRand: kJointRandShare } =
-        this.decodePrepareMessage(encoded);
-
-      verifier = this.flp.field.vecAdd(verifier, shareVerifier);
-
-      if (this.flp.jointRandLen > 0 && kJointRandShare) {
-        kJointRandCheck = xorWith(kJointRandCheck, kJointRandShare);
-      }
-    }
-
-    return this.encodePrepareMessage(verifier, kJointRandCheck);
-  }
-
-  outSharesToAggShare(_aggParam: AggParam, outShares: OutShare[]): AggShare {
-    return outShares.reduce(
-      (agg, share) => this.flp.field.vecAdd(agg, share),
-      this.flp.field.vec(this.flp.outputLen)
-    );
-  }
-
-  aggSharesToResult(_aggParam: AggParam, aggShares: AggShare[]): AggResult {
-    return aggShares
-      .reduce(
-        (agg, share) => this.flp.field.vecAdd(agg, share),
-        this.flp.field.vec(this.flp.outputLen)
-      )
-      .toValues()
-      .map(Number);
-  }
-
-  testVectorVerifyParams(verifyParams: VerifyParam[]): [number, string][] {
-    return verifyParams.map(([j, kQueryInit]) => [
-      j,
-      kQueryInit.toString("hex"),
-    ]);
-  }
-
-  encodePrepareMessage(
+  private encodePrepareMessage(
     verifier: Vector,
-    kJointRandShares: Buffer | null
+    jointRandShares: Buffer | null
   ): Buffer {
-    const verifierEncoded = this.flp.field.encode(verifier);
-    if (this.flp.jointRandLen > 0 && kJointRandShares) {
-      return Buffer.concat([verifierEncoded, kJointRandShares]);
+    const verifierEncoded = this.field.encode(verifier);
+
+    if (this.flp.jointRandLen > 0 && jointRandShares) {
+      return Buffer.concat([verifierEncoded, jointRandShares]);
     } else {
       return verifierEncoded;
     }
   }
-}
 
-function xorWith(a: Buffer, b: Buffer) {
-  const returnBuffer = Buffer.alloc(Math.min(a.length, b.length));
-  for (let i = 0; i < returnBuffer.length; i++) {
-    returnBuffer[i] = a[i] ^ b[i];
+  private async buildLeaderShare(
+    input: Vector,
+    helperShares: Share[]
+  ): Promise<{
+    inputShare: Vector;
+    blind: Buffer;
+    hint: Buffer;
+  }> {
+    const { prg, field } = this;
+    const inputShare = helperShares.reduce(
+      (inputShare, helper) => field.vecSub(inputShare, helper.inputShare),
+      input
+    );
+    const blind = prg.randomSeed();
+    const encoded = field.encode(inputShare);
+    const hint = await prg.deriveSeed(blind, Buffer.from([0, ...encoded]));
+    return { inputShare, blind, hint };
   }
-  return returnBuffer;
+
+  private buildHelperShares(): Promise<Share[]> {
+    const { flp, prg, field } = this;
+    return Promise.all(
+      arr(this.shares - 1, async (j) => {
+        const blind = prg.randomSeed();
+        const inputShareSeed = prg.randomSeed();
+        const inputShare = await this.pseudorandom(
+          flp.inputLen,
+          inputShareSeed,
+          j + 1
+        );
+        const encoded = field.encode(inputShare);
+        const hint = await prg.deriveSeed(
+          blind,
+          Buffer.from([j + 1, ...encoded])
+        );
+        const proofShareSeed = prg.randomSeed();
+        const proofShare = await this.pseudorandom(
+          flp.proofLen,
+          proofShareSeed,
+          j + 1
+        );
+
+        return {
+          inputShare,
+          blind,
+          hint,
+          proofShare,
+          inputShareSeed,
+          proofShareSeed,
+        };
+      })
+    );
+  }
+
+  private encodeShares(shares: Share[]): Buffer[] {
+    return shares.map((share) => this.encodeShare(share));
+  }
+
+  private encodeShare(share: Share): Buffer {
+    const { flp } = this;
+    const inputShareSeed =
+      "inputShareSeed" in share ? share.inputShareSeed : null;
+    const proofShareSeed =
+      "proofShareSeed" in share ? share.proofShareSeed : null;
+
+    return Buffer.concat([
+      inputShareSeed || flp.field.encode(share.inputShare),
+      proofShareSeed || flp.field.encode(share.proofShare),
+      ...(flp.jointRandLen > 0 && share.blind && share.hint
+        ? [share.blind, share.hint]
+        : []),
+    ]);
+  }
+
+  private decodeLeaderShare(encoded: Buffer): DecodedShare {
+    const { flp, prg, field } = this;
+    let encodedInputShare: Buffer, encodedProofShare: Buffer;
+    [encodedInputShare, encoded] = split(
+      encoded,
+      field.encodedSize * flp.inputLen
+    );
+    [encodedProofShare, encoded] = split(
+      encoded,
+      field.encodedSize * flp.proofLen
+    );
+
+    const inputShare = field.decode(encodedInputShare);
+    const proofShare = field.decode(encodedProofShare);
+
+    let blind: Buffer | null = null;
+    let hint: Buffer | null = null;
+
+    if (flp.jointRandLen > 0) {
+      [blind, encoded] = split(encoded, prg.seedSize);
+      [hint, encoded] = split(encoded, prg.seedSize);
+    }
+
+    if (encoded.length) {
+      throw new Error("unexpected extra leader share bytes");
+    }
+
+    return { inputShare, proofShare, blind, hint };
+  }
+
+  private async decodeHelperShare(
+    j: number,
+    encoded: Buffer
+  ): Promise<DecodedShare> {
+    const { prg, flp } = this;
+    let inputShareSeed, proofShareSeed;
+    [inputShareSeed, encoded] = split(encoded, prg.seedSize);
+    [proofShareSeed, encoded] = split(encoded, prg.seedSize);
+
+    const inputShare = await this.pseudorandom(flp.inputLen, inputShareSeed, j);
+    const proofShare = await this.pseudorandom(flp.proofLen, proofShareSeed, j);
+
+    let blind = null;
+    let hint = null;
+    if (flp.jointRandLen > 0) {
+      [blind, encoded] = split(encoded, prg.seedSize);
+      [hint, encoded] = split(encoded, prg.seedSize);
+    }
+
+    if (encoded.length) {
+      throw new Error("unused bytes in decoding helper share");
+    }
+
+    return { inputShare, proofShare, blind, hint };
+  }
 }
 
 export class Prio3Aes128Count extends Prio3<number> {
@@ -447,11 +444,4 @@ export class Prio3Aes128Sum extends Prio3<number> {
   constructor(shares: number, bits: number) {
     super(PrgAes128, new FlpGeneric(new Sum(bits)), shares);
   }
-}
-
-function split<T extends { slice(start: number, end?: number): T }>(
-  sliceable: T,
-  index: number
-): [T, T] {
-  return [sliceable.slice(0, index), sliceable.slice(index)];
 }

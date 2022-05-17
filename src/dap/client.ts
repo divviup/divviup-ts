@@ -1,18 +1,20 @@
+import { TaskId } from "dap/taskId";
+import { Nonce } from "dap/nonce";
+import { Report } from "dap/report";
+import { HpkeConfig } from "dap/hpkeConfig";
+import { Vdaf } from "vdaf";
+import { Extension } from "dap/extension";
+import { encodeArray } from "dap/encoding";
+import { DAPError } from "dap/errors";
+
+export { TaskId } from "dap/taskId";
+
 import {
   fetch as actualFetch,
   RequestInit,
   RequestInfo,
   Response,
 } from "undici";
-import { TaskId } from "dap/taskId";
-import { Nonce } from "dap/nonce";
-import { Report } from "dap/report";
-import { HpkeConfig } from "dap/hpkeConfig";
-import { Vdaf } from "vdaf";
-import { Extension } from "./extension";
-import { encodeArray } from "./encoding";
-
-export { TaskId } from "dap/taskId";
 
 export enum Role {
   Collector = 0,
@@ -38,17 +40,11 @@ export interface Aggregator {
   hpkeConfig?: HpkeConfig;
 }
 
-interface AggregatorDefinition {
-  url: URL | string;
-  role: Role | Lowercase<keyof typeof Role>;
-  hpkeConfig?: HpkeConfig;
-}
-
 export interface Parameters<M, PP> {
   vdaf: ClientVdaf<M, PP>;
-  taskId: TaskId | Buffer;
-  minimumBatchSize: number;
-  aggregators: AggregatorDefinition[];
+  taskId: TaskId | Buffer | string;
+  leader: string | URL;
+  helpers: (string | URL)[];
 }
 
 type Fetch = (
@@ -73,46 +69,36 @@ export const CONTENT_TYPES = Object.freeze({
   HPKE_CONFIG: "message/dap-hpke-config",
 });
 
-function urlFromDefinition(url: URL | string): URL {
-  return typeof url === "string" ? new URL(url) : url;
+function aggregatorsFromParameters<M, PP>({
+  leader,
+  helpers,
+}: Parameters<M, PP>): Aggregator[] {
+  return [
+    {
+      url: new URL(leader),
+      role: Role.Leader,
+    },
+    ...helpers.map((url) => ({
+      url: new URL(url),
+      role: Role.Helper,
+    })),
+  ];
 }
 
-function roleFromDefinition(
-  roleDefinition: Role | Lowercase<keyof typeof Role>
-): Role {
-  switch (roleDefinition) {
-    case "client":
-      return Role.Client;
-    case "collector":
-      return Role.Collector;
-    case "helper":
-      return Role.Helper;
-    case "leader":
-      return Role.Leader;
-    default:
-      return roleDefinition;
-  }
-}
+function taskIdFromDefinition(
+  taskIdDefinition: Buffer | TaskId | string
+): TaskId {
+  if (typeof taskIdDefinition === "string")
+    taskIdDefinition = Buffer.from(taskIdDefinition, "base64url");
 
-function aggregatorFromDefinition(
-  aggregatorDefinition: AggregatorDefinition
-): Aggregator {
-  return {
-    url: urlFromDefinition(aggregatorDefinition.url),
-    role: roleFromDefinition(aggregatorDefinition.role),
-    hpkeConfig: aggregatorDefinition.hpkeConfig,
-  };
-}
-
-function taskIdFromDefinition(taskIdDefinition: Buffer | TaskId): TaskId {
   if (taskIdDefinition instanceof TaskId) return taskIdDefinition;
+
   return new TaskId(taskIdDefinition);
 }
 
 export class DAPClient<M, PP> {
   vdaf: ClientVdaf<M, PP>;
   taskId: TaskId;
-  minimumBatchSize: number;
   aggregators: Aggregator[];
   fetch: Fetch;
   keyConfig?: HpkeConfig[];
@@ -121,8 +107,7 @@ export class DAPClient<M, PP> {
   constructor(parameters: Parameters<M, PP>, fetch: Fetch = actualFetch) {
     this.vdaf = parameters.vdaf;
     this.taskId = taskIdFromDefinition(parameters.taskId);
-    this.minimumBatchSize = parameters.minimumBatchSize;
-    this.aggregators = parameters.aggregators.map(aggregatorFromDefinition);
+    this.aggregators = aggregatorsFromParameters(parameters);
     this.fetch = fetch;
   }
 
@@ -172,7 +157,7 @@ export class DAPClient<M, PP> {
     );
 
     if (!response.ok) {
-      throw new Error("report upload failed");
+      throw await DAPError.fromResponse(response, "report upload failed");
     }
   }
 
@@ -190,7 +175,8 @@ export class DAPClient<M, PP> {
         });
 
         if (!response.ok) {
-          throw new Error(
+          throw await DAPError.fromResponse(
+            response,
             `makeKeyConfigurationRequest received a ${response.status} response, aborting`
           );
         }

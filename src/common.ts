@@ -69,3 +69,35 @@ export function randomBytes(n: number): Buffer {
 export function dbg(o: unknown) {
   console.log(util.inspect(o, { depth: null }));
 }
+
+export function zip<A, B>(a: A[], b: B[]): [A, B][] {
+  if (a.length !== b.length)
+    throw new Error("could not zip two unequal arrays");
+  return arr(a.length, (i) => [a[i], b[i]]);
+}
+
+export function xorWith(a: Buffer, b: Buffer) {
+  if (a.length !== b.length)
+    throw new Error("cannot xor two buffers of unequal length");
+  const returnBuffer = Buffer.alloc(a.length);
+  for (let i = 0; i < returnBuffer.length; i++) returnBuffer[i] = a[i] ^ b[i];
+  return returnBuffer;
+}
+
+export function xorInPlace(
+  bufferThatChanges: Buffer,
+  bufferThatIsUnchanged: Buffer
+) {
+  if (bufferThatChanges.length !== bufferThatIsUnchanged.length)
+    throw new Error("cannot xor two buffers of unequal length");
+
+  for (let i = 0; i < bufferThatChanges.length; i++)
+    bufferThatChanges[i] ^= bufferThatIsUnchanged[i];
+}
+
+export function split<T extends { slice(start: number, end?: number): T }>(
+  sliceable: T,
+  index: number
+): [T, T] {
+  return [sliceable.slice(0, index), sliceable.slice(index)];
+}

@@ -1,40 +1,51 @@
 export interface Vdaf<
   Measurement,
-  PublicParam,
-  VerifyParam,
-  AggParam,
-  Prep,
-  AggShare,
-  AggResult,
-  OutShare
+  PublicParameter,
+  VerifyParameter,
+  AggregationParameter,
+  PrepareMessage,
+  AggregatorShare,
+  AggregationResult,
+  OutputShare
 > {
   shares: number;
   rounds: number;
 
-  setup(): [PublicParam, VerifyParam[]];
+  setup(): [PublicParameter, VerifyParameter[]];
 
   measurementToInputShares(
-    publicParam: PublicParam,
+    publicParam: PublicParameter,
     measurement: Measurement
   ): Promise<Buffer[]>;
 
-  prepInit(
-    verifyParam: VerifyParam,
-    aggParam: AggParam,
+  initialPrepareMessage(
+    verifyParam: VerifyParameter,
+    aggParam: AggregationParameter,
     nonce: Buffer,
     inputShare: Buffer
-  ): Promise<Prep>;
+  ): Promise<PrepareMessage>;
 
-  prepNext(
-    prep: Prep,
+  prepareNext(
+    prepareMessage: PrepareMessage,
     inbound: Buffer | null
-  ): { prep: Prep; prepMessage: Buffer } | { outShare: OutShare };
+  ):
+    | { prepareMessage: PrepareMessage; prepareShare: Buffer }
+    | { outputShare: OutputShare };
 
-  prepSharesToPrep(aggParam: AggParam, prepShares: Buffer[]): Buffer;
+  prepSharesToPrepareMessage(
+    aggParam: AggregationParameter,
+    prepShares: Buffer[]
+  ): Buffer;
 
-  outSharesToAggShare(aggParam: AggParam, outShares: OutShare[]): AggShare;
+  outputSharesToAggregatorShare(
+    aggParam: AggregationParameter,
+    outShares: OutputShare[]
+  ): AggregatorShare;
 
-  aggSharesToResult(aggParam: AggParam, aggShares: AggShare[]): AggResult;
+  aggregatorSharesToResult(
+    aggParam: AggregationParameter,
+    aggShares: AggregatorShare[]
+  ): AggregationResult;
 
-  testVectorVerifyParams(verifyParams: VerifyParam[]): [number, string][];
+  testVectorVerifyParams(verifyParams: VerifyParameter[]): [number, string][];
 }

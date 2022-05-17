@@ -4,12 +4,9 @@ import { Prio3Aes128Count } from "prio3";
 async function main() {
   const client = new DAPClient({
     vdaf: new Prio3Aes128Count(2),
-    aggregators: [
-      { url: "http://localhost:8080", role: "leader" },
-      { url: "http://localhost:8081", role: "helper" },
-    ],
-    minimumBatchSize: 1,
     taskId: Buffer.from(process.argv[2], "base64url"),
+    leader: "http://localhost:8080",
+    helpers: ["http://localhost:8081"],
   });
 
   await client.fetchKeyConfiguration();
