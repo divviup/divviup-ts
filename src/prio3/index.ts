@@ -15,7 +15,7 @@ type AggregationParameter = null;
 type AggregatorShare = Vector;
 type AggregationResult = number[];
 type OutputShare = Vector;
-type PrioVdaf<Measurement> = Vdaf<
+type Prio3Vdaf<Measurement> = Vdaf<
   Measurement,
   PublicParameter,
   VerifyParameter,
@@ -44,7 +44,7 @@ interface Share {
 
 const DOMAIN_SEPARATION_TAG = Buffer.from(`${VDAF_VERSION} prio3`, "ascii");
 
-export class Prio3<Measurement> implements PrioVdaf<Measurement> {
+export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   readonly rounds = 1;
 
   constructor(
