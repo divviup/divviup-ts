@@ -1,7 +1,7 @@
 import { Nonce } from "dap/nonce";
 import assert from "assert";
 
-describe("Nonce", () => {
+describe("DAP Nonce", () => {
   describe("generate", () => {
     it("uses the current time in seconds as the first component", () => {
       const nonce = Nonce.generate();
