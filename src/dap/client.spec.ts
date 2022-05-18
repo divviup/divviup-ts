@@ -64,7 +64,7 @@ function withHpkeConfigs<M, PP>(dapClient: DAPClient<M, PP>): DAPClient<M, PP> {
   return dapClient;
 }
 
-describe("DAP", () => {
+describe("DAPClient", () => {
   describe("fetching key configuration", () => {
     it("can succeed", async () => {
       const params = buildParams();
