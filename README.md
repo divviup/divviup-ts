@@ -1,4 +1,4 @@
-# DivvyUp Typescript Client
+# DivviUp Typescript Client
 
 ```typescript
 import { DAPClient } from "dap/client";
