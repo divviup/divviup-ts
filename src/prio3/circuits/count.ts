@@ -2,7 +2,7 @@ import { Circuit } from "prio3/circuit";
 import { Field64, Vector } from "field";
 import { Mul } from "prio3/gadgets/mul";
 
-export class Count extends Circuit<number> {
+export class Count extends Circuit<boolean> {
   gadgets = [new Mul()];
   gadgetCalls = [1];
   inputLen = 1;
@@ -20,12 +20,12 @@ export class Count extends Circuit<number> {
     );
   }
 
-  encode(measurement: number): Vector {
-    if (![0, 1].includes(measurement)) {
-      throw new Error("expected count measurement to be a zero or one");
+  encode(measurement: boolean): Vector {
+    if (typeof measurement !== "boolean") {
+      throw new Error("expected count measurement to be a boolean");
     }
 
-    return this.field.vec([BigInt(measurement)]);
+    return this.field.vec([measurement ? 1n : 0n]);
   }
 
   truncate(input: Vector): Vector {
