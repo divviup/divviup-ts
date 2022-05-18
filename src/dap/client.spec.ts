@@ -235,4 +235,30 @@ describe("DAPClient", () => {
       assert.equal(fetch.calls.length, 1);
     });
   });
+
+  describe("sending measurement", () => {
+    it("makes the correct number of http requests", async () => {
+      const params = buildParams();
+      const [hpkeConfig1, hpkeConfig2] = [buildHpkeConfig(), buildHpkeConfig()];
+      const taskId = params.taskId.buffer.toString("base64url");
+      const fetch = mockFetch({
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
+          body: hpkeConfig1.encode(),
+          contentType: "message/dap-hpke-config",
+        },
+
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
+          body: hpkeConfig2.encode(),
+          contentType: "message/dap-hpke-config",
+        },
+
+        "https://a.example.com/upload": {},
+      });
+
+      const client = new DAPClient(params);
+      client.fetch = fetch;
+      await client.sendMeasurement(10);
+      assert.equal(fetch.calls.length, 3);
+    });
+  });
 });
