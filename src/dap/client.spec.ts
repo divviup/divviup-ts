@@ -146,6 +146,14 @@ describe("DAPClient", () => {
       assert.equal(fetch.calls.length, 2);
     });
 
+    it("does not fetch key configuration if all of the aggregators already have key configs", async () => {
+      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const fetch = mockFetch({});
+      client.fetch = fetch;
+      await client.fetchKeyConfiguration();
+      assert.equal(fetch.calls.length, 0);
+    });
+
     // this is pending because of a bug in janus
     xit("throws an error if the content type is not correct", async () => {
       const params = buildParams();
