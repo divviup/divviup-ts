@@ -155,24 +155,24 @@ describe("DAPClient", () => {
     });
 
     // this is pending because of a bug in janus
-    xit("throws an error if the content type is not correct", async () => {
+    //    it("throws an error if the content type is not correct", async () => {
+    it("accepts any content type", async () => {
       const params = buildParams();
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
         [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
           contentType: "application/text",
+          body: buildHpkeConfig().encode(),
         },
         [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
           contentType: "application/text",
+          body: buildHpkeConfig().encode(),
         },
       });
       const client = new DAPClient(params);
       client.fetch = fetch;
 
-      await assert.rejects(client.fetchKeyConfiguration(), (error: Error) => {
-        assert.match(error.message, /message\/dap-hpke-config/);
-        return true;
-      });
+      await assert.doesNotReject(client.fetchKeyConfiguration());
 
       assert.equal(fetch.calls.length, 2);
     });
