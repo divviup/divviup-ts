@@ -1,0 +1,64 @@
+import Benchmark from "benchmark";
+import { DAPClient } from "dap/client";
+import { TaskId } from "dap/taskId";
+import {
+  Prio3Aes128Count,
+  Prio3Aes128Histogram,
+  Prio3Aes128Sum,
+} from "prio3/instantiations";
+import { HpkeConfig } from "dap/hpkeConfig";
+import { ClientVdaf } from "vdaf";
+import * as hpke from "hpke";
+
+const suite = new Benchmark.Suite("Report generation");
+function buildHpkeConfig(): HpkeConfig {
+  return new HpkeConfig(
+    1,
+    hpke.Kem.DhP256HkdfSha256,
+    hpke.Kdf.Sha256,
+    hpke.Aead.AesGcm128,
+    Buffer.from(new hpke.Keypair(hpke.Kem.DhP256HkdfSha256).public_key)
+  );
+}
+
+function withHpkeConfigs<M, PP>(dapClient: DAPClient<M, PP>): DAPClient<M, PP> {
+  for (const aggregator of dapClient.aggregators) {
+    aggregator.hpkeConfig = buildHpkeConfig();
+  }
+  return dapClient;
+}
+
+function buildClient<M, PP>(vdaf: ClientVdaf<M, PP>): DAPClient<M, PP> {
+  return withHpkeConfigs(
+    new DAPClient({
+      helpers: ["http://helper.example.com"],
+      leader: "http://leader.example.com",
+      taskId: TaskId.random(),
+      vdaf,
+    })
+  );
+}
+
+const sumClient = buildClient(new Prio3Aes128Sum({ bits: 8, shares: 2 }));
+const histogramClient = buildClient(
+  new Prio3Aes128Histogram({ shares: 2, buckets: [10, 20, 30] })
+);
+const countClient = buildClient(new Prio3Aes128Count({ shares: 2 }));
+
+suite.add("sum", async () => {
+  await sumClient.generateReport(Math.floor(Math.random() * 100), null);
+});
+
+suite.add("histogram", async () => {
+  await histogramClient.generateReport(Math.floor(Math.random() * 50), null);
+});
+
+suite.add("count", async () => {
+  await countClient.generateReport(Math.random() < 0.5, null);
+});
+
+suite.on("cycle", (event: Benchmark.Event) =>
+  console.log(String(event.target))
+);
+
+suite.run({ async: true });
