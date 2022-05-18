@@ -30,7 +30,7 @@ export class Count extends Circuit<boolean> {
 
   truncate(input: Vector): Vector {
     if (input.length !== 1) {
-      throw new Error("expected Count input to be exactly one bigint");
+      throw new Error("expected Count input to be exactly one boolean");
     }
 
     return input;
