@@ -88,8 +88,8 @@ describe("flp generic", () => {
     });
 
     it("examples", () => {
-      testCircuit(count, count.encode(0), true);
-      testCircuit(count, count.encode(1), true);
+      testCircuit(count, count.encode(false), true);
+      testCircuit(count, count.encode(true), true);
       testCircuit(count, count.field.vec([1337n]), false);
     });
   });

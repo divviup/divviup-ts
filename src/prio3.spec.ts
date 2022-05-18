@@ -16,8 +16,8 @@ describe("prio3 vdaf", () => {
 
   it("count", async () => {
     const count = new Prio3Aes128Count({ shares: 2 });
-    await testVdaf(count, null, [0, 1, 1, 0, 1], [3]);
-    await testVdaf(count, null, [1], [1], true);
+    await testVdaf(count, null, [false, true, true, false, true], [3]);
+    await testVdaf(count, null, [true], [1], true);
   });
 
   it("sum", async () => {

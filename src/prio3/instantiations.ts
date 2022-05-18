@@ -5,7 +5,7 @@ import { Count } from "prio3/circuits/count";
 import { Histogram } from "prio3/circuits/histogram";
 import { Sum } from "prio3/circuits/sum";
 
-export class Prio3Aes128Count extends Prio3<number> {
+export class Prio3Aes128Count extends Prio3<boolean> {
   constructor({ shares }: { shares: number }) {
     super(PrgAes128, new FlpGeneric(new Count()), shares);
   }

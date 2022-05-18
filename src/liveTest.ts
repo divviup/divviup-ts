@@ -7,7 +7,7 @@ async function main() {
     taskId: process.argv[2],
     leader: "http://localhost:8080",
     helpers: ["http://localhost:8081"],
-  }).sendMeasurement(1, null);
+  }).sendMeasurement(true, null);
 }
 
 main().then().catch(console.error);
