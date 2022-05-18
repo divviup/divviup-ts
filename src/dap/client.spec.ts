@@ -169,7 +169,6 @@ describe("DAPClient", () => {
       assert.equal(fetch.calls.length, 2);
     });
   });
-
   describe("generating reports", () => {
     it("can succeed", async () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
@@ -199,6 +198,14 @@ describe("DAPClient", () => {
       assert(client.aggregators[0].hpkeConfig);
       client.aggregators[0].hpkeConfig.aeadId = 500.25;
       await assert.rejects(client.generateReport(21));
+    });
+
+    it("fails if the hpke configs are missing", async () => {
+      const client = new DAPClient(buildParams());
+      await assert.rejects(
+        client.generateReport(10),
+        /Cannot generate a report before fetching key configuration. Call fetchKeyConfiguration\(\) on this client\./
+      );
     });
   });
 
