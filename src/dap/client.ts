@@ -60,6 +60,11 @@ export interface ClientParameters<Measurement, PublicParameter> {
      strings or {@linkcode URL}s.
   */
   helpers: (string | URL)[];
+
+  /**
+     The public parameter for the provided vdaf
+     */
+  publicParameter: PublicParameter;
 }
 
 type Fetch = (
@@ -103,6 +108,7 @@ export class DAPClient<Measurement, PublicParameter> {
   #aggregators: Aggregator[];
   #extensions: Extension[] = [];
   #fetch: Fetch = actualFetch;
+  #publicParameter: PublicParameter;
 
   /** the protocol version for this client, usually in the form `dap-{nn}` */
   static readonly protocolVersion = DAP_VERSION;
@@ -114,6 +120,7 @@ export class DAPClient<Measurement, PublicParameter> {
     this.#vdaf = parameters.vdaf;
     this.#taskId = taskIdFromDefinition(parameters.taskId);
     this.#aggregators = aggregatorsFromParameters(parameters);
+    this.#publicParameter = parameters.publicParameter;
   }
 
   /** @internal */
@@ -137,15 +144,11 @@ export class DAPClient<Measurement, PublicParameter> {
      previously fetched key configuration.
 
      @param measurement The type of this argument will be determined by the Vdaf that this client is constructed for.
-     @param publicParameter The type of this argument will be determined by the Vdaf that this client is constructed for.
      @throws `Error` if there is any issue in generating the report
    */
-  async generateReport(
-    measurement: Measurement,
-    publicParameter: PublicParameter
-  ): Promise<Report> {
+  async generateReport(measurement: Measurement): Promise<Report> {
     const inputShares = await this.#vdaf.measurementToInputShares(
-      publicParameter,
+      this.#publicParameter,
       measurement
     );
 
@@ -217,12 +220,9 @@ export class DAPClient<Measurement, PublicParameter> {
      @throws {@linkcode DAPError} if any http response is not Ok or
      `Error` if there is an issue generating the report
    */
-  async sendMeasurement(
-    measurement: Measurement,
-    publicParameter: PublicParameter
-  ): Promise<void> {
+  async sendMeasurement(measurement: Measurement): Promise<void> {
     await this.fetchKeyConfiguration();
-    const report = await this.generateReport(measurement, publicParameter);
+    const report = await this.generateReport(measurement);
     await this.sendReport(report);
   }
 

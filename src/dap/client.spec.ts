@@ -54,6 +54,7 @@ function buildParams(): ClientParameters<number, null> & { taskId: TaskId } {
     leader: "https://a.example.com",
     helpers: ["https://b.example.com"],
     taskId: TaskId.random(),
+    publicParameter: null,
   };
 }
 
@@ -144,14 +145,14 @@ describe("DAPClient", () => {
   describe("generating reports", () => {
     it("can succeed", async () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
-      const report = await client.generateReport(21, null);
+      const report = await client.generateReport(21);
       assert.equal(report.encryptedInputShares.length, 2);
     });
 
     it("fails if the measurement is not valid", async () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       await assert.rejects(
-        client.generateReport(-25.25, null),
+        client.generateReport(-25.25),
         /measurement -25.25 was not an integer in \[0, 65536\)/ // this is specific to the Sum circuit as configured
       );
     });
@@ -162,14 +163,14 @@ describe("DAPClient", () => {
       client.aggregators[0].hpkeConfig.publicKey = Buffer.from(
         "not a valid public key"
       );
-      await assert.rejects(client.generateReport(21, null));
+      await assert.rejects(client.generateReport(21));
     });
 
     it("fails if the HpkeConfig cannot be converted to a hpke.Config", async () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       assert(client.aggregators[0].hpkeConfig);
       client.aggregators[0].hpkeConfig.aeadId = 500.25;
-      await assert.rejects(client.generateReport(21, null));
+      await assert.rejects(client.generateReport(21));
     });
   });
 
@@ -178,7 +179,7 @@ describe("DAPClient", () => {
       const fetch = mockFetch({ "https://a.example.com/upload": {} });
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       client.fetch = fetch;
-      const report = await client.generateReport(100, null);
+      const report = await client.generateReport(100);
       await client.sendReport(report);
       assert.equal(fetch.calls.length, 1);
       const [[url, args]] = fetch.calls;
@@ -194,7 +195,7 @@ describe("DAPClient", () => {
       const fetch = mockFetch({});
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       client.fetch = fetch;
-      const report = await client.generateReport(100, null);
+      const report = await client.generateReport(100);
       await assert.rejects(client.sendReport(report));
       assert.equal(fetch.calls.length, 1);
     });
