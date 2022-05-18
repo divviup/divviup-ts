@@ -28,13 +28,14 @@ function withHpkeConfigs<M, PP>(dapClient: DAPClient<M, PP>): DAPClient<M, PP> {
   return dapClient;
 }
 
-function buildClient<M, PP>(vdaf: ClientVdaf<M, PP>): DAPClient<M, PP> {
+function buildClient<M>(vdaf: ClientVdaf<M, null>): DAPClient<M, null> {
   return withHpkeConfigs(
     new DAPClient({
       helpers: ["http://helper.example.com"],
       leader: "http://leader.example.com",
       taskId: TaskId.random(),
       vdaf,
+      publicParameter: null,
     })
   );
 }
@@ -47,22 +48,20 @@ const countClient = buildClient(new Prio3Aes128Count({ shares: 2 }));
 
 suite.add("sum", async () => {
   const report = await sumClient.generateReport(
-    Math.floor(Math.random() * 100),
-    null
+    Math.floor(Math.random() * 100)
   );
   report.encode();
 });
 
 suite.add("histogram", async () => {
   const report = await histogramClient.generateReport(
-    Math.floor(Math.random() * 50),
-    null
+    Math.floor(Math.random() * 50)
   );
   report.encode();
 });
 
 suite.add("count", async () => {
-  const report = await countClient.generateReport(Math.random() < 0.5, null);
+  const report = await countClient.generateReport(Math.random() < 0.5);
   report.encode();
 });
 
