@@ -10,7 +10,8 @@
     "lint": "eslint . --ext .ts && prettier -c src",
     "format": "prettier -w",
     "test:coverage": "nyc --reporter=lcov --reporter=html --reporter=text --reporter=text-summary npm test",
-    "ci": "npm run lint && npm run test:coverage"
+    "ci": "npm run lint && npm run test:coverage",
+    "benchmark": "ts-node src/benchmarks.ts"
   },
   "license": "MPL-2",
   "dependencies": {
@@ -22,13 +23,16 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@tsconfig/node18": "^1.0.0",
+    "@types/benchmark": "^2.1.1",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^9.1.1",
     "@types/node": "^17.0.32",
     "@typescript-eslint/eslint-plugin": "^5.23.0",
     "@typescript-eslint/parser": "^5.23.0",
+    "benchmark": "^2.1.4",
     "eslint": "^8.15.0",
     "eslint-config-prettier": "^8.5.0",
+    "microtime": "^3.0.0",
     "mocha": "^10.0.0",
     "nyc": "^15.1.0",
     "prettier": "^2.6.2",
