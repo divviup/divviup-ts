@@ -1,7 +1,7 @@
 import { TaskId } from "dap/taskId";
 import assert from "assert";
 
-describe("TaskId", () => {
+describe("DAP TaskId", () => {
   it("requires exactly 32 bytes", () => {
     assert.throws(() => new TaskId(Buffer.from("hello")));
     assert.throws(() => new TaskId(Buffer.alloc(31)));
