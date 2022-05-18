@@ -37,11 +37,15 @@ export class Sum extends Circuit<number> {
   }
 
   encode(measurement: number): Vector {
-    if (measurement < 0 || measurement >= 2 ** this.inputLen)
+    if (
+      measurement !== Math.floor(measurement) ||
+      measurement < 0 ||
+      measurement >= 2 ** this.inputLen
+    )
       throw new Error(
-        `measurement ${measurement} expected to be in [0, ${
-          2 && this.inputLen
-        }], but it was not`
+        `measurement ${measurement} was not an integer in [0, ${
+          2 ** this.inputLen
+        })`
       );
 
     return this.field.vec(

@@ -9,7 +9,34 @@ export class HpkeConfig implements Encodable {
     public kdfId: hpke.Kdf,
     public aeadId: hpke.Aead,
     public publicKey: Buffer
-  ) {}
+  ) {
+    if (id !== Math.floor(id) || id < 0 || id > 255) {
+      throw new Error("id must be an integer in [0, 255]");
+    }
+
+    this.validate(hpke.Kem, "kemId");
+    this.validate(hpke.Kdf, "kdfId");
+    this.validate(hpke.Aead, "aeadId");
+  }
+
+  private validate(
+    e: { [key: string]: unknown },
+    id: "kemId" | "kdfId" | "aeadId"
+  ) {
+    const actual = this[id];
+
+    if (!(actual in e)) {
+      const errorText = Object.keys(e)
+        .map((n) => parseInt(n, 10))
+        .filter((n) => !isNaN(n))
+        .map((id) => `    ${id}: ${e[id] as string}`)
+        .join("\n");
+
+      throw new Error(
+        `${id} was ${actual} but must be one of the following:\n${errorText}`
+      );
+    }
+  }
 
   static parse(parsable: Parseable): HpkeConfig {
     const parser = Parser.from(parsable);
@@ -35,6 +62,7 @@ export class HpkeConfig implements Encodable {
     return buffer;
   }
 
+  /** @internal */
   config(): hpke.Config {
     return hpke.Config.try_from_ids(this.aeadId, this.kdfId, this.kemId);
   }
