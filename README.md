@@ -1,4 +1,4 @@
-# DivviUp Typescript Client
+# [DivviUp](https://divviup.org/) Typescript Client
 
 
 [![Coverage Status](https://coveralls.io/repos/github/jbr/divviup-ts/badge.svg?branch=main)](https://coveralls.io/github/jbr/divviup-ts?branch=main)
