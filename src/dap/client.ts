@@ -135,6 +135,12 @@ export class DAPClient<Measurement, PublicParameter> {
     this.#fetch = fetch;
   }
 
+  /** @internal */
+  //this exists for testing, and should not be considered part of the public api.
+  get taskId(): TaskId {
+    return this.#taskId;
+  }
+
   /**
      Produce a {@linkcode Report} from the supplied Measurement and PublicParameter.
      

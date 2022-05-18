@@ -66,6 +66,34 @@ function withHpkeConfigs<M, PP>(dapClient: DAPClient<M, PP>): DAPClient<M, PP> {
 }
 
 describe("DAPClient", () => {
+  describe("constructor variations", () => {
+    it("accepts a string taskId that is the base64url encoding of a taskId", () => {
+      const client = new DAPClient({
+        ...buildParams(),
+        taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+      });
+      assert.equal(
+        client.taskId.toString(),
+        "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY"
+      );
+    });
+
+    it("accepts a buffer taskId", () => {
+      const client = new DAPClient({
+        ...buildParams(),
+        taskId: Buffer.from(
+          "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+          "base64url"
+        ),
+      });
+
+      assert.equal(
+        client.taskId.toString(),
+        "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY"
+      );
+    });
+  });
+
   describe("fetching key configuration", () => {
     it("can succeed", async () => {
       const params = buildParams();
