@@ -1,6 +1,6 @@
 {
-  "name": "divvy-ts",
-  "version": "0.0.1",
+  "name": "divviup-ts",
+  "version": "0.1.0",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
