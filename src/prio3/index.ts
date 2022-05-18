@@ -196,12 +196,6 @@ export class Prio3<Measurement> implements PrioVdaf<Measurement> {
     return { outputShare: prepareMessage.outputShare };
   }
 
-  async decodeShare(j: number, encoded: Buffer): Promise<DecodedShare> {
-    return j == 0
-      ? this.decodeLeaderShare(encoded)
-      : await this.decodeHelperShare(j, encoded);
-  }
-
   prepSharesToPrepareMessage(
     _aggParam: AggregationParameter,
     encodedPrepShares: Buffer[]
@@ -255,6 +249,12 @@ export class Prio3<Measurement> implements PrioVdaf<Measurement> {
 
   testVectorVerifyParams(verifyParams: VerifyParameter[]): [number, string][] {
     return verifyParams.map(([j, queryInit]) => [j, queryInit.toString("hex")]);
+  }
+
+  private async decodeShare(j: number, encoded: Buffer): Promise<DecodedShare> {
+    return j == 0
+      ? this.decodeLeaderShare(encoded)
+      : await this.decodeHelperShare(j, encoded);
   }
 
   private decodePrepareMessage(input: Buffer): {
