@@ -13,7 +13,7 @@
     "ci": "npm run lint && npm run test:coverage",
     "benchmark": "ts-node src/benchmarks.ts"
   },
-  "license": "MPL-2",
+  "license": "MPL-2.0",
   "dependencies": {
     "@guildofweavers/galois": "^0.4.22",
     "aes-cmac": "^1.0.3",
