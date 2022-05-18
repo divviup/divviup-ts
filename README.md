@@ -8,14 +8,14 @@
 
 ```typescript
 import { DAPClient } from "dap/client";
-import { Prio3Aes128Count } from "prio3/instantiations";
+import { Prio3Aes128Sum } from "prio3/instantiations";
 
 const client = new DAPClient({
-  vdaf: new Prio3Aes128Count({ shares: 2 }),
+  vdaf: new Prio3Aes128Sum({ shares: 2, bits: 8 }),
   taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
   leader: "http://localhost:8080",
   helpers: ["http://localhost:8081"],
 });
 
-await client.sendMeasurement(1, null);
+await client.sendMeasurement(42, null);
 ```
