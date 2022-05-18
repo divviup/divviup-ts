@@ -9,7 +9,7 @@
     "test": "ts-mocha **/*.spec.ts --paths src -p ./tsconfig.json",
     "lint": "eslint . --ext .ts && prettier -c src",
     "format": "prettier -w",
-    "test:coverage": "nyc --reporter=html --reporter=text --reporter=text-summary npm test",
+    "test:coverage": "nyc --reporter=lcov --reporter=html --reporter=text --reporter=text-summary npm test",
     "ci": "npm run lint && npm run test:coverage"
   },
   "license": "MPL-2",
