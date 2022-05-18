@@ -46,19 +46,29 @@ const histogramClient = buildClient(
 const countClient = buildClient(new Prio3Aes128Count({ shares: 2 }));
 
 suite.add("sum", async () => {
-  await sumClient.generateReport(Math.floor(Math.random() * 100), null);
+  const report = await sumClient.generateReport(
+    Math.floor(Math.random() * 100),
+    null
+  );
+  report.encode();
 });
 
 suite.add("histogram", async () => {
-  await histogramClient.generateReport(Math.floor(Math.random() * 50), null);
+  const report = await histogramClient.generateReport(
+    Math.floor(Math.random() * 50),
+    null
+  );
+  report.encode();
 });
 
 suite.add("count", async () => {
-  await countClient.generateReport(Math.random() < 0.5, null);
+  const report = await countClient.generateReport(Math.random() < 0.5, null);
+  report.encode();
 });
 
-suite.on("cycle", (event: Benchmark.Event) =>
-  console.log(String(event.target))
-);
+suite.on("cycle", (event: Benchmark.Event) => {
+  console.log(String(event.target));
+  console.log(event.target.stats);
+});
 
 suite.run({ async: true });
