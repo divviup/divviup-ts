@@ -2,7 +2,7 @@ import { Field, Vector } from "field";
 import { nextPowerOf2, arr } from "common";
 import { Gadget } from "prio3/gadget";
 
-export class Query implements Gadget {
+export class Query extends Gadget {
   arity: number;
   degree: number;
   wire: bigint[][];
@@ -18,6 +18,7 @@ export class Query implements Gadget {
     gadget: Gadget,
     gadgetCalls: number
   ) {
+    super();
     this.degree = gadget.degree;
     this.gadget = gadget;
     this.arity = gadget.arity;
