@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "docs": "typedoc src",
-    "test": "ts-mocha **/*.spec.ts --paths src -p ./tsconfig.json",
+    "test": "ts-mocha \"src/**/*.spec.ts\" --paths src -p ./tsconfig.json",
     "lint": "eslint . --ext .ts && prettier -c src",
     "format": "prettier -w",
     "test:coverage": "nyc --reporter=lcov --reporter=html --reporter=text --reporter=text-summary npm test",

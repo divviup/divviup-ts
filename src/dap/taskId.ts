@@ -12,6 +12,10 @@ export class TaskId implements Encodable {
     return new TaskId(randomBytes(32));
   }
 
+  toString(): string {
+    return this.buffer.toString("base64url");
+  }
+
   encode(): Buffer {
     return this.buffer;
   }
