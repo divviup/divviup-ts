@@ -1,6 +1,6 @@
 import { arr } from "common";
 import { Field, Vector } from "field";
-import { Gadget, ensureGadgetArity, ensureGadgetPolyArity } from "prio3/gadget";
+import { Gadget } from "prio3/gadget";
 
 function stripPoly(poly: bigint[]): bigint[] {
   let index = poly.length - 1;
@@ -8,12 +8,13 @@ function stripPoly(poly: bigint[]): bigint[] {
   return poly.slice(0, index + 1);
 }
 
-export class PolyEval implements Gadget {
+export class PolyEval extends Gadget {
   arity = 1;
   p: bigint[];
   degree: number;
 
   constructor(p: bigint[]) {
+    super();
     p = stripPoly(p);
 
     if (p.length === 0) {
@@ -25,13 +26,13 @@ export class PolyEval implements Gadget {
   }
 
   eval(field: Field, input: Vector): bigint {
-    ensureGadgetArity(this, input);
+    this.ensureArity(input);
 
     return field.evalPoly(field.vec(this.p), input.getValue(0));
   }
 
   evalPoly(field: Field, inputPolynomial: Vector[]): Vector {
-    ensureGadgetPolyArity(this, inputPolynomial);
+    this.ensurePolyArity(inputPolynomial);
 
     const out = arr(this.degree * inputPolynomial[0].length, () => 0n);
     out[0] = this.p[0];

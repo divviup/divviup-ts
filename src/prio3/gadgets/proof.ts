@@ -2,7 +2,7 @@ import { Field, Vector } from "field";
 import { nextPowerOf2 } from "common";
 import { Gadget } from "prio3/gadget";
 
-export class Proof implements Gadget {
+export class Proof extends Gadget {
   arity: number;
   degree: number;
   field: Field;
@@ -16,6 +16,7 @@ export class Proof implements Gadget {
     gadget: Gadget,
     calls: number
   ) {
+    super();
     this.gadget = gadget;
     this.arity = gadget.arity;
     this.degree = gadget.degree;
