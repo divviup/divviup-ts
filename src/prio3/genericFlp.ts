@@ -6,26 +6,38 @@ import { Query } from "prio3/circuits/query";
 import { Proof } from "prio3/circuits/proof";
 
 export class FlpGeneric<M> implements Flp<M> {
-  jointRandLen: number;
-  proveRandLen: number;
-  queryRandLen: number;
-  inputLen: number;
-  outputLen: number;
-  proofLen: number;
-  verifierLen: number;
-  field: Field;
-  circuit: Circuit<M>;
+  constructor(public circuit: Circuit<M>) {}
 
-  constructor(circuit: Circuit<M>) {
-    this.circuit = circuit;
-    this.field = this.circuit.field;
-    this.proveRandLen = this.circuit.proveRandLen;
-    this.queryRandLen = this.circuit.queryRandLen;
-    this.jointRandLen = this.circuit.jointRandLen;
-    this.inputLen = this.circuit.inputLen;
-    this.outputLen = this.circuit.outputLen;
-    this.proofLen = this.circuit.proofLen;
-    this.verifierLen = this.circuit.verifierLen;
+  get jointRandLen(): number {
+    return this.circuit.jointRandLen;
+  }
+
+  get proveRandLen(): number {
+    return this.circuit.proveRandLen;
+  }
+
+  get queryRandLen(): number {
+    return this.circuit.queryRandLen;
+  }
+
+  get inputLen(): number {
+    return this.circuit.inputLen;
+  }
+
+  get outputLen(): number {
+    return this.circuit.outputLen;
+  }
+
+  get proofLen(): number {
+    return this.circuit.proofLen;
+  }
+
+  get verifierLen(): number {
+    return this.circuit.verifierLen;
+  }
+
+  get field(): Field {
+    return this.circuit.field;
   }
 
   prove(input: Vector, proveRand: Vector, jointRand: Vector): Vector {
