@@ -32,14 +32,12 @@ interface Aggregator {
 /**
    Parameters from which to build a DAPClient
    @typeParam Measurement The Measurement for the provided vdaf, usually inferred from the vdaf.
-   @typeParam PublicParameter The PublicParameter for the provided vdaf, usually inferred from the vdaf.
 */
 export interface ClientParameters<Measurement> {
   /**
-     A {@linkcode ClientVdaf} that this {@linkcode DAPClient} will use to
-     generate reports. The measurement and public parameter passed to
-     generateReport must be the `Measurement` and `PublicParameter` that
-     this ClientVdaf supports.
+     A {@linkcode ClientVdaf} that this {@linkcode DAPClient} will use
+     to generate reports. The measurement passed to generateReport
+     must be the `Measurement` that this ClientVdaf supports.
   */
 
   vdaf: ClientVdaf<Measurement>;
@@ -135,14 +133,16 @@ export class DAPClient<Measurement> {
   }
 
   /**
-     Produce a {@linkcode Report} from the supplied Measurement and PublicParameter.
+     Produce a {@linkcode Report} from the supplied Measurement
      
      This method depends on the key configuration already having been
      fetched with {@linkcode DAPClient.fetchKeyConfiguration}. It will
      throw an error if you attempt to call it without having
      previously fetched key configuration.
 
-     @param measurement The type of this argument will be determined by the Vdaf that this client is constructed for.
+     @param measurement The type of this argument will be determined
+     by the Vdaf that this client is constructed for.
+
      @throws `Error` if there is any issue in generating the report
    */
   async generateReport(measurement: Measurement): Promise<Report> {
@@ -206,8 +206,8 @@ export class DAPClient<Measurement> {
   /**
 
      A convenience function to fetch the key configuration (if
-     needed), generate a report from the provided measurement and
-     public parameter, and send that report to the leader aggregator.
+     needed), generate a report from the provided measurement and send
+     that report to the leader aggregator.
 
      This is identical to calling {@linkcode
      DAPClient.fetchKeyConfiguration}, {@linkcode
