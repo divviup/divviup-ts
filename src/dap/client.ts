@@ -221,7 +221,6 @@ export class DAPClient<Measurement> {
      `Error` if there is an issue generating the report
    */
   async sendMeasurement(measurement: Measurement): Promise<void> {
-    await this.fetchKeyConfiguration();
     const report = await this.generateReport(measurement);
     await this.sendReport(report);
   }
