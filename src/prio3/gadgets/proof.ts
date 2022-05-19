@@ -1,14 +1,12 @@
 import { Field, Vector } from "field";
-import { nextPowerOf2 } from "common";
+import { arr, nextPowerOf2 } from "common";
 import { Gadget } from "prio3/gadget";
 
 export class Proof extends Gadget {
-  arity: number;
-  degree: number;
   field: Field;
-  wire: bigint[][];
   gadget: Gadget;
-  k: number; // TODO(jbr): find out a better name for this
+  wire: bigint[][];
+  callCount = 0;
 
   constructor(
     field: Field,
@@ -18,26 +16,19 @@ export class Proof extends Gadget {
   ) {
     super();
     this.gadget = gadget;
-    this.arity = gadget.arity;
-    this.degree = gadget.degree;
     this.field = field;
-    this.wire = [];
-    this.wire.length = this.arity;
-    this.k = 0;
-    const p = nextPowerOf2(1 + calls);
-
-    for (let i = 0; i < this.arity; i++) {
-      const wire = new Array(p).fill(0n) as bigint[];
-      wire[0] = wireSeeds[i];
-      this.wire[i] = wire;
-    }
+    const wirePolyLength = nextPowerOf2(1 + calls);
+    this.wire = arr(this.arity, (i) => [
+      wireSeeds[i],
+      ...arr(wirePolyLength - 1, () => 0n),
+    ]);
   }
 
   eval(field: Field, input: Vector): bigint {
-    this.k += 1;
+    this.callCount += 1;
 
     this.wire.forEach((wire, index) => {
-      wire[this.k] = input.getValue(index);
+      wire[this.callCount] = input.getValue(index);
     });
 
     return this.gadget.eval(field, input);
@@ -45,5 +36,13 @@ export class Proof extends Gadget {
 
   evalPoly(field: Field, inputPoly: Vector[]): Vector {
     return this.gadget.evalPoly(field, inputPoly);
+  }
+
+  get arity(): number {
+    return this.gadget.arity;
+  }
+
+  get degree(): number {
+    return this.gadget.degree;
   }
 }
