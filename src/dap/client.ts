@@ -101,6 +101,7 @@ export class DAPClient<Measurement> {
   #aggregators: Aggregator[];
   #extensions: Extension[] = [];
   #fetch: Fetch = actualFetch;
+  #hpkeConfigsWereInvalid = false;
 
   /** the protocol version for this client, usually in the form `dap-{nn}` */
   static readonly protocolVersion = DAP_VERSION;
@@ -222,7 +223,29 @@ export class DAPClient<Measurement> {
    */
   async sendMeasurement(measurement: Measurement): Promise<void> {
     const report = await this.generateReport(measurement);
-    await this.sendReport(report);
+
+    try {
+      await this.sendReport(report);
+      this.#hpkeConfigsWereInvalid = false;
+    } catch (error) {
+      if (
+        error instanceof DAPError &&
+        error.shortType === "outdatedConfig" &&
+        !this.#hpkeConfigsWereInvalid // only retry once
+      ) {
+        this.invalidateHpkeConfig();
+        await this.sendMeasurement(measurement);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  invalidateHpkeConfig() {
+    this.#hpkeConfigsWereInvalid = true;
+    for (const aggregator of this.#aggregators) {
+      delete aggregator.hpkeConfig;
+    }
   }
 
   /**
