@@ -5,27 +5,27 @@ import { Prio3Aes128Sum } from "prio3/instantiations";
 import { RequestInit, RequestInfo, Response, Request } from "undici";
 import * as hpke from "hpke";
 import { TaskId } from "dap/taskId";
+import { DAPError } from "./errors";
 
 interface Fetchy {
   (input: RequestInfo, init?: RequestInit | undefined): Promise<Response>;
   calls: [RequestInfo, RequestInit | undefined][];
 }
 
-function mockFetch(mocks: {
-  [url: string]: {
-    body?: Buffer | Uint8Array | number[] | string;
-    contentType?: string;
-    status?: number;
-  };
-}): Fetchy {
+interface ResponseSpec {
+  body?: Buffer | Uint8Array | number[] | string;
+  contentType?: string;
+  status?: number;
+}
+
+function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetchy {
   function fakeFetch(
     input: RequestInfo,
     init?: RequestInit | undefined
   ): Promise<Response> {
     fakeFetch.calls.push([input, init]);
-    const response = mocks[input.toString()] || {
-      status: 404,
-    };
+    const responseSpec = mocks[input.toString()];
+    const response = responseSpec.shift() || { status: 404 };
     return Promise.resolve(
       new Response(Buffer.from(response.body || ""), {
         status: response.status || 200,
@@ -40,7 +40,7 @@ function mockFetch(mocks: {
 
 function buildHpkeConfig(): HpkeConfig {
   return new HpkeConfig(
-    1,
+    Math.floor(Math.random() * 255),
     hpke.Kem.DhP256HkdfSha256,
     hpke.Kdf.Sha256,
     hpke.Aead.AesGcm128,
@@ -99,15 +99,13 @@ describe("DAPClient", () => {
       const [hpkeConfig1, hpkeConfig2] = [buildHpkeConfig(), buildHpkeConfig()];
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
-          body: hpkeConfig1.encode(),
-          contentType: "message/dap-hpke-config",
-        },
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(hpkeConfig1),
+        ],
 
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
-          body: hpkeConfig2.encode(),
-          contentType: "message/dap-hpke-config",
-        },
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(hpkeConfig2),
+        ],
       });
 
       const client = new DAPClient(params);
@@ -126,12 +124,12 @@ describe("DAPClient", () => {
       const taskId = params.taskId.buffer.toString("base64url");
 
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
-          status: 418,
-        },
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
-          status: 500,
-        },
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+          { status: 418 },
+        ],
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+          { status: 500 },
+        ],
       });
 
       const client = new DAPClient(params);
@@ -159,14 +157,18 @@ describe("DAPClient", () => {
       const params = buildParams();
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
-          contentType: "application/text",
-          body: buildHpkeConfig().encode(),
-        },
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
-          contentType: "application/text",
-          body: buildHpkeConfig().encode(),
-        },
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+          {
+            contentType: "application/text",
+            body: buildHpkeConfig().encode(),
+          },
+        ],
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+          {
+            contentType: "application/text",
+            body: buildHpkeConfig().encode(),
+          },
+        ],
       });
       const client = new DAPClient(params);
       client.fetch = fetch;
@@ -211,14 +213,12 @@ describe("DAPClient", () => {
       const params = buildParams();
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
-          contentType: "application/text",
-          body: buildHpkeConfig().encode(),
-        },
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
-          contentType: "application/text",
-          body: buildHpkeConfig().encode(),
-        },
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(),
+        ],
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(),
+        ],
       });
       const client = new DAPClient(params);
       client.fetch = fetch;
@@ -229,7 +229,9 @@ describe("DAPClient", () => {
 
   describe("sending reports", () => {
     it("can succeed", async () => {
-      const fetch = mockFetch({ "https://a.example.com/upload": {} });
+      const fetch = mockFetch({
+        "https://a.example.com/upload": [{ status: 200 }],
+      });
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       client.fetch = fetch;
       const report = await client.generateReport(100);
@@ -255,22 +257,17 @@ describe("DAPClient", () => {
   });
 
   describe("sending measurement", () => {
-    it("makes the correct number of http requests", async () => {
+    it("makes the correct number of http requests when all goes well", async () => {
       const params = buildParams();
-      const [hpkeConfig1, hpkeConfig2] = [buildHpkeConfig(), buildHpkeConfig()];
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
-          body: hpkeConfig1.encode(),
-          contentType: "message/dap-hpke-config",
-        },
-
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
-          body: hpkeConfig2.encode(),
-          contentType: "message/dap-hpke-config",
-        },
-
-        "https://a.example.com/upload": {},
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(),
+        ],
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(),
+        ],
+        "https://a.example.com/upload": [{ status: 200 }],
       });
 
       const client = new DAPClient(params);
@@ -278,5 +275,91 @@ describe("DAPClient", () => {
       await client.sendMeasurement(10);
       assert.equal(fetch.calls.length, 3);
     });
+
+    it("retries once if the configs were outdated", async () => {
+      const params = buildParams();
+      const taskId = params.taskId.buffer.toString("base64url");
+      const fetch = mockFetch({
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(),
+          hpkeConfigResponse(),
+        ],
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(),
+          hpkeConfigResponse(),
+        ],
+        "https://a.example.com/upload": [
+          {
+            status: 400,
+            contentType: "application/problem+json",
+            body: JSON.stringify({
+              type: "urn:ietf:params:ppm:dap:outdatedConfig",
+              title:
+                "The message was generated using an outdated configuration.",
+              status: 400,
+              detail:
+                "The message was generated using an outdated configuration.",
+              instance: "..",
+              taskid: params.taskId.toString(),
+            }),
+          },
+          {},
+        ],
+      });
+
+      const client = new DAPClient(params);
+      client.fetch = fetch;
+      await client.sendMeasurement(10);
+      assert.equal(fetch.calls.length, 6);
+    });
+
+    it("does not retry more than once if the [refetched] configs were [still] outdated", async () => {
+      const params = buildParams();
+      const taskId = params.taskId.buffer.toString("base64url");
+      const fetch = mockFetch({
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(),
+          hpkeConfigResponse(),
+        ],
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+          hpkeConfigResponse(),
+          hpkeConfigResponse(),
+        ],
+        "https://a.example.com/upload": [
+          outdatedConfigResponse(params.taskId),
+          outdatedConfigResponse(params.taskId),
+        ],
+      });
+
+      const client = new DAPClient(params);
+      client.fetch = fetch;
+      await assert.rejects(
+        client.sendMeasurement(10),
+        (e) => e instanceof DAPError && e.shortType == "outdatedConfig"
+      );
+      assert.equal(fetch.calls.length, 6); // we do not try again
+    });
   });
 });
+
+function outdatedConfigResponse(taskId: TaskId): ResponseSpec {
+  return {
+    status: 400,
+    contentType: "application/problem+json",
+    body: JSON.stringify({
+      type: "urn:ietf:params:ppm:dap:outdatedConfig",
+      title: "The message was generated using an outdated configuration.",
+      status: 400,
+      detail: "The message was generated using an outdated configuration.",
+      instance: "..",
+      taskid: taskId.toString(),
+    }),
+  };
+}
+
+function hpkeConfigResponse(config = buildHpkeConfig()): ResponseSpec {
+  return {
+    body: config.encode(),
+    contentType: "message/dap-hpke-config",
+  };
+}
