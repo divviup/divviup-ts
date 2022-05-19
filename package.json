@@ -11,7 +11,7 @@
     "format": "prettier -w",
     "test:coverage": "nyc --reporter=lcov --reporter=html --reporter=text --reporter=text-summary npm test",
     "ci": "npm run lint && npm run test:coverage",
-    "benchmark": "ts-node src/benchmarks.ts"
+    "benchmark": "ts-node scripts/benchmarks.ts"
   },
   "license": "MPL-2.0",
   "dependencies": {
