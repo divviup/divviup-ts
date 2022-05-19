@@ -152,9 +152,7 @@ describe("DAPClient", () => {
       assert.equal(fetch.calls.length, 0);
     });
 
-    // this is pending because of a bug in janus
-    //    it("throws an error if the content type is not correct", async () => {
-    it("accepts any content type", async () => {
+    it("throws an error if the content type is not correct", async () => {
       const params = buildParams();
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
@@ -173,9 +171,7 @@ describe("DAPClient", () => {
       });
       const client = new DAPClient(params);
       client.fetch = fetch;
-
-      await assert.doesNotReject(client.fetchKeyConfiguration());
-
+      await assert.rejects(client.fetchKeyConfiguration());
       assert.equal(fetch.calls.length, 2);
     });
   });
