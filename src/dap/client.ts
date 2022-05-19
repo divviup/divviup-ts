@@ -153,7 +153,7 @@ export class DAPClient<Measurement> {
 
     const nonce = Nonce.generate();
     const aad = Buffer.concat([
-      //        this.taskId.encode(), <- soon
+      this.taskId.encode(),
       nonce.encode(),
       encodeArray16(this.#extensions),
     ]);
@@ -168,11 +168,7 @@ export class DAPClient<Measurement> {
         );
       }
 
-      const info = Buffer.from([
-        ...this.#taskId.encode(), //<-this moves to aad soon
-        ...INPUT_SHARE_ASCII,
-        aggregator.role,
-      ]);
+      const info = Buffer.from([...INPUT_SHARE_ASCII, aggregator.role]);
 
       return aggregator.hpkeConfig.seal(info, inputShares[i], aad);
     });
