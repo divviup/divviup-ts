@@ -52,7 +52,6 @@ export class Proof<M> extends Circuit<M> {
     this.gadgets = circuit.gadgets.map(
       (gadget, index) =>
         new ProofGadget(
-          this.field,
           proveRandValues.slice(
             proveRandIndex,
             (proveRandIndex += gadget.arity)

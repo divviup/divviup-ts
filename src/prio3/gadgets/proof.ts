@@ -3,20 +3,13 @@ import { arr, nextPowerOf2 } from "common";
 import { Gadget } from "prio3/gadget";
 
 export class Proof extends Gadget {
-  field: Field;
   gadget: Gadget;
   wire: bigint[][];
   callCount = 0;
 
-  constructor(
-    field: Field,
-    wireSeeds: bigint[],
-    gadget: Gadget,
-    calls: number
-  ) {
+  constructor(wireSeeds: bigint[], gadget: Gadget, calls: number) {
     super();
     this.gadget = gadget;
-    this.field = field;
     const wirePolyLength = nextPowerOf2(1 + calls);
     this.wire = arr(this.arity, (i) => [
       wireSeeds[i],

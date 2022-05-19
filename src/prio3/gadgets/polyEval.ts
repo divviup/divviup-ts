@@ -2,51 +2,54 @@ import { arr } from "common";
 import { Field, Vector } from "field";
 import { Gadget } from "prio3/gadget";
 
-function stripPoly(poly: bigint[]): bigint[] {
-  let index = poly.length - 1;
-  while (index >= 0 && poly[index] == 0n) index--;
-  return poly.slice(0, index + 1);
+function stripPolynomial(polynomial: bigint[]): bigint[] {
+  let index = polynomial.length - 1;
+  while (index >= 0 && polynomial[index] == 0n) index--;
+  return polynomial.slice(0, index + 1);
 }
 
 export class PolyEval extends Gadget {
   arity = 1;
-  p: bigint[];
+  polynomial: bigint[];
   degree: number;
 
-  constructor(p: bigint[]) {
+  constructor(polynomial: bigint[]) {
     super();
-    p = stripPoly(p);
+    polynomial = stripPolynomial(polynomial);
 
-    if (p.length === 0) {
+    if (polynomial.length === 0) {
       throw new Error("invalid polynomial: zero length");
     }
 
-    this.p = p.map(BigInt);
-    this.degree = p.length - 1;
+    this.polynomial = polynomial.map(BigInt);
+    this.degree = polynomial.length - 1;
   }
 
   eval(field: Field, input: Vector): bigint {
     this.ensureArity(input);
 
-    return field.evalPoly(field.vec(this.p), input.getValue(0));
+    return field.evalPoly(field.vec(this.polynomial), input.getValue(0));
   }
 
   evalPoly(field: Field, inputPolynomial: Vector[]): Vector {
     this.ensurePolyArity(inputPolynomial);
 
     const out = arr(this.degree * inputPolynomial[0].length, () => 0n);
-    out[0] = this.p[0];
+    out[0] = this.polynomial[0];
 
     let x = inputPolynomial[0];
 
-    for (let i = 1; i < this.p.length; i++) {
+    for (let i = 1; i < this.polynomial.length; i++) {
       for (let j = 0; j < x.length; j++) {
-        out[j] = field.add(out[j], field.mul(this.p[i], x.getValue(j)));
+        out[j] = field.add(
+          out[j],
+          field.mul(this.polynomial[i], x.getValue(j))
+        );
       }
 
       x = field.mulPolys(x, inputPolynomial[0]);
     }
 
-    return field.vec(stripPoly(out));
+    return field.vec(stripPolynomial(out));
   }
 }
