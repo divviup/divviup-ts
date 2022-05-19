@@ -6,8 +6,9 @@ import { RequestInit, RequestInfo, Response, Request } from "undici";
 import * as hpke from "hpke";
 import { TaskId } from "dap/taskId";
 import { DAPError } from "./errors";
+import { arr, zip } from "common";
 
-interface Fetchy {
+interface Fetch {
   (input: RequestInfo, init?: RequestInit | undefined): Promise<Response>;
   calls: [RequestInfo, RequestInit | undefined][];
 }
@@ -18,7 +19,7 @@ interface ResponseSpec {
   status?: number;
 }
 
-function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetchy {
+function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
   function fakeFetch(
     input: RequestInfo,
     init?: RequestInit | undefined
@@ -180,9 +181,62 @@ describe("DAPClient", () => {
   });
   describe("generating reports", () => {
     it("can succeed", async () => {
-      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const privateKeys = [] as [Buffer, number][];
+      const client = new DAPClient({
+        ...buildParams(),
+        taskId: new TaskId(Buffer.alloc(32, 1)),
+      });
+      const kem = hpke.Kem.DhP256HkdfSha256;
+      const kdf = hpke.Kdf.Sha256;
+      const aead = hpke.Aead.AesGcm128;
+
+      for (const aggregator of client.aggregators) {
+        const { private_key, public_key } = new hpke.Keypair(kem);
+        privateKeys.push([Buffer.from(private_key), aggregator.role]);
+        aggregator.hpkeConfig = new HpkeConfig(
+          Math.floor(Math.random() * 255),
+          kem,
+          kdf,
+          aead,
+          Buffer.from(public_key)
+        );
+      }
+
       const report = await client.generateReport(21);
       assert.equal(report.encryptedInputShares.length, 2);
+      assert.equal(report.taskID, client.taskId);
+      assert(
+        Math.floor(Date.now() / 1000) - Number(report.nonce.time) <
+          1 /*1 second delta*/
+      );
+
+      const aad = Buffer.from([...report.nonce.encode(), ...[0, 0]]);
+
+      for (const [[privateKey, role], share] of zip(
+        privateKeys,
+        report.encryptedInputShares
+      )) {
+        const info = Buffer.from([
+          ...arr(32, () => 1),
+          ...Buffer.from("ppm input share"),
+          1,
+          role,
+        ]);
+
+        // at some point we might want to run the vdaf to completion
+        // with these decrypted shares in order to assert that the
+        // client does in fact generate valid input shares, but for
+        // now we just assert that the hpke layer is as expected
+        assert.doesNotThrow(() =>
+          hpke.Config.try_from_ids(aead, kdf, kem).base_mode_open(
+            privateKey,
+            share.encapsulatedContext,
+            info,
+            share.payload,
+            aad
+          )
+        );
+      }
     });
 
     it("fails if the measurement is not valid", async () => {
