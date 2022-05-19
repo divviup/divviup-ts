@@ -280,11 +280,8 @@ export class DAPClient<Measurement> {
         const blob = await response.blob();
 
         if (blob.type !== CONTENT_TYPES.HPKE_CONFIG) {
-          ///          throw new Error( <- this is the correct behavior, but janus sends a generic content-type currently
-          ///             `expected ${CONTENT_TYPES.HPKE_CONFIG} content-type header, aborting`
-          ///          );
-          console.error(
-            `expected ${CONTENT_TYPES.HPKE_CONFIG} content-type header, continuing for now`
+          throw new Error(
+            `expected ${CONTENT_TYPES.HPKE_CONFIG} content-type header, aborting`
           );
         }
 
