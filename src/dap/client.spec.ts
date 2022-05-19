@@ -210,18 +210,17 @@ describe("DAPClient", () => {
           1 /*1 second delta*/
       );
 
-      const aad = Buffer.from([...report.nonce.encode(), ...[0, 0]]);
+      const aad = Buffer.from([
+        ...arr(32, () => 1),
+        ...report.nonce.encode(),
+        ...[0, 0],
+      ]);
 
       for (const [[privateKey, role], share] of zip(
         privateKeys,
         report.encryptedInputShares
       )) {
-        const info = Buffer.from([
-          ...arr(32, () => 1),
-          ...Buffer.from("ppm input share"),
-          1,
-          role,
-        ]);
+        const info = Buffer.from([...Buffer.from("ppm input share"), 1, role]);
 
         // at some point we might want to run the vdaf to completion
         // with these decrypted shares in order to assert that the
