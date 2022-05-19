@@ -34,7 +34,7 @@ interface Aggregator {
    @typeParam Measurement The Measurement for the provided vdaf, usually inferred from the vdaf.
    @typeParam PublicParameter The PublicParameter for the provided vdaf, usually inferred from the vdaf.
 */
-export interface ClientParameters<Measurement, PublicParameter> {
+export interface ClientParameters<Measurement> {
   /**
      A {@linkcode ClientVdaf} that this {@linkcode DAPClient} will use to
      generate reports. The measurement and public parameter passed to
@@ -42,7 +42,7 @@ export interface ClientParameters<Measurement, PublicParameter> {
      this ClientVdaf supports.
   */
 
-  vdaf: ClientVdaf<Measurement, PublicParameter>;
+  vdaf: ClientVdaf<Measurement>;
 
   /**
      The task identifier for this {@linkcode DAPClient}. This can be specified
@@ -60,11 +60,6 @@ export interface ClientParameters<Measurement, PublicParameter> {
      strings or {@linkcode URL}s.
   */
   helpers: (string | URL)[];
-
-  /**
-     The public parameter for the provided vdaf
-     */
-  publicParameter: PublicParameter;
 }
 
 type Fetch = (
@@ -102,13 +97,12 @@ const CONTENT_TYPES = Object.freeze({
    {@linkcode ClientVdaf}, such as an implementation of Prio3, as specified by
    [draft-irtf-cfrg-vdaf-00](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf).
 */
-export class DAPClient<Measurement, PublicParameter> {
-  #vdaf: ClientVdaf<Measurement, PublicParameter>;
+export class DAPClient<Measurement> {
+  #vdaf: ClientVdaf<Measurement>;
   #taskId: TaskId;
   #aggregators: Aggregator[];
   #extensions: Extension[] = [];
   #fetch: Fetch = actualFetch;
-  #publicParameter: PublicParameter;
 
   /** the protocol version for this client, usually in the form `dap-{nn}` */
   static readonly protocolVersion = DAP_VERSION;
@@ -116,11 +110,10 @@ export class DAPClient<Measurement, PublicParameter> {
   /**
      Builds a new DAPClient from the {@linkcode ClientParameters} provided. 
    */
-  constructor(parameters: ClientParameters<Measurement, PublicParameter>) {
+  constructor(parameters: ClientParameters<Measurement>) {
     this.#vdaf = parameters.vdaf;
     this.#taskId = taskIdFromDefinition(parameters.taskId);
     this.#aggregators = aggregatorsFromParameters(parameters);
-    this.#publicParameter = parameters.publicParameter;
   }
 
   /** @internal */
@@ -153,10 +146,7 @@ export class DAPClient<Measurement, PublicParameter> {
      @throws `Error` if there is any issue in generating the report
    */
   async generateReport(measurement: Measurement): Promise<Report> {
-    const inputShares = await this.#vdaf.measurementToInputShares(
-      this.#publicParameter,
-      measurement
-    );
+    const inputShares = await this.#vdaf.measurementToInputShares(measurement);
 
     const nonce = Nonce.generate();
     const aad = Buffer.concat([
@@ -278,10 +268,10 @@ export class DAPClient<Measurement, PublicParameter> {
   }
 }
 
-function aggregatorsFromParameters<M, PP>({
+function aggregatorsFromParameters<M>({
   leader,
   helpers,
-}: ClientParameters<M, PP>): Aggregator[] {
+}: ClientParameters<M>): Aggregator[] {
   return [
     {
       url: new URL(leader),

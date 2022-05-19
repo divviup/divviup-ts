@@ -21,21 +21,20 @@ function buildHpkeConfig(): HpkeConfig {
   );
 }
 
-function withHpkeConfigs<M, PP>(dapClient: DAPClient<M, PP>): DAPClient<M, PP> {
+function withHpkeConfigs<M>(dapClient: DAPClient<M>): DAPClient<M> {
   for (const aggregator of dapClient.aggregators) {
     aggregator.hpkeConfig = buildHpkeConfig();
   }
   return dapClient;
 }
 
-function buildClient<M>(vdaf: ClientVdaf<M, null>): DAPClient<M, null> {
+function buildClient<M>(vdaf: ClientVdaf<M>): DAPClient<M> {
   return withHpkeConfigs(
     new DAPClient({
       helpers: ["http://helper.example.com"],
       leader: "http://leader.example.com",
       taskId: TaskId.random(),
       vdaf,
-      publicParameter: null,
     })
   );
 }
