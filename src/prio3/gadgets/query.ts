@@ -3,52 +3,57 @@ import { nextPowerOf2, arr } from "common";
 import { Gadget } from "prio3/gadget";
 
 export class Query extends Gadget {
-  arity: number;
-  degree: number;
   wire: bigint[][];
   gadget: Gadget;
   gadgetPoly: Vector;
   alpha: bigint;
-  k = 0;
+  callCount = 0;
 
   constructor(
     field: Field,
     wireSeeds: bigint[],
     gadgetPoly: Vector,
     gadget: Gadget,
-    gadgetCalls: number
+    calls: number
   ) {
     super();
-    this.degree = gadget.degree;
     this.gadget = gadget;
-    this.arity = gadget.arity;
-    this.wire = new Array(this.arity) as bigint[][];
     this.gadgetPoly = gadgetPoly;
-    const p = nextPowerOf2(gadgetCalls + 1);
+    const wirePolyLength = nextPowerOf2(calls + 1);
 
-    for (let i = 0; i < this.arity; i++) {
-      const wire = arr(p, () => 0n);
-      wire[0] = wireSeeds[i];
-      this.wire[i] = wire;
-    }
+    this.wire = arr(this.arity, (i) => [
+      wireSeeds[i],
+      ...arr(wirePolyLength - 1, () => 0n),
+    ]);
 
-    this.alpha = field.exp(field.generator, field.genOrder / BigInt(p));
+    this.alpha = field.exp(
+      field.generator,
+      field.genOrder / BigInt(wirePolyLength)
+    );
   }
 
   eval(field: Field, input: Vector): bigint {
-    this.k += 1;
+    this.callCount += 1;
 
-    for (let j = 0; j < input.length; j++) {
-      this.wire[j][this.k] = input.getValue(j);
-    }
+    this.wire.forEach((wire, index) => {
+      wire[this.callCount] = input.getValue(index);
+    });
 
     return field.evalPoly(
       this.gadgetPoly,
-      field.exp(this.alpha, BigInt(this.k))
+      field.exp(this.alpha, BigInt(this.callCount))
     );
   }
 
   evalPoly(_field: Field, _inputPoly: unknown): Vector {
     throw new Error("evalPoly is not implemented for QueryGadget");
+  }
+
+  get arity(): number {
+    return this.gadget.arity;
+  }
+
+  get degree(): number {
+    return this.gadget.degree;
   }
 }
