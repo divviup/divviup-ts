@@ -261,10 +261,7 @@ export class DAPClient<Measurement> {
     await Promise.all(
       this.#aggregators.map(async (aggregator) => {
         const url = new URL(ROUTES.keyConfig, aggregator.url);
-        url.searchParams.append(
-          "task_id",
-          this.#taskId.buffer.toString("base64url")
-        );
+        url.searchParams.append("task_id", this.#taskId.toString());
 
         const response = await this.#fetch(url, {
           headers: { Accept: CONTENT_TYPES.HPKE_CONFIG },
