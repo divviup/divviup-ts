@@ -207,12 +207,23 @@ describe("DAPClient", () => {
       await assert.rejects(client.generateReport(21));
     });
 
-    it("fails if the hpke configs are missing", async () => {
-      const client = new DAPClient(buildParams());
-      await assert.rejects(
-        client.generateReport(10),
-        /Cannot generate a report before fetching key configuration. Call fetchKeyConfiguration\(\) on this client\./
-      );
+    it("fetches hpke configs if needed", async () => {
+      const params = buildParams();
+      const taskId = params.taskId.buffer.toString("base64url");
+      const fetch = mockFetch({
+        [`https://a.example.com/hpke_config?task_id=${taskId}`]: {
+          contentType: "application/text",
+          body: buildHpkeConfig().encode(),
+        },
+        [`https://b.example.com/hpke_config?task_id=${taskId}`]: {
+          contentType: "application/text",
+          body: buildHpkeConfig().encode(),
+        },
+      });
+      const client = new DAPClient(params);
+      client.fetch = fetch;
+      await assert.doesNotReject(client.generateReport(10));
+      assert.equal(fetch.calls.length, 2);
     });
   });
 

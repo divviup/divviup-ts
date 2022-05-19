@@ -146,6 +146,8 @@ export class DAPClient<Measurement> {
      @throws `Error` if there is any issue in generating the report
    */
   async generateReport(measurement: Measurement): Promise<Report> {
+    await this.fetchKeyConfiguration();
+
     const inputShares = await this.#vdaf.measurementToInputShares(measurement);
 
     const nonce = Nonce.generate();
@@ -157,9 +159,11 @@ export class DAPClient<Measurement> {
 
     const ciphertexts = this.#aggregators.map((aggregator, i) => {
       if (!aggregator.hpkeConfig) {
+        // This exists entirely to tell typescript it's ok to use the hpkeConfig.
+        // Throwing an explicit error is preferable to `as HpkeConfig`
         throw new Error(
-          "Cannot generate a report before fetching key " +
-            "configuration. Call fetchKeyConfiguration() on this client."
+          "We fetched key configuration but this aggregator is missing hpkeConfig. " +
+            "This should be unreachable; please file a bug report."
         );
       }
 
