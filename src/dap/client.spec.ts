@@ -48,17 +48,16 @@ function buildHpkeConfig(): HpkeConfig {
   );
 }
 
-function buildParams(): ClientParameters<number, null> & { taskId: TaskId } {
+function buildParams(): ClientParameters<number> & { taskId: TaskId } {
   return {
     vdaf: new Prio3Aes128Sum({ shares: 2, bits: 16 }),
     leader: "https://a.example.com",
     helpers: ["https://b.example.com"],
     taskId: TaskId.random(),
-    publicParameter: null,
   };
 }
 
-function withHpkeConfigs<M, PP>(dapClient: DAPClient<M, PP>): DAPClient<M, PP> {
+function withHpkeConfigs<M>(dapClient: DAPClient<M>): DAPClient<M> {
   for (const aggregator of dapClient.aggregators) {
     aggregator.hpkeConfig = buildHpkeConfig();
   }

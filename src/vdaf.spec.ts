@@ -8,8 +8,6 @@ type PrepareMessage = {
   inputRange: { min: number; max: number };
   encodedInputShare: Buffer;
 };
-type PublicParameter = null;
-type VerifyParameter = null;
 type AggregationParameter = null;
 type AggregatorShare = Vector;
 type OutputShare = Vector;
@@ -17,8 +15,6 @@ type AggregationResult = number;
 type Measurement = number;
 type TestVdaf = Vdaf<
   Measurement,
-  PublicParameter,
-  VerifyParameter,
   AggregationParameter,
   PrepareMessage,
   AggregatorShare,
@@ -26,8 +22,8 @@ type TestVdaf = Vdaf<
   OutputShare
 >;
 
-export async function testVdaf<M, PP, VP, AP, P, AS, AR, OS>(
-  vdaf: Vdaf<M, PP, VP, AP, P, AS, AR, OS>,
+export async function testVdaf<M, AP, P, AS, AR, OS>(
+  vdaf: Vdaf<M, AP, P, AS, AR, OS>,
   aggParam: AP,
   measurements: M[],
   expectedAggResult: AR,
@@ -38,9 +34,8 @@ export async function testVdaf<M, PP, VP, AP, P, AS, AR, OS>(
   assert.deepEqual(aggResult, expectedAggResult);
 }
 
-interface TestVector<PP, AP, M, OS, AS, AR> {
-  public_param: PP;
-  verify_params: [number, string][];
+interface TestVector<AP, M, OS, AS, AR> {
+  verify_key: string;
   agg_param: AP;
   prep: PrepTestVector<M, OS>[];
   agg_shares: AS[];
@@ -60,15 +55,9 @@ export class VdafTest implements TestVdaf {
   shares = 2;
   rounds = 1;
   inputRange = { min: 0, max: 5 };
+  verifyKeySize = 0;
 
-  setup(): [PublicParameter, VerifyParameter[]] {
-    return [null, arr(this.shares, () => null)];
-  }
-
-  measurementToInputShares(
-    _publicParam: PublicParameter,
-    measurement: Measurement
-  ): Promise<Buffer[]> {
+  measurementToInputShares(measurement: Measurement): Promise<Buffer[]> {
     const { field } = this;
     const helperShares = field.fillRandom(this.shares - 1).toValues();
 
@@ -84,7 +73,8 @@ export class VdafTest implements TestVdaf {
   }
 
   initialPrepareMessage(
-    _verifyParam: VerifyParameter,
+    _verifyKey: Buffer,
+    _aggregatorId: number,
     _aggParam: AggregationParameter,
     _nonce: Buffer,
     inputShare: Buffer
@@ -143,10 +133,6 @@ export class VdafTest implements TestVdaf {
       aggShares.reduce((x, y) => this.field.add(x, y.getValue(0)), 0n)
     );
   }
-
-  testVectorVerifyParams(_verifyParams: VerifyParameter[]): [number, string][] {
-    return [];
-  }
 }
 
 describe("test vdaf", () => {
@@ -155,18 +141,17 @@ describe("test vdaf", () => {
   });
 });
 
-export async function runVdaf<M, PP, VP, AP, P, AS, AR, OS>(
-  vdaf: Vdaf<M, PP, VP, AP, P, AS, AR, OS>,
+export async function runVdaf<M, AP, P, AS, AR, OS>(
+  vdaf: Vdaf<M, AP, P, AS, AR, OS>,
   aggregationParameter: AP,
   nonces: Buffer[],
   measurements: M[],
   print = false
 ): Promise<AR> {
-  const [publicParam, verifyParams] = vdaf.setup();
+  const verifyKey = randomBytes(vdaf.verifyKeySize);
 
-  const testVector: TestVector<PP, AP, M, OS, AS, AR> = {
-    public_param: publicParam,
-    verify_params: vdaf.testVectorVerifyParams(verifyParams),
+  const testVector: TestVector<AP, M, OS, AS, AR> = {
+    verify_key: verifyKey.toString("hex"),
     agg_param: aggregationParameter,
     prep: [],
     agg_shares: [],
@@ -182,39 +167,39 @@ export async function runVdaf<M, PP, VP, AP, P, AS, AR, OS>(
         out_shares: [],
       };
 
-      const inputShares = await vdaf.measurementToInputShares(
-        publicParam,
-        measurement
-      );
+      const inputShares = await vdaf.measurementToInputShares(measurement);
 
       for (const share of inputShares) {
         prepTestVector.input_shares.push(share.toString("hex"));
       }
 
       const prepStates: P[] = await Promise.all(
-        arr(vdaf.shares, (j) =>
+        arr(vdaf.shares, (aggregatorId) =>
           vdaf.initialPrepareMessage(
-            verifyParams[j],
+            verifyKey,
+            aggregatorId,
             aggregationParameter,
             nonce,
-            inputShares[j]
+            inputShares[aggregatorId]
           )
         )
       );
 
       let inbound: Buffer | null = null;
-      for (let i = 0; i < vdaf.rounds; i++) {
-        const outbound: Buffer[] = prepStates.map((state, j, states) => {
-          const out = vdaf.prepareNext(state, inbound);
-          if (!("prepareMessage" in out) || !("prepareShare" in out)) {
-            throw new Error("expected prepareMessage and prepareShare");
+      for (let round = 0; round < vdaf.rounds; round++) {
+        const outbound: Buffer[] = prepStates.map(
+          (state, aggregatorId, states) => {
+            const out = vdaf.prepareNext(state, inbound);
+            if (!("prepareMessage" in out) || !("prepareShare" in out)) {
+              throw new Error("expected prepareMessage and prepareShare");
+            }
+            states[aggregatorId] = out.prepareMessage;
+            return out.prepareShare;
           }
-          states[j] = out.prepareMessage;
-          return out.prepareShare;
-        });
+        );
 
         for (const prepShare of outbound) {
-          prepTestVector.prep_shares[i].push(prepShare.toString("hex"));
+          prepTestVector.prep_shares[round].push(prepShare.toString("hex"));
         }
 
         inbound = vdaf.prepSharesToPrepareMessage(
@@ -241,24 +226,26 @@ export async function runVdaf<M, PP, VP, AP, P, AS, AR, OS>(
   );
 
   const aggregatorShares = [];
-  for (let j = 0; j < vdaf.shares; j++) {
-    const outSharesJ = outShares.reduce(
-      (osjs, out) => [...osjs, out[j]],
+  for (let aggregatorId = 0; aggregatorId < vdaf.shares; aggregatorId++) {
+    const aggregatorOutShares = outShares.reduce(
+      (aggregatorOutShares, out) => [...aggregatorOutShares, out[aggregatorId]],
       [] as OS[]
     );
 
-    const aggShareJ = vdaf.outputSharesToAggregatorShare(
+    const aggregatorShare = vdaf.outputSharesToAggregatorShare(
       aggregationParameter,
-      outSharesJ
+      aggregatorOutShares
     );
-    aggregatorShares.push(aggShareJ);
-    testVector.agg_shares.push(aggShareJ);
+
+    aggregatorShares.push(aggregatorShare);
+    testVector.agg_shares.push(aggregatorShare);
   }
 
   const aggregationResult = vdaf.aggregatorSharesToResult(
     aggregationParameter,
     aggregatorShares
   );
+
   testVector.agg_result = aggregationResult;
 
   if (print && process.env.TEST_VECTOR) {

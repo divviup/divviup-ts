@@ -3,8 +3,6 @@ export const VDAF_VERSION = "vdaf-00";
 
 export interface Vdaf<
   Measurement,
-  PublicParameter,
-  VerifyParameter,
   AggregationParameter,
   PrepareMessage,
   AggregatorShare,
@@ -13,16 +11,13 @@ export interface Vdaf<
 > {
   shares: number;
   rounds: number;
+  verifyKeySize: number;
 
-  setup(): [PublicParameter, VerifyParameter[]];
-
-  measurementToInputShares(
-    publicParam: PublicParameter,
-    measurement: Measurement
-  ): Promise<Buffer[]>;
+  measurementToInputShares(measurement: Measurement): Promise<Buffer[]>;
 
   initialPrepareMessage(
-    verifyParam: VerifyParameter,
+    verifyKey: Buffer,
+    aggId: number,
     aggParam: AggregationParameter,
     nonce: Buffer,
     inputShare: Buffer
@@ -49,16 +44,11 @@ export interface Vdaf<
     aggParam: AggregationParameter,
     aggShares: AggregatorShare[]
   ): AggregationResult;
-
-  testVectorVerifyParams(verifyParams: VerifyParameter[]): [number, string][];
 }
 
-export interface ClientVdaf<Measurement, PublicParameter> {
+export interface ClientVdaf<Measurement> {
   shares: number;
   rounds: number;
 
-  measurementToInputShares(
-    publicParam: PublicParameter,
-    measurement: Measurement
-  ): Promise<Buffer[]>;
+  measurementToInputShares(measurement: Measurement): Promise<Buffer[]>;
 }

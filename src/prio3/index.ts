@@ -9,16 +9,12 @@ type PrepareMessage = {
   jointRandSeed: Buffer | null;
   outboundMessage: Buffer;
 };
-type PublicParameter = null;
-type VerifyParameter = [number, Buffer];
 type AggregationParameter = null;
 type AggregatorShare = Vector;
 type AggregationResult = number[];
 type OutputShare = Vector;
 type Prio3Vdaf<Measurement> = Vdaf<
   Measurement,
-  PublicParameter,
-  VerifyParameter,
   AggregationParameter,
   PrepareMessage,
   AggregatorShare,
@@ -46,12 +42,15 @@ const DOMAIN_SEPARATION_TAG = Buffer.from(`${VDAF_VERSION} prio3`, "ascii");
 
 export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   readonly rounds = 1;
+  readonly verifyKeySize: number;
 
   constructor(
     public readonly prg: PrgConstructor,
     public readonly flp: Flp<Measurement>,
     public readonly shares: number
-  ) {}
+  ) {
+    this.verifyKeySize = prg.seedSize;
+  }
 
   private async pseudorandom(
     len: number,
@@ -73,19 +72,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     return this.flp.field;
   }
 
-  setup(): [PublicParameter, VerifyParameter[]] {
-    const queryInit = this.prg.randomSeed();
-    const verifyParam = arr(
-      this.shares,
-      (j) => [j, queryInit] as [number, Buffer]
-    );
-    return [null, verifyParam];
-  }
-
-  async measurementToInputShares(
-    _publicParam: PublicParameter,
-    measurement: Measurement
-  ): Promise<Buffer[]> {
+  async measurementToInputShares(measurement: Measurement): Promise<Buffer[]> {
     const { flp, prg, field } = this;
     const jointRandSeed = Buffer.alloc(prg.seedSize);
     const helperShares = await this.buildHelperShares();
@@ -118,20 +105,20 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   }
 
   async initialPrepareMessage(
-    verifyParam: VerifyParameter,
+    verifyKey: Buffer,
+    aggregatorId: number,
     _aggParam: AggregationParameter,
     nonce: Buffer,
     encodedInputShare: Buffer
   ): Promise<PrepareMessage> {
     const { prg, flp, field } = this;
-    const [j, queryInit] = verifyParam;
 
-    const share = await this.decodeShare(j, encodedInputShare);
+    const share = await this.decodeShare(aggregatorId, encodedInputShare);
 
     const outputShare = flp.truncate(share.inputShare);
 
     const queryRandSeed = await prg.deriveSeed(
-      queryInit,
+      verifyKey,
       Buffer.from([255, ...nonce])
     );
 
@@ -145,7 +132,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
       const encoded = field.encode(share.inputShare);
       shareJointRandSeed = await prg.deriveSeed(
         share.blind,
-        Buffer.from([j, ...encoded])
+        Buffer.from([aggregatorId, ...encoded])
       );
       jointRandSeed = xor(share.hint, shareJointRandSeed);
       jointRand = await this.pseudorandom(flp.jointRandLen, jointRandSeed);
@@ -247,14 +234,13 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
       .map(Number);
   }
 
-  testVectorVerifyParams(verifyParams: VerifyParameter[]): [number, string][] {
-    return verifyParams.map(([j, queryInit]) => [j, queryInit.toString("hex")]);
-  }
-
-  private async decodeShare(j: number, encoded: Buffer): Promise<DecodedShare> {
-    return j == 0
+  private async decodeShare(
+    aggregatorId: number,
+    encoded: Buffer
+  ): Promise<DecodedShare> {
+    return aggregatorId == 0
       ? this.decodeLeaderShare(encoded)
-      : await this.decodeHelperShare(j, encoded);
+      : await this.decodeHelperShare(aggregatorId, encoded);
   }
 
   private decodePrepareMessage(input: Buffer): {
@@ -400,7 +386,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   }
 
   private async decodeHelperShare(
-    j: number,
+    aggregatorId: number,
     encoded: Buffer
   ): Promise<DecodedShare> {
     const { prg, flp } = this;
@@ -408,8 +394,16 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     [inputShareSeed, encoded] = split(encoded, prg.seedSize);
     [proofShareSeed, encoded] = split(encoded, prg.seedSize);
 
-    const inputShare = await this.pseudorandom(flp.inputLen, inputShareSeed, j);
-    const proofShare = await this.pseudorandom(flp.proofLen, proofShareSeed, j);
+    const inputShare = await this.pseudorandom(
+      flp.inputLen,
+      inputShareSeed,
+      aggregatorId
+    );
+    const proofShare = await this.pseudorandom(
+      flp.proofLen,
+      proofShareSeed,
+      aggregatorId
+    );
 
     let blind = null;
     let hint = null;
