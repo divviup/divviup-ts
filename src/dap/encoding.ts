@@ -2,7 +2,7 @@ export interface Encodable {
   encode(): Buffer;
 }
 
-export function encodeArray<T extends Encodable>(items: T[]): Buffer {
+export function encodeArray16<T extends Encodable>(items: T[]): Buffer {
   const content = Buffer.concat([
     Buffer.alloc(2),
     ...items.map((item) => item.encode()),
@@ -11,7 +11,7 @@ export function encodeArray<T extends Encodable>(items: T[]): Buffer {
   return content;
 }
 
-export function encodeOpaque(buffer: Buffer): Buffer {
+export function encodeOpaque16(buffer: Buffer): Buffer {
   const returnBuffer = Buffer.concat([Buffer.alloc(2), buffer]);
   returnBuffer.writeUint16BE(buffer.length, 0);
   return returnBuffer;

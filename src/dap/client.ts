@@ -4,7 +4,7 @@ import { Report } from "dap/report";
 import { HpkeConfig } from "dap/hpkeConfig";
 import { ClientVdaf } from "vdaf";
 import { Extension } from "dap/extension";
-import { encodeArray } from "dap/encoding";
+import { encodeArray16 } from "dap/encoding";
 import { DAPError } from "dap/errors";
 
 export { TaskId } from "dap/taskId";
@@ -152,7 +152,7 @@ export class DAPClient<Measurement> {
     const aad = Buffer.concat([
       //        this.taskId.encode(), <- soon
       nonce.encode(),
-      encodeArray(this.#extensions),
+      encodeArray16(this.#extensions),
     ]);
 
     const ciphertexts = this.#aggregators.map((aggregator, i) => {
