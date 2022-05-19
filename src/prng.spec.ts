@@ -1,6 +1,6 @@
 import assert from "assert";
 import { PrgAes128 } from "prng";
-import { Field128 } from "field";
+import { Field128, Field96 } from "field";
 import { randomBytes } from "common";
 
 describe("PrgAes128", () => {
@@ -80,5 +80,24 @@ describe("PrgAes128", () => {
       assert.equal(0, actual.compare(expected));
       assert.deepEqual(actual, expected);
     });
+  });
+
+  it("performs rejection sampling correctly", async () => {
+    // These constants were found through brute-force search. Field96 is used because, out of the
+    // three fields, it has the largest relative gap between the prime and the next power of two
+    // by a few orders of magnitude, making these necessary preconditions easier to find.
+    const field = Field96;
+    const expandedLen = 146;
+    const seed = Buffer.from("0000000000000000000000000000015f", "hex");
+    const info = Buffer.alloc(0);
+    const expectedLastElem = 39729620190871453347343769187n;
+
+    const expandedVec = await PrgAes128.expandIntoVec(
+      field,
+      seed,
+      info,
+      expandedLen
+    );
+    assert.equal(expandedVec.getValue(expandedLen - 1), expectedLastElem);
   });
 });
