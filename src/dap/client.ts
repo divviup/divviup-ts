@@ -74,7 +74,7 @@ const ROUTES = Object.freeze({
    The protocol version for this DAP implementation. Usually of the
    form `dap-{nn}`.
 */
-const DAP_VERSION = "ppm";
+const DAP_VERSION = "dap-01";
 
 /** A Buffer that will always equal `${DAP_VERSION} input share\x01` */
 const INPUT_SHARE_ASCII = Object.freeze([
