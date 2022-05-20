@@ -103,6 +103,13 @@ export class Field {
   fillRandom(length: number): Vector {
     return this.vec(arr(length, () => this.#finiteField.rand()));
   }
+
+  sum<T>(arr: T[], mapper: (value: T, index: number) => bigint): bigint {
+    return arr.reduce(
+      (sum, value, index) => this.add(sum, mapper(value, index)),
+      0n
+    );
+  }
 }
 
 interface FieldConstructorArgs {

@@ -24,6 +24,13 @@ function testField(field: Field, name: string) {
       it("can do exponentiation", () => {
         assert.equal(field.exp(x, 100n), x ** 100n % field.modulus);
       });
+
+      it("has a sum reducer", () => {
+        assert.equal(
+          field.sum([field.modulus, 1n, 2n, 3n], (n) => n),
+          6n
+        );
+      });
     });
 
     it("does not decode when the field is not a multiple of encodedSize", () => {

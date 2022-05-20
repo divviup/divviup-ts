@@ -23,25 +23,24 @@ export class Histogram extends Circuit<number> {
 
   eval(input: Vector, jointRand: Vector, shares: number): bigint {
     this.ensureValidEval(input, jointRand);
-    const inputArr = input.toValues();
-    const [jr0, jr1] = jointRand.toValues();
+    const inputValues = input.toValues();
+    const [firstRand, secondRand] = jointRand.toValues();
     const [gadget] = this.gadgets;
     const f = this.field;
 
-    const { rangeCheck, sumCheck } = inputArr.reduce(
-      ({ rangeCheck, sumCheck, r }, b) => ({
-        rangeCheck: f.add(rangeCheck, f.mul(r, gadget.eval(f, f.vec([b])))),
-        r: f.mul(r, jr0),
-        sumCheck: f.add(sumCheck, b),
-      }),
-      {
-        rangeCheck: 0n,
-        r: jr0,
-        sumCheck: f.mul(-1n, f.exp(BigInt(shares), -1n)),
-      }
+    const rangeCheck = f.sum(inputValues, (value, index) =>
+      f.mul(f.exp(firstRand, BigInt(index)), gadget.eval(f, f.vec([value])))
     );
 
-    return f.add(f.mul(jr1, rangeCheck), f.mul(f.exp(jr1, 2n), sumCheck));
+    const sumCheck = f.sum(
+      [...inputValues, f.mul(-1n, f.exp(BigInt(shares), -1n))],
+      (n) => n
+    );
+
+    return f.add(
+      f.mul(secondRand, rangeCheck),
+      f.mul(f.exp(secondRand, 2n), sumCheck)
+    );
   }
 
   encode(measurement: number): Vector {
