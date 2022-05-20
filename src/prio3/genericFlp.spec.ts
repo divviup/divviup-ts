@@ -6,22 +6,15 @@ import { Histogram } from "prio3/circuits/histogram";
 import { FlpGeneric } from "prio3/genericFlp";
 import { runFlp } from "prio3/flp.spec";
 import { Circuit, GenericCircuit } from "prio3/circuit";
-import { nextPowerOf2 } from "common";
+import { arr, nextPowerOf2 } from "common";
 import assert from "assert";
 import { PolyEval } from "prio3/gadgets/polyEval";
 import { Mul } from "prio3/gadgets/mul";
 
 function testGadget(gadget: Gadget, field: Field, testLength: number) {
-  const inputPoly = [];
-  const input = [];
   const evalAt = field.randomElement();
-
-  for (let i = 0; i < gadget.arity; i++) {
-    const poly = field.fillRandom(testLength);
-    inputPoly.push(poly);
-    input.push(field.evalPoly(poly, evalAt));
-  }
-
+  const inputPoly = arr(gadget.arity, () => field.fillRandom(testLength));
+  const input = inputPoly.map((poly) => field.evalPoly(poly, evalAt));
   const outPoly = gadget.evalPoly(field, inputPoly);
   const expected = gadget.eval(field, field.vec(input));
   const actual = field.evalPoly(outPoly, evalAt);

@@ -21,19 +21,23 @@ export class Sum extends Circuit<number> {
 
   eval(input: Vector, jointRand: Vector, _shares: number): bigint {
     this.ensureValidEval(input, jointRand);
-    const gadget = this.gadgets[0];
+    const [gadget] = this.gadgets;
     const field = this.field;
-    let out = 0n;
     const jointRandZero = jointRand.getValue(0);
-    let r = jointRandZero;
-    for (let i = 0; i < input.length; i++) {
-      out = field.add(
-        out,
-        field.mul(r, gadget.eval(field, field.vec([input.getValue(i)])))
+
+    return input
+      .toValues()
+      .reduce(
+        (out, inputValue, index) =>
+          field.add(
+            out,
+            field.mul(
+              field.exp(jointRandZero, BigInt(index)),
+              gadget.eval(field, field.vec([inputValue]))
+            )
+          ),
+        0n
       );
-      r = field.mul(r, jointRandZero);
-    }
-    return out;
   }
 
   encode(measurement: number): Vector {
@@ -41,19 +45,16 @@ export class Sum extends Circuit<number> {
       measurement !== Math.floor(measurement) ||
       measurement < 0 ||
       measurement >= 2 ** this.inputLen
-    )
+    ) {
       throw new Error(
         `measurement ${measurement} was not an integer in [0, ${
           2 ** this.inputLen
         })`
       );
+    }
 
     return this.field.vec(
-      arr(
-        this.inputLen,
-        (l) =>
-          (BigInt(measurement) >> BigInt(l) % this.field.modulus) & BigInt(1)
-      )
+      arr(this.inputLen, (l) => BigInt((measurement >> l) & 1))
     );
   }
 

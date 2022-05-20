@@ -225,8 +225,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
     })
   );
 
-  const aggregatorShares = [];
-  for (let aggregatorId = 0; aggregatorId < vdaf.shares; aggregatorId++) {
+  const aggregatorShares = arr(vdaf.shares, (aggregatorId) => {
     const aggregatorOutShares = outShares.reduce(
       (aggregatorOutShares, out) => [...aggregatorOutShares, out[aggregatorId]],
       [] as OS[]
@@ -237,9 +236,9 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
       aggregatorOutShares
     );
 
-    aggregatorShares.push(aggregatorShare);
     testVector.agg_shares.push(aggregatorShare);
-  }
+    return aggregatorShare;
+  });
 
   const aggregationResult = vdaf.aggregatorSharesToResult(
     aggregationParameter,

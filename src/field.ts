@@ -84,16 +84,18 @@ export class Field {
   }
 
   decode(encoded: Buffer): Vector {
-    const l = this.encodedSize;
-    if (encoded.length % l !== 0) {
+    const encodedSize = this.encodedSize;
+    if (encoded.length % encodedSize !== 0) {
       throw new Error(
-        `could not decode, expected ${encoded.length} to be a multiple of ${l}`
+        `could not decode, expected ${encoded.length} to be a multiple of ${encodedSize}`
       );
     }
 
     return this.vec(
-      arr(encoded.length / l, (i) =>
-        octetStringToInteger(encoded.slice(i * l, (i + 1) * l))
+      arr(encoded.length / encodedSize, (index) =>
+        octetStringToInteger(
+          encoded.slice(index * encodedSize, (index + 1) * encodedSize)
+        )
       )
     );
   }
