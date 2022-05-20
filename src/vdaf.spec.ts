@@ -111,17 +111,14 @@ export class VdafTest implements TestVdaf {
     const { field } = this;
     return field.encode(
       field.vec([
-        prepShares.reduce(
-          (sum, encoded) => field.add(sum, field.decode(encoded).getValue(0)),
-          0n
-        ),
+        field.sum(prepShares, (encoded) => field.decode(encoded).getValue(0)),
       ])
     );
   }
 
   outputSharesToAggregatorShare(_aggParam: null, outShares: Vector[]): Vector {
     return this.field.vec([
-      outShares.reduce((x, y) => this.field.add(x, y.getValue(0)), 0n),
+      this.field.sum(outShares, (share) => share.getValue(0)),
     ]);
   }
 
@@ -129,9 +126,7 @@ export class VdafTest implements TestVdaf {
     _aggParam: AggregationParameter,
     aggShares: AggregatorShare[]
   ): AggregationResult {
-    return Number(
-      aggShares.reduce((x, y) => this.field.add(x, y.getValue(0)), 0n)
-    );
+    return Number(this.field.sum(aggShares, (share) => share.getValue(0)));
   }
 }
 

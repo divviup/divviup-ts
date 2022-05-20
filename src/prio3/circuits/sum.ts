@@ -13,31 +13,26 @@ export class Sum extends Circuit<number> {
 
   constructor(bits: number) {
     super();
-    if (2n ** BigInt(bits) >= this.field.modulus)
+    if (2n ** BigInt(bits) >= this.field.modulus) {
       throw new Error("bit size exceeds field modulus");
+    }
+
     this.gadgetCalls = [bits];
     this.inputLen = bits;
   }
 
   eval(input: Vector, jointRand: Vector, _shares: number): bigint {
     this.ensureValidEval(input, jointRand);
-    const [gadget] = this.gadgets;
+    const [poly] = this.gadgets;
     const field = this.field;
     const jointRandZero = jointRand.getValue(0);
 
-    return input
-      .toValues()
-      .reduce(
-        (out, inputValue, index) =>
-          field.add(
-            out,
-            field.mul(
-              field.exp(jointRandZero, BigInt(index)),
-              gadget.eval(field, field.vec([inputValue]))
-            )
-          ),
-        0n
-      );
+    return field.sum(input.toValues(), (value, index) =>
+      field.mul(
+        field.exp(jointRandZero, BigInt(index)),
+        poly.eval(field, field.vec([value]))
+      )
+    );
   }
 
   encode(measurement: number): Vector {
@@ -54,22 +49,16 @@ export class Sum extends Circuit<number> {
     }
 
     return this.field.vec(
-      arr(this.inputLen, (l) => BigInt((measurement >> l) & 1))
+      arr(this.inputLen, (index) => BigInt((measurement >> index) & 1))
     );
   }
 
   truncate(input: Vector): Vector {
     const field = this.field;
-    const trunc = field.vec([
-      input
-        .toValues()
-        .reduce(
-          (decoded, b, l) =>
-            field.add(decoded, field.mul(field.exp(2n, BigInt(l)), b)),
-          0n
-        ),
+    return field.vec([
+      field.sum(input.toValues(), (value, index) =>
+        field.mul(field.exp(2n, BigInt(index)), value)
+      ),
     ]);
-
-    return trunc;
   }
 }
