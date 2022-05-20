@@ -14,12 +14,11 @@ describe("PrgAes128", () => {
     assert.equal(expanded.length, expandedLen);
 
     const expected = await new PrgAes128(seed, info).next(700);
-    let actual = Buffer.alloc(0);
     const prg = new PrgAes128(seed, info);
 
-    for (let i = 0; i < 700; i += 7) {
-      actual = Buffer.concat([actual, await prg.next(7)]);
-    }
+    const buffers = [];
+    for (let i = 0; i < 100; i++) buffers.push(await prg.next(7));
+    const actual = Buffer.concat(buffers);
 
     assert.equal(0, actual.compare(expected));
     assert.deepEqual(actual, expected);
