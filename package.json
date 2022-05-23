@@ -30,7 +30,7 @@
     "@typescript-eslint/eslint-plugin": "^5.26.0",
     "@typescript-eslint/parser": "^5.23.0",
     "benchmark": "^2.1.4",
-    "eslint": "^8.15.0",
+    "eslint": "^8.16.0",
     "eslint-config-prettier": "^8.5.0",
     "microtime": "^3.0.0",
     "mocha": "^10.0.0",
