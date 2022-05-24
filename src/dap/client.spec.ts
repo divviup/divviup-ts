@@ -220,7 +220,11 @@ describe("DAPClient", () => {
         privateKeys,
         report.encryptedInputShares
       )) {
-        const info = Buffer.from([...Buffer.from("ppm input share"), 1, role]);
+        const info = Buffer.from([
+          ...Buffer.from("dap-01 input share"),
+          1,
+          role,
+        ]);
 
         // at some point we might want to run the vdaf to completion
         // with these decrypted shares in order to assert that the
