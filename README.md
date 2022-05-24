@@ -7,14 +7,14 @@
 [docs for main](https://divviup.github.io/divviup-ts/)
 
 ```typescript
-import { DAPClient } from "dap/client";
-import { Prio3Aes128Sum } from "prio3/instantiations";
+import DAPClient from "dap";
 
 const client = new DAPClient({
-  vdaf: new Prio3Aes128Sum({ shares: 2, bits: 8 }),
+  type: "sum",
+  bits: 8,
   taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
   leader: "http://localhost:8080",
-  helpers: ["http://localhost:8081"],
+  helper: "http://localhost:8081",
 });
 
 await client.sendMeasurement(42);
