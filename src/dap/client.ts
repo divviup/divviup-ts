@@ -15,6 +15,11 @@ import {
   RequestInfo,
   Response,
 } from "undici";
+import {
+  Prio3Aes128Count,
+  Prio3Aes128Histogram,
+  Prio3Aes128Sum,
+} from "prio3/instantiations";
 
 enum Role {
   Collector = 0,
@@ -33,15 +38,7 @@ interface Aggregator {
    Parameters from which to build a DAPClient
    @typeParam Measurement The Measurement for the provided vdaf, usually inferred from the vdaf.
 */
-export interface ClientParameters<Measurement> {
-  /**
-     A {@linkcode ClientVdaf} that this {@linkcode DAPClient} will use
-     to generate reports. The measurement passed to generateReport
-     must be the `Measurement` that this ClientVdaf supports.
-  */
-
-  vdaf: ClientVdaf<Measurement>;
-
+export interface ClientParameters {
   /**
      The task identifier for this {@linkcode DAPClient}. This can be specified
      either as a Buffer, a {@linkcode TaskId} or a base64url-encoded
@@ -54,10 +51,10 @@ export interface ClientParameters<Measurement> {
   */
   leader: string | URL;
   /**
-     the url of the helper aggregators, specified as an array of either
-     strings or {@linkcode URL}s.
+     the url of the helper aggregator, specified as either a string or
+     {@linkcode URL}s.
   */
-  helpers: (string | URL)[];
+  helper: string | URL;
 }
 
 type Fetch = (
@@ -87,6 +84,41 @@ const CONTENT_TYPES = Object.freeze({
   HPKE_CONFIG: "message/dap-hpke-config",
 });
 
+interface KnownVdafs {
+  sum: typeof Prio3Aes128Sum;
+  count: typeof Prio3Aes128Count;
+  histogram: typeof Prio3Aes128Histogram;
+}
+
+type KnownVdafNames = keyof KnownVdafs;
+export type KnownVdafSpec = {
+  [Key in KnownVdafNames]: Omit<
+    { type: Key } & ConstructorParameters<KnownVdafs[Key]>[0],
+    "shares"
+  >;
+}[KnownVdafNames];
+type KnownVdaf<Spec extends KnownVdafSpec> = KnownVdafs[Spec["type"]];
+type VdafInstance<Spec extends KnownVdafSpec> = InstanceType<KnownVdaf<Spec>>;
+export type VdafMeasurement<Spec extends KnownVdafSpec> = Parameters<
+  VdafInstance<Spec>["measurementToInputShares"]
+>[0];
+function vdafFromSpec<Spec extends KnownVdafSpec>(
+  spec: Spec,
+  shares = 2
+): VdafInstance<Spec> {
+  switch (spec.type) {
+    case "count":
+      return new Prio3Aes128Count({ ...spec, shares }) as VdafInstance<Spec>;
+    case "histogram":
+      return new Prio3Aes128Histogram({
+        ...spec,
+        shares,
+      }) as VdafInstance<Spec>;
+    case "sum":
+      return new Prio3Aes128Sum({ ...spec, shares }) as VdafInstance<Spec>;
+  }
+}
+
 /**
    A client for interacting with DAP servers, as specified by
    [draft-ietf-ppm-dap-00](https://datatracker.ietf.org/doc/html/draft-ietf-ppm-dap). Instances
@@ -95,7 +127,10 @@ const CONTENT_TYPES = Object.freeze({
    {@linkcode ClientVdaf}, such as an implementation of Prio3, as specified by
    [draft-irtf-cfrg-vdaf-00](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf).
 */
-export class DAPClient<Measurement> {
+export class DAPClient<
+  Spec extends KnownVdafSpec,
+  Measurement extends VdafMeasurement<Spec>
+> {
   #vdaf: ClientVdaf<Measurement>;
   #taskId: TaskId;
   #aggregators: Aggregator[];
@@ -109,8 +144,8 @@ export class DAPClient<Measurement> {
   /**
      Builds a new DAPClient from the {@linkcode ClientParameters} provided. 
    */
-  constructor(parameters: ClientParameters<Measurement>) {
-    this.#vdaf = parameters.vdaf;
+  constructor(parameters: ClientParameters & Spec) {
+    this.#vdaf = vdafFromSpec(parameters) as ClientVdaf<Measurement>;
     this.#taskId = taskIdFromDefinition(parameters.taskId);
     this.#aggregators = aggregatorsFromParameters(parameters);
   }
@@ -247,7 +282,7 @@ export class DAPClient<Measurement> {
   /**
      Fetches hpke configuration from the configured aggregators over
      the network. This will make one http/https request for each
-     aggregator (leader and helpers).
+     aggregator (leader and helper).
 
      @throws {@linkcode DAPError} if any response is not Ok.
      */
@@ -284,19 +319,13 @@ export class DAPClient<Measurement> {
   }
 }
 
-function aggregatorsFromParameters<M>({
+function aggregatorsFromParameters({
   leader,
-  helpers,
-}: ClientParameters<M>): Aggregator[] {
+  helper,
+}: ClientParameters): Aggregator[] {
   return [
-    {
-      url: new URL(leader),
-      role: Role.Leader,
-    },
-    ...helpers.map((url) => ({
-      url: new URL(url),
-      role: Role.Helper,
-    })),
+    { url: new URL(leader), role: Role.Leader },
+    { url: new URL(helper), role: Role.Helper },
   ];
 }
 

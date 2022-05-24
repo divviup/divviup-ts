@@ -1,7 +1,6 @@
 import assert from "assert";
-import { ClientParameters, DAPClient } from "dap/client";
+import { DAPClient, KnownVdafSpec, VdafMeasurement } from "dap/client";
 import { HpkeConfig } from "dap/hpkeConfig";
-import { Prio3Aes128Sum } from "prio3/instantiations";
 import { RequestInit, RequestInfo, Response, Request } from "undici";
 import * as hpke from "hpke";
 import { TaskId } from "dap/taskId";
@@ -49,16 +48,26 @@ function buildHpkeConfig(): HpkeConfig {
   );
 }
 
-function buildParams(): ClientParameters<number> & { taskId: TaskId } {
+function buildParams(): {
+  type: "sum";
+  bits: number;
+  helper: string;
+  leader: string;
+  taskId: TaskId;
+} {
   return {
-    vdaf: new Prio3Aes128Sum({ shares: 2, bits: 16 }),
+    type: "sum",
+    bits: 16,
     leader: "https://a.example.com",
-    helpers: ["https://b.example.com"],
+    helper: "https://b.example.com",
     taskId: TaskId.random(),
   };
 }
 
-function withHpkeConfigs<M>(dapClient: DAPClient<M>): DAPClient<M> {
+function withHpkeConfigs<
+  Spec extends KnownVdafSpec,
+  Measurement extends VdafMeasurement<Spec>
+>(dapClient: DAPClient<Spec, Measurement>): DAPClient<Spec, Measurement> {
   for (const aggregator of dapClient.aggregators) {
     aggregator.hpkeConfig = buildHpkeConfig();
   }

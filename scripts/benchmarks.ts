@@ -1,13 +1,7 @@
 import Benchmark from "benchmark";
-import { DAPClient } from "dap/client";
+import { DAPClient, KnownVdafSpec, VdafMeasurement } from "dap/client";
 import { TaskId } from "dap/taskId";
-import {
-  Prio3Aes128Count,
-  Prio3Aes128Histogram,
-  Prio3Aes128Sum,
-} from "prio3/instantiations";
 import { HpkeConfig } from "dap/hpkeConfig";
-import { ClientVdaf } from "vdaf";
 import * as hpke from "hpke";
 
 const suite = new Benchmark.Suite("Report generation");
@@ -21,29 +15,36 @@ function buildHpkeConfig(): HpkeConfig {
   );
 }
 
-function withHpkeConfigs<M>(dapClient: DAPClient<M>): DAPClient<M> {
+function withHpkeConfigs<
+  Spec extends KnownVdafSpec,
+  Measurement extends VdafMeasurement<Spec>
+>(dapClient: DAPClient<Spec, Measurement>): DAPClient<Spec, Measurement> {
   for (const aggregator of dapClient.aggregators) {
     aggregator.hpkeConfig = buildHpkeConfig();
   }
   return dapClient;
 }
 
-function buildClient<M>(vdaf: ClientVdaf<M>): DAPClient<M> {
+function buildClient<
+  Spec extends KnownVdafSpec,
+  Measurement extends VdafMeasurement<Spec>
+>(spec: Spec): DAPClient<Spec, Measurement> {
   return withHpkeConfigs(
     new DAPClient({
-      helpers: ["http://helper.example.com"],
+      helper: "http://helper.example.com",
       leader: "http://leader.example.com",
       taskId: TaskId.random(),
-      vdaf,
+      ...spec,
     })
   );
 }
 
-const sumClient = buildClient(new Prio3Aes128Sum({ bits: 8, shares: 2 }));
-const histogramClient = buildClient(
-  new Prio3Aes128Histogram({ shares: 2, buckets: [10, 20, 30] })
-);
-const countClient = buildClient(new Prio3Aes128Count({ shares: 2 }));
+const sumClient = buildClient({ type: "sum", bits: 8 });
+const histogramClient = buildClient({
+  type: "histogram",
+  buckets: [10, 20, 30],
+});
+const countClient = buildClient({ type: "count" });
 
 suite.add("sum", async () => {
   const report = await sumClient.generateReport(
