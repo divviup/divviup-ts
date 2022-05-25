@@ -51,10 +51,7 @@ export class Query<M> extends Circuit<M> {
       const gadgetPolyLen = gadget.degree * (p - 1) + 1;
 
       const wireSeeds = proof.slice(proofIndex, (proofIndex += gadget.arity));
-
-      const gadgetPoly = circuit.field.vec(
-        proof.slice(proofIndex, (proofIndex += gadgetPolyLen))
-      );
+      const gadgetPoly = proof.slice(proofIndex, (proofIndex += gadgetPolyLen));
 
       return new QueryGadget(
         circuit.field,

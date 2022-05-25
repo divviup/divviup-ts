@@ -28,7 +28,7 @@ export class PolyEval extends Gadget {
   eval(field: Field, input: bigint[]): bigint {
     this.ensureArity(input);
 
-    return field.evalPoly(field.vec(this.polynomial), input[0]);
+    return field.evalPoly(this.polynomial, input[0]);
   }
 
   evalPoly(field: Field, inputPolynomial: bigint[][]): bigint[] {
@@ -47,6 +47,6 @@ export class PolyEval extends Gadget {
       x = field.mulPolys(x, inputPolynomial[0]);
     }
 
-    return field.vec(stripPolynomial(out));
+    return stripPolynomial(out);
   }
 }

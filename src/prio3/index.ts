@@ -137,7 +137,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
       jointRandSeed = xor(share.hint, shareJointRandSeed);
       jointRand = await this.pseudorandom(flp.jointRandLen, jointRandSeed);
     } else {
-      jointRand = field.vec([]);
+      jointRand = [];
       jointRandSeed = null;
       shareJointRandSeed = null;
     }
@@ -192,8 +192,6 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
 
     const verifier = encodedPrepShares.reduce(
       (verifier, encodedPrepMessage) => {
-        field.vec(flp.verifierLen);
-
         const { verifier: shareVerifier, jointRand: shareJointRand } =
           this.decodePrepareMessage(encodedPrepMessage);
 
@@ -203,7 +201,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
 
         return field.vecAdd(verifier, shareVerifier);
       },
-      field.vec(flp.verifierLen)
+      arr(flp.verifierLen, () => 0n)
     );
 
     return this.encodePrepareMessage(verifier, jointRandCheck);
@@ -216,7 +214,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     const { field, flp } = this;
     return outShares.reduce(
       (agg, share) => field.vecAdd(agg, share),
-      field.vec(flp.outputLen)
+      arr(flp.outputLen, () => 0n)
     );
   }
 
@@ -228,7 +226,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     return aggShares
       .reduce(
         (agg, share) => field.vecAdd(agg, share),
-        field.vec(flp.outputLen)
+        arr(flp.outputLen, () => 0n)
       )
       .map(Number);
   }

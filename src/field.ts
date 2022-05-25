@@ -42,14 +42,6 @@ export class Field {
     return this.#finiteField.evalPolyAt(pVec, x);
   }
 
-  vec(data: number | bigint[]): bigint[] {
-    if (typeof data === "number") {
-      return arr(data, () => 0n);
-    } else {
-      return data.map((d) => this.mod(d));
-    }
-  }
-
   interpolate(xs: bigint[], ys: bigint[]): bigint[] {
     const xsVec = this.#finiteField.newVectorFrom(xs);
     const ysVec = this.#finiteField.newVectorFrom(ys);
@@ -103,17 +95,19 @@ export class Field {
       );
     }
 
-    return this.vec(
-      arr(encoded.length / encodedSize, (index) =>
-        octetStringToInteger(
-          encoded.slice(index * encodedSize, (index + 1) * encodedSize)
-        )
-      )
-    );
+    return arr(encoded.length / encodedSize, (index) => {
+      const n = octetStringToInteger(
+        encoded.slice(index * encodedSize, (index + 1) * encodedSize)
+      );
+      if (n >= this.modulus) {
+        throw new Error("decoded an element that is not in the field");
+      }
+      return n;
+    });
   }
 
   fillRandom(length: number): bigint[] {
-    return this.vec(arr(length, () => this.#finiteField.rand()));
+    return arr(length, () => this.#finiteField.rand());
   }
 
   sum<T>(arr: T[], mapper: (value: T, index: number) => bigint): bigint {

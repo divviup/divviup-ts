@@ -28,7 +28,7 @@ export class Histogram extends Circuit<number> {
     const f = this.field;
 
     const rangeCheck = f.sum(input, (value, index) =>
-      f.mul(f.exp(firstRand, BigInt(index)), gadget.eval(f, f.vec([value])))
+      f.mul(f.exp(firstRand, BigInt(index)), gadget.eval(f, [value]))
     );
 
     const sumCheck = f.sum(
@@ -46,7 +46,7 @@ export class Histogram extends Circuit<number> {
     const boundaries = [...this.buckets, Infinity];
     const encoded = boundaries.map(() => 0n);
     encoded[boundaries.findIndex((b) => measurement <= b)] = 1n;
-    return this.field.vec(encoded);
+    return encoded;
   }
 
   truncate(input: bigint[]): bigint[] {

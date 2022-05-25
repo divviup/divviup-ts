@@ -5,7 +5,7 @@ import { arr } from "common";
 function testField(field: Field, name: string) {
   describe(name, () => {
     it("can allocate a zeroed vec of some length", () => {
-      const vec = field.vec(23);
+      const vec = arr(23, () => 0n);
       assert.equal(23, vec.length);
     });
 
@@ -54,7 +54,7 @@ function testField(field: Field, name: string) {
       const p = field.fillRandom(10);
       const xs = arr(10, (i) => BigInt(i));
       const ys = xs.map((x) => field.evalPoly(p, x));
-      const q = field.interpolate(field.vec(xs), field.vec(ys));
+      const q = field.interpolate(xs, ys);
       for (const x of xs) {
         const a = field.evalPoly(p, x);
         const b = field.evalPoly(q, x);
