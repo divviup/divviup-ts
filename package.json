@@ -8,7 +8,7 @@
     "docs": "typedoc src",
     "test": "ts-mocha \"src/**/*.spec.ts\" --paths src -p ./tsconfig.json",
     "lint": "eslint . --ext .ts && prettier -c src",
-    "format": "prettier -w",
+    "format": "prettier -w src",
     "test:coverage": "nyc --reporter=lcov --reporter=html --reporter=text --reporter=text-summary npm test",
     "ci": "npm run lint && npm run test:coverage",
     "benchmark": "ts-node scripts/benchmarks.ts"
