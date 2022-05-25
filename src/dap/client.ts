@@ -158,6 +158,12 @@ export class DAPClient<
 
   /** @internal */
   //this exists for testing, and should not be considered part of the public api.
+  get vdaf(): ClientVdaf<Measurement> {
+    return this.#vdaf;
+  }
+
+  /** @internal */
+  //this exists for testing, and should not be considered part of the public api.
   set fetch(fetch: Fetch) {
     this.#fetch = fetch;
   }

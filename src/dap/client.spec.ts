@@ -6,6 +6,11 @@ import * as hpke from "hpke";
 import { TaskId } from "dap/taskId";
 import { DAPError } from "./errors";
 import { fill, zip } from "common";
+import {
+  Prio3Aes128Count,
+  Prio3Aes128Histogram,
+  Prio3Aes128Sum,
+} from "prio3/instantiations";
 
 interface Fetch {
   (input: RequestInfo, init?: RequestInit | undefined): Promise<Response>;
@@ -100,6 +105,42 @@ describe("DAPClient", () => {
         client.taskId.toString(),
         "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY"
       );
+    });
+
+    it("can build a histogram vdaf", () => {
+      const client = new DAPClient({
+        type: "histogram",
+        buckets: [10, 20, 30],
+        helper: "http://helper",
+        leader: "http://leader",
+        taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+      });
+
+      assert(client.vdaf instanceof Prio3Aes128Histogram);
+    });
+
+    it("can build a sum vdaf", () => {
+      const client = new DAPClient({
+        type: "sum",
+        bits: 8,
+        helper: "http://helper",
+        leader: "http://leader",
+        taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+      });
+
+      assert(client.vdaf instanceof Prio3Aes128Sum);
+    });
+
+    it("can build a count vdaf", () => {
+      const client = new DAPClient({
+        type: "count",
+        bits: 8,
+        helper: "http://helper",
+        leader: "http://leader",
+        taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+      });
+
+      assert(client.vdaf instanceof Prio3Aes128Count);
     });
   });
 
