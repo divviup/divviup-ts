@@ -6,7 +6,7 @@ import { RequestInit, RequestInfo, Response, Request } from "undici";
 import * as hpke from "hpke";
 import { TaskId } from "dap/taskId";
 import { DAPError } from "./errors";
-import { arr, zip } from "common";
+import { fill, zip } from "common";
 
 interface Fetch {
   (input: RequestInfo, init?: RequestInit | undefined): Promise<Response>;
@@ -207,7 +207,7 @@ describe("DAPClient", () => {
       );
 
       const aad = Buffer.from([
-        ...arr(32, () => 1),
+        ...fill(32, 1),
         ...report.nonce.encode(),
         ...[0, 0],
       ]);

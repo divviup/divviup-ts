@@ -4,11 +4,6 @@ import { arr } from "common";
 
 function testField(field: Field, name: string) {
   describe(name, () => {
-    it("can allocate a zeroed vec of some length", () => {
-      const vec = arr(23, () => 0n);
-      assert.equal(23, vec.length);
-    });
-
     describe("modulus arithmetic within the field", () => {
       const x = field.randomElement();
       const y = field.randomElement();
@@ -34,10 +29,10 @@ function testField(field: Field, name: string) {
     });
 
     it("does not decode when the field is not a multiple of encodedSize", () => {
-      const oneByteTooLong = Buffer.from(arr(field.encodedSize + 1, () => 10));
+      const oneByteTooLong = Buffer.alloc(field.encodedSize + 1, 10);
       assert.throws(() => field.decode(oneByteTooLong));
 
-      const oneByteTooShort = Buffer.from(arr(field.encodedSize - 1, () => 10));
+      const oneByteTooShort = Buffer.alloc(field.encodedSize - 1, 10);
       assert.throws(() => field.decode(oneByteTooShort));
     });
 
@@ -52,7 +47,7 @@ function testField(field: Field, name: string) {
 
     it("correctly interpolates polynomials", () => {
       const p = field.fillRandom(10);
-      const xs = arr(10, (i) => BigInt(i));
+      const xs = arr(10, BigInt);
       const ys = xs.map((x) => field.evalPoly(p, x));
       const q = field.interpolate(xs, ys);
       for (const x of xs) {

@@ -1,6 +1,6 @@
 import { Vdaf, VDAF_VERSION } from "vdaf";
 import { PrgConstructor } from "prng";
-import { arr, xor, split, xorInPlace } from "common";
+import { fill, arr, xor, split, xorInPlace } from "common";
 import { Field } from "field";
 import { Flp } from "prio3/flp";
 
@@ -201,7 +201,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
 
         return field.vecAdd(verifier, shareVerifier);
       },
-      arr(flp.verifierLen, () => 0n)
+      fill(flp.verifierLen, 0n)
     );
 
     return this.encodePrepareMessage(verifier, jointRandCheck);
@@ -214,7 +214,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     const { field, flp } = this;
     return outShares.reduce(
       (agg, share) => field.vecAdd(agg, share),
-      arr(flp.outputLen, () => 0n)
+      fill(flp.outputLen, 0n)
     );
   }
 
@@ -224,10 +224,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   ): AggregationResult {
     const { field, flp } = this;
     return aggShares
-      .reduce(
-        (agg, share) => field.vecAdd(agg, share),
-        arr(flp.outputLen, () => 0n)
-      )
+      .reduce((agg, share) => field.vecAdd(agg, share), fill(flp.outputLen, 0n))
       .map(Number);
   }
 
