@@ -36,6 +36,11 @@ function testField(field: Field, name: string) {
       assert.throws(() => field.decode(oneByteTooShort));
     });
 
+    it("throws when decoding an element that is not within the field", () => {
+      const value = field.encode([field.modulus + 1n]);
+      assert.throws(() => field.decode(value));
+    });
+
     it("encodes and decodes a round trip correctly", () => {
       const randVec = field.fillRandom(10);
       assert.deepEqual(randVec, field.decode(field.encode(randVec)));
