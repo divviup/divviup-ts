@@ -1,5 +1,5 @@
 import { Field } from "field";
-import { arr, nextPowerOf2 } from "common";
+import { arr, fill, nextPowerOf2 } from "common";
 import { Gadget } from "prio3/gadget";
 
 export class Proof extends Gadget {
@@ -13,7 +13,7 @@ export class Proof extends Gadget {
     const wirePolyLength = nextPowerOf2(1 + calls);
     this.wire = arr(this.arity, (i) => [
       wireSeeds[i],
-      ...arr(wirePolyLength - 1, () => 0n),
+      ...fill(wirePolyLength - 1, 0n),
     ]);
   }
 

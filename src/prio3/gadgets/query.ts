@@ -1,5 +1,5 @@
 import { Field } from "field";
-import { nextPowerOf2, arr } from "common";
+import { nextPowerOf2, arr, fill } from "common";
 import { Gadget } from "prio3/gadget";
 
 export class Query extends Gadget {
@@ -23,7 +23,7 @@ export class Query extends Gadget {
 
     this.wire = arr(this.arity, (i) => [
       wireSeeds[i],
-      ...arr(wirePolyLength - 1, () => 0n),
+      ...fill(wirePolyLength - 1, 0n),
     ]);
 
     this.alpha = field.exp(

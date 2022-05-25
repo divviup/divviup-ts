@@ -27,10 +27,15 @@ export function octetStringToInteger(octetString: Uint8Array): bigint {
 }
 
 /** @internal */
-export function arr<T>(n: number, mapper: (n: number) => T): T[] {
-  const a = new Array(n) as T[];
-  for (let i = 0; i < n; i++) a[i] = mapper(i);
+export function arr<T>(length: number, mapper: (n: number) => T): T[] {
+  const a = new Array(length) as T[];
+  for (let i = 0; i < length; i++) a[i] = mapper(i);
   return a;
+}
+
+/** @internal */
+export function fill<T>(length: number, value: T): T[] {
+  return new Array(length).fill(value) as T[];
 }
 
 /** @internal */
