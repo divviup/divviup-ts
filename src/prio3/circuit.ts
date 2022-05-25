@@ -1,4 +1,4 @@
-import { Field, Vector } from "field";
+import { Field } from "field";
 import { Gadget } from "prio3/gadget";
 import { nextPowerOf2 } from "common";
 
@@ -14,9 +14,9 @@ export interface GenericCircuit {
   gadgets: Gadget[];
   gadgetCalls: number[];
 
-  eval(input: Vector, jointRand: Vector, shares: number): bigint;
-  encode(measurement: unknown): Vector;
-  truncate(input: Vector): Vector;
+  eval(input: bigint[], jointRand: bigint[], shares: number): bigint;
+  encode(measurement: unknown): bigint[];
+  truncate(input: bigint[]): bigint[];
 }
 
 export abstract class Circuit<M> implements GenericCircuit {
@@ -27,9 +27,9 @@ export abstract class Circuit<M> implements GenericCircuit {
   abstract gadgets: Gadget[];
   abstract gadgetCalls: number[];
 
-  abstract eval(input: Vector, jointRand: Vector, shares: number): bigint;
-  abstract encode(measurement: M): Vector;
-  abstract truncate(input: Vector): Vector;
+  abstract eval(input: bigint[], jointRand: bigint[], shares: number): bigint;
+  abstract encode(measurement: M): bigint[];
+  abstract truncate(input: bigint[]): bigint[];
 
   get proveRandLen(): number {
     return this.gadgets.reduce((sum, gadget) => sum + gadget.arity, 0);
@@ -51,7 +51,7 @@ export abstract class Circuit<M> implements GenericCircuit {
     return this.gadgets.reduce((sum, gadget) => sum + gadget.arity + 1, 1);
   }
 
-  ensureValidEval(input: Vector, jointRand: Vector) {
+  ensureValidEval(input: bigint[], jointRand: bigint[]) {
     if (input.length != this.inputLen) {
       throw new Error(
         `expected input length to be ${this.inputLen} but it was ${input.length}`

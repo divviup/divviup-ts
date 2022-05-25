@@ -1,8 +1,12 @@
 import assert from "assert";
-import { Field, Field128, Vector } from "field";
+import { Field, Field128 } from "field";
 import { Flp } from "prio3/flp";
 
-export function runFlp<M>(flp: Flp<M>, input: Vector, shares: number): boolean {
+export function runFlp<M>(
+  flp: Flp<M>,
+  input: bigint[],
+  shares: number
+): boolean {
   const jointRand = flp.field.fillRandom(flp.jointRandLen);
   const proveRand = flp.field.fillRandom(flp.proveRandLen);
   const queryRand = flp.field.fillRandom(flp.queryRandLen);
@@ -33,7 +37,7 @@ class TestFlp implements Flp<number> {
     return n >= min && n < max;
   }
 
-  encode(measurement: number): Vector {
+  encode(measurement: number): bigint[] {
     if (this.inRange(measurement)) {
       return this.field.vec([BigInt(measurement), BigInt(measurement)]);
     } else {
@@ -41,28 +45,28 @@ class TestFlp implements Flp<number> {
     }
   }
 
-  prove(input: Vector, _queryRand: Vector, _jointRand: Vector): Vector {
+  prove(input: bigint[], _queryRand: bigint[], _jointRand: bigint[]): bigint[] {
     return input;
   }
 
-  decide(verifier: Vector): boolean {
+  decide(verifier: bigint[]): boolean {
     if (verifier.length !== 2) return false;
-    const value0 = verifier.getValue(0);
-    return value0 === verifier.getValue(1) && this.inRange(Number(value0));
+    const value0 = verifier[0];
+    return value0 === verifier[1] && this.inRange(Number(value0));
   }
 
   query(
-    input: Vector,
-    _proof: Vector,
-    _queryRand: Vector,
-    _jointRand: Vector,
+    input: bigint[],
+    _proof: bigint[],
+    _queryRand: bigint[],
+    _jointRand: bigint[],
     _shares: number
-  ): Vector {
+  ): bigint[] {
     return input;
   }
 
-  truncate(input: Vector): Vector {
-    return this.field.vec([input.getValue(0)]);
+  truncate(input: bigint[]): bigint[] {
+    return this.field.vec([input[0]]);
   }
 }
 

@@ -41,7 +41,7 @@ describe("common", () => {
     });
 
     it("round trips some large numbers", () => {
-      for (const n of Field128.fillRandom(100).toValues()) {
+      for (const n of Field128.fillRandom(100)) {
         assert.equal(
           n,
           octetStringToInteger(integerToOctetString(n, Field128.encodedSize))

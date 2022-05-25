@@ -1,7 +1,7 @@
 import { Vdaf, VDAF_VERSION } from "vdaf";
 import { PrgConstructor } from "prng";
 import { arr, xor, split, xorInPlace } from "common";
-import { Vector, Field } from "field";
+import { Field } from "field";
 import { Flp } from "prio3/flp";
 
 type PrepareMessage = {
@@ -10,9 +10,9 @@ type PrepareMessage = {
   outboundMessage: Buffer;
 };
 type AggregationParameter = null;
-type AggregatorShare = Vector;
+type AggregatorShare = bigint[];
 type AggregationResult = number[];
-type OutputShare = Vector;
+type OutputShare = bigint[];
 type Prio3Vdaf<Measurement> = Vdaf<
   Measurement,
   AggregationParameter,
@@ -23,8 +23,8 @@ type Prio3Vdaf<Measurement> = Vdaf<
 >;
 
 interface DecodedShare {
-  inputShare: Vector;
-  proofShare: Vector;
+  inputShare: bigint[];
+  proofShare: bigint[];
   blind: Buffer | null;
   hint: Buffer | null;
 }
@@ -32,8 +32,8 @@ interface DecodedShare {
 interface Share {
   blind: Buffer;
   hint: Buffer;
-  inputShare: Vector;
-  proofShare: Vector;
+  inputShare: bigint[];
+  proofShare: bigint[];
   inputShareSeed?: Buffer;
   proofShareSeed?: Buffer;
 }
@@ -56,7 +56,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     len: number,
     seed?: Buffer,
     info?: number
-  ): Promise<Vector> {
+  ): Promise<bigint[]> {
     const { prg, field } = this;
     return prg.expandIntoVec(
       field,
@@ -124,7 +124,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
 
     const queryRand = await this.pseudorandom(flp.queryRandLen, queryRandSeed);
 
-    let jointRand: Vector;
+    let jointRand: bigint[];
     let jointRandSeed: Buffer | null;
     let shareJointRandSeed: Buffer | null;
 
@@ -230,7 +230,6 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
         (agg, share) => field.vecAdd(agg, share),
         field.vec(flp.outputLen)
       )
-      .toValues()
       .map(Number);
   }
 
@@ -244,7 +243,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   }
 
   private decodePrepareMessage(input: Buffer): {
-    verifier: Vector;
+    verifier: bigint[];
     jointRand: Buffer | null;
   } {
     const { flp, prg, field } = this;
@@ -269,7 +268,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   }
 
   private encodePrepareMessage(
-    verifier: Vector,
+    verifier: bigint[],
     jointRandShares: Buffer | null
   ): Buffer {
     const verifierEncoded = this.field.encode(verifier);
@@ -282,10 +281,10 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   }
 
   private async buildLeaderShare(
-    input: Vector,
+    input: bigint[],
     helperShares: Share[]
   ): Promise<{
-    inputShare: Vector;
+    inputShare: bigint[];
     blind: Buffer;
     hint: Buffer;
   }> {

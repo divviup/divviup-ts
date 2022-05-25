@@ -1,4 +1,4 @@
-import { Field, Vector } from "field";
+import { Field } from "field";
 
 export interface Flp<M> {
   jointRandLen: number;
@@ -10,19 +10,19 @@ export interface Flp<M> {
   verifierLen: number;
   field: Field;
 
-  encode(measurement: M): Vector;
+  encode(measurement: M): bigint[];
 
-  prove(input: Vector, proveRand: Vector, jointRand: Vector): Vector;
+  prove(input: bigint[], proveRand: bigint[], jointRand: bigint[]): bigint[];
 
   query(
-    input: Vector,
-    proof: Vector,
-    queryRand: Vector,
-    jointRand: Vector,
+    input: bigint[],
+    proof: bigint[],
+    queryRand: bigint[],
+    jointRand: bigint[],
     shares: number
-  ): Vector;
+  ): bigint[];
 
-  decide(input: Vector): boolean;
+  decide(input: bigint[]): boolean;
 
-  truncate(input: Vector): Vector;
+  truncate(input: bigint[]): bigint[];
 }

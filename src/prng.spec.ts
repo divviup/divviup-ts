@@ -97,6 +97,6 @@ describe("PrgAes128", () => {
       info,
       expandedLen
     );
-    assert.equal(expandedVec.getValue(expandedLen - 1), expectedLastElem);
+    assert.equal(expandedVec[expandedLen - 1], expectedLastElem);
   });
 });

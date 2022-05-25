@@ -1,5 +1,5 @@
 import { AesCmac } from "aes-cmac";
-import { Field, Vector } from "field";
+import { Field } from "field";
 import { nextPowerOf2Big, randomBytes } from "common";
 import { octetStringToInteger } from "common";
 import * as crypto from "crypto";
@@ -33,7 +33,7 @@ export abstract class Prg {
     seed: Buffer,
     info: Buffer,
     length: number
-  ): Promise<Vector> {
+  ): Promise<bigint[]> {
     const m = nextPowerOf2Big(field.modulus) - 1n;
     const prg = new this(seed, info);
     const vec = [];
@@ -57,7 +57,7 @@ export interface PrgConstructor {
     seed: Buffer,
     info: Buffer,
     length: number
-  ): Promise<Vector>;
+  ): Promise<bigint[]>;
 }
 
 /**

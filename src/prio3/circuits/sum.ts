@@ -1,5 +1,5 @@
 import { Circuit } from "prio3/circuit";
-import { Field128, Vector } from "field";
+import { Field128 } from "field";
 import { PolyEval } from "prio3/gadgets/polyEval";
 import { arr } from "common";
 
@@ -21,13 +21,13 @@ export class Sum extends Circuit<number> {
     this.inputLen = bits;
   }
 
-  eval(input: Vector, jointRand: Vector, _shares: number): bigint {
+  eval(input: bigint[], jointRand: bigint[], _shares: number): bigint {
     this.ensureValidEval(input, jointRand);
     const [poly] = this.gadgets;
     const field = this.field;
-    const jointRandZero = jointRand.getValue(0);
+    const jointRandZero = jointRand[0];
 
-    return field.sum(input.toValues(), (value, index) =>
+    return field.sum(input, (value, index) =>
       field.mul(
         field.exp(jointRandZero, BigInt(index)),
         poly.eval(field, field.vec([value]))
@@ -35,7 +35,7 @@ export class Sum extends Circuit<number> {
     );
   }
 
-  encode(measurement: number): Vector {
+  encode(measurement: number): bigint[] {
     if (
       measurement !== Math.floor(measurement) ||
       measurement < 0 ||
@@ -53,10 +53,10 @@ export class Sum extends Circuit<number> {
     );
   }
 
-  truncate(input: Vector): Vector {
+  truncate(input: bigint[]): bigint[] {
     const field = this.field;
     return field.vec([
-      field.sum(input.toValues(), (value, index) =>
+      field.sum(input, (value, index) =>
         field.mul(field.exp(2n, BigInt(index)), value)
       ),
     ]);

@@ -1,4 +1,4 @@
-import { Field128, Vector } from "field";
+import { Field128 } from "field";
 import { Vdaf } from "vdaf";
 import assert from "assert";
 import { arr, randomBytes, zip } from "common";
@@ -9,8 +9,8 @@ type PrepareMessage = {
   encodedInputShare: Buffer;
 };
 type AggregationParameter = null;
-type AggregatorShare = Vector;
-type OutputShare = Vector;
+type AggregatorShare = bigint[];
+type OutputShare = bigint[];
 type AggregationResult = number;
 type Measurement = number;
 type TestVdaf = Vdaf<
@@ -59,7 +59,7 @@ export class VdafTest implements TestVdaf {
 
   measurementToInputShares(measurement: Measurement): Promise<Buffer[]> {
     const { field } = this;
-    const helperShares = field.fillRandom(this.shares - 1).toValues();
+    const helperShares = field.fillRandom(this.shares - 1);
 
     const leaderShare = helperShares.reduce(
       (ls, hs) => field.sub(ls, hs),
@@ -90,12 +90,12 @@ export class VdafTest implements TestVdaf {
     inbound: Buffer | null
   ):
     | { prepareMessage: PrepareMessage; prepareShare: Buffer }
-    | { outputShare: Vector } {
+    | { outputShare: bigint[] } {
     if (!inbound) {
       return { prepareMessage, prepareShare: prepareMessage.encodedInputShare };
     }
 
-    const measurement = Number(this.field.decode(inbound).getValue(0));
+    const measurement = Number(this.field.decode(inbound)[0]);
     const { min, max } = this.inputRange;
     if (measurement <= min || measurement > max) {
       throw new Error(`measurement ${measurement} was not in [${min}, ${max})`);
@@ -110,23 +110,22 @@ export class VdafTest implements TestVdaf {
   ): Buffer {
     const { field } = this;
     return field.encode(
-      field.vec([
-        field.sum(prepShares, (encoded) => field.decode(encoded).getValue(0)),
-      ])
+      field.vec([field.sum(prepShares, (encoded) => field.decode(encoded)[0])])
     );
   }
 
-  outputSharesToAggregatorShare(_aggParam: null, outShares: Vector[]): Vector {
-    return this.field.vec([
-      this.field.sum(outShares, (share) => share.getValue(0)),
-    ]);
+  outputSharesToAggregatorShare(
+    _aggParam: null,
+    outShares: bigint[][]
+  ): bigint[] {
+    return this.field.vec([this.field.sum(outShares, (share) => share[0])]);
   }
 
   aggregatorSharesToResult(
     _aggParam: AggregationParameter,
     aggShares: AggregatorShare[]
   ): AggregationResult {
-    return Number(this.field.sum(aggShares, (share) => share.getValue(0)));
+    return Number(this.field.sum(aggShares, (share) => share[0]));
   }
 }
 
