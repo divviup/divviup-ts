@@ -67,8 +67,8 @@ export class VdafTest implements TestVdaf {
     );
 
     return Promise.resolve([
-      field.encode(field.vec([leaderShare])),
-      ...helperShares.map((hs) => field.encode(field.vec([hs]))),
+      field.encode([leaderShare]),
+      ...helperShares.map((hs) => field.encode([hs])),
     ]);
   }
 
@@ -109,16 +109,16 @@ export class VdafTest implements TestVdaf {
     prepShares: Buffer[]
   ): Buffer {
     const { field } = this;
-    return field.encode(
-      field.vec([field.sum(prepShares, (encoded) => field.decode(encoded)[0])])
-    );
+    return field.encode([
+      field.sum(prepShares, (encoded) => field.decode(encoded)[0]),
+    ]);
   }
 
   outputSharesToAggregatorShare(
     _aggParam: null,
     outShares: bigint[][]
   ): bigint[] {
-    return this.field.vec([this.field.sum(outShares, (share) => share[0])]);
+    return [this.field.sum(outShares, (share) => share[0])];
   }
 
   aggregatorSharesToResult(

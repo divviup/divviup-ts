@@ -30,7 +30,7 @@ export class Sum extends Circuit<number> {
     return field.sum(input, (value, index) =>
       field.mul(
         field.exp(jointRandZero, BigInt(index)),
-        poly.eval(field, field.vec([value]))
+        poly.eval(field, [value])
       )
     );
   }
@@ -48,17 +48,15 @@ export class Sum extends Circuit<number> {
       );
     }
 
-    return this.field.vec(
-      arr(this.inputLen, (index) => BigInt((measurement >> index) & 1))
-    );
+    return arr(this.inputLen, (index) => BigInt((measurement >> index) & 1));
   }
 
   truncate(input: bigint[]): bigint[] {
     const field = this.field;
-    return field.vec([
+    return [
       field.sum(input, (value, index) =>
         field.mul(field.exp(2n, BigInt(index)), value)
       ),
-    ]);
+    ];
   }
 }

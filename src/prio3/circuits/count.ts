@@ -12,12 +12,10 @@ export class Count extends Circuit<boolean> {
 
   eval(input: bigint[], jointRand: bigint[], _shares: number): bigint {
     this.ensureValidEval(input, jointRand);
-    const inputZero = input[0];
+    const { field } = this;
+    const [inputZero] = input;
     const [mul] = this.gadgets;
-    return this.field.sub(
-      mul.eval(this.field, this.field.vec([inputZero, inputZero])),
-      inputZero
-    );
+    return field.sub(mul.eval(field, [inputZero, inputZero]), inputZero);
   }
 
   encode(measurement: boolean): bigint[] {
@@ -25,7 +23,7 @@ export class Count extends Circuit<boolean> {
       throw new Error("expected count measurement to be a boolean");
     }
 
-    return this.field.vec([measurement ? 1n : 0n]);
+    return [measurement ? 1n : 0n];
   }
 
   truncate(input: bigint[]): bigint[] {

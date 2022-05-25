@@ -45,28 +45,24 @@ export class FlpGeneric<M> implements Flp<M> {
     const { field } = this;
     circuit.eval(input, jointRand, 1);
 
-    return field.vec(
-      circuit.gadgets.flatMap((gadget) => {
-        const p = gadget.wire[0].length;
+    return circuit.gadgets.flatMap((gadget) => {
+      const p = gadget.wire[0].length;
 
-        const alpha = field.exp(
-          this.field.generator,
-          this.field.genOrder / BigInt(p)
-        );
+      const alpha = field.exp(
+        this.field.generator,
+        this.field.genOrder / BigInt(p)
+      );
 
-        const wireInputs = field.vec(
-          arr(p, (k) => field.exp(alpha, BigInt(k)))
-        );
+      const wireInputs = arr(p, (k) => field.exp(alpha, BigInt(k)));
 
-        const wirePolys = arr(gadget.arity, (j) =>
-          this.field.interpolate(wireInputs, field.vec(gadget.wire[j]))
-        );
+      const wirePolys = arr(gadget.arity, (j) =>
+        this.field.interpolate(wireInputs, gadget.wire[j])
+      );
 
-        const gadgetPoly = gadget.evalPoly(field, wirePolys);
+      const gadgetPoly = gadget.evalPoly(field, wirePolys);
 
-        return gadget.wire.map((wire) => wire[0]).concat(gadgetPoly);
-      })
-    );
+      return gadget.wire.map((wire) => wire[0]).concat(gadgetPoly);
+    });
   }
 
   encode(measurement: M): bigint[] {
@@ -94,32 +90,27 @@ export class FlpGeneric<M> implements Flp<M> {
       );
     }
 
-    return field.vec(
-      circuit.gadgets.reduce(
-        (verifier, gadget, index) => {
-          const t = queryRand[index];
-          const p = gadget.wire[0].length;
+    return circuit.gadgets.reduce(
+      (verifier, gadget, index) => {
+        const t = queryRand[index];
+        const p = gadget.wire[0].length;
 
-          if (field.exp(t, BigInt(p)) == 1n) {
-            throw new Error(
-              "Degenerate point would leak gadget output to the verifier"
-            );
-          }
-
-          const wireInput = field.vec(
-            arr(p, (k) => field.exp(gadget.alpha, BigInt(k)))
+        if (field.exp(t, BigInt(p)) == 1n) {
+          throw new Error(
+            "Degenerate point would leak gadget output to the verifier"
           );
+        }
 
-          return [
-            ...verifier,
-            ...gadget.wire.map((wire) =>
-              field.evalPoly(field.interpolate(wireInput, field.vec(wire)), t)
-            ),
-            field.evalPoly(gadget.gadgetPoly, t),
-          ];
-        },
-        [v]
-      )
+        const wireInput = arr(p, (k) => field.exp(gadget.alpha, BigInt(k)));
+        return [
+          ...verifier,
+          ...gadget.wire.map((wire) =>
+            field.evalPoly(field.interpolate(wireInput, wire), t)
+          ),
+          field.evalPoly(gadget.gadgetPoly, t),
+        ];
+      },
+      [v]
     );
   }
 
@@ -138,7 +129,7 @@ export class FlpGeneric<M> implements Flp<M> {
     for (const gadget of this.circuit.gadgets) {
       const x = verifier.slice(verifierIndex, (verifierIndex += gadget.arity));
       const y = verifier[verifierIndex];
-      const z = gadget.eval(this.field, this.field.vec(x));
+      const z = gadget.eval(this.field, x);
       if (z != y) {
         return false;
       }

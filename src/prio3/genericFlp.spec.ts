@@ -16,7 +16,7 @@ function testGadget(gadget: Gadget, field: Field, testLength: number) {
   const inputPoly = arr(gadget.arity, () => field.fillRandom(testLength));
   const input = inputPoly.map((poly) => field.evalPoly(poly, evalAt));
   const outPoly = gadget.evalPoly(field, inputPoly);
-  const expected = gadget.eval(field, field.vec(input));
+  const expected = gadget.eval(field, input);
   const actual = field.evalPoly(outPoly, evalAt);
 
   assert.equal(actual, expected);
@@ -55,9 +55,9 @@ class TestMultiGadget extends Circuit<number> {
     this.ensureValidEval(input, jointRand);
     const field = this.field;
     const [g0, g1] = this.gadgets;
-    const x = g0.eval(field, field.vec([input[0], input[0]]));
-    const y = g1.eval(field, field.vec([input[0], x]));
-    const z = g1.eval(field, field.vec([x, y]));
+    const x = g0.eval(field, [input[0], input[0]]);
+    const y = g1.eval(field, [input[0], x]);
+    const z = g1.eval(field, [x, y]);
     return z;
   }
 
@@ -65,7 +65,7 @@ class TestMultiGadget extends Circuit<number> {
     if (![0, 1].includes(measurement)) {
       throw new Error("measurement expected to be 1 or 0");
     }
-    return this.field.vec([BigInt(measurement)]);
+    return [BigInt(measurement)];
   }
 
   truncate(input: bigint[]): bigint[] {
@@ -87,7 +87,7 @@ describe("flp generic", () => {
     it("examples", () => {
       testCircuit(count, count.encode(false), true);
       testCircuit(count, count.encode(true), true);
-      testCircuit(count, count.field.vec([1337n]), false);
+      testCircuit(count, [1337n], false);
     });
   });
 

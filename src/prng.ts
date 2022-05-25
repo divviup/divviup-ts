@@ -43,7 +43,7 @@ export abstract class Prg {
         vec.push(x);
       }
     }
-    return field.vec(vec);
+    return vec;
   }
 }
 

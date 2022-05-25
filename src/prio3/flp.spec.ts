@@ -39,7 +39,7 @@ class TestFlp implements Flp<number> {
 
   encode(measurement: number): bigint[] {
     if (this.inRange(measurement)) {
-      return this.field.vec([BigInt(measurement), BigInt(measurement)]);
+      return [BigInt(measurement), BigInt(measurement)];
     } else {
       throw new Error("encode");
     }
@@ -66,7 +66,7 @@ class TestFlp implements Flp<number> {
   }
 
   truncate(input: bigint[]): bigint[] {
-    return this.field.vec([input[0]]);
+    return [input[0]];
   }
 }
 
@@ -81,6 +81,6 @@ describe("flp", () => {
     const flp = new TestFlp128();
     assert(runFlp(flp, flp.encode(0), 1));
     assert(runFlp(flp, flp.encode(4), 1));
-    assert(!runFlp(flp, Field128.vec([BigInt(1337)]), 1));
+    assert(!runFlp(flp, [BigInt(1337)], 1));
   });
 });
