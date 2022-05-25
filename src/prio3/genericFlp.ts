@@ -1,6 +1,6 @@
 import { arr } from "common";
 import { Flp } from "prio3/flp";
-import { Field, Vector } from "field";
+import { Field } from "field";
 import { Circuit } from "prio3/circuit";
 import { Query } from "prio3/circuits/query";
 import { Proof } from "prio3/circuits/proof";
@@ -40,7 +40,7 @@ export class FlpGeneric<M> implements Flp<M> {
     return this.circuit.field;
   }
 
-  prove(input: Vector, proveRand: Vector, jointRand: Vector): Vector {
+  prove(input: bigint[], proveRand: bigint[], jointRand: bigint[]): bigint[] {
     const circuit = new Proof(this.circuit, proveRand);
     const { field } = this;
     circuit.eval(input, jointRand, 1);
@@ -64,26 +64,26 @@ export class FlpGeneric<M> implements Flp<M> {
 
         const gadgetPoly = gadget.evalPoly(field, wirePolys);
 
-        return gadget.wire.map((wire) => wire[0]).concat(gadgetPoly.toValues());
+        return gadget.wire.map((wire) => wire[0]).concat(gadgetPoly);
       })
     );
   }
 
-  encode(measurement: M): Vector {
+  encode(measurement: M): bigint[] {
     return this.circuit.encode(measurement);
   }
 
-  truncate(input: Vector): Vector {
+  truncate(input: bigint[]): bigint[] {
     return this.circuit.truncate(input);
   }
 
   query(
-    input: Vector,
-    proof: Vector,
-    queryRand: Vector,
-    jointRand: Vector,
+    input: bigint[],
+    proof: bigint[],
+    queryRand: bigint[],
+    jointRand: bigint[],
     shares: number
-  ): Vector {
+  ): bigint[] {
     const circuit = new Query(this.circuit, proof);
     const v = circuit.eval(input, jointRand, shares);
     const { field } = this;
@@ -97,7 +97,7 @@ export class FlpGeneric<M> implements Flp<M> {
     return field.vec(
       circuit.gadgets.reduce(
         (verifier, gadget, index) => {
-          const t = queryRand.getValue(index);
+          const t = queryRand[index];
           const p = gadget.wire[0].length;
 
           if (field.exp(t, BigInt(p)) == 1n) {
@@ -123,25 +123,21 @@ export class FlpGeneric<M> implements Flp<M> {
     );
   }
 
-  decide(verifier: Vector): boolean {
+  decide(verifier: bigint[]): boolean {
     if (verifier.length !== this.circuit.verifierLen) {
       throw new Error(
         `expected verifier of length ${this.circuit.verifierLen} but got ${verifier.length}`
       );
     }
 
-    const verifierData = verifier.toValues();
-    if (verifierData[0] !== 0n) {
+    if (verifier[0] !== 0n) {
       return false;
     }
     let verifierIndex = 1;
 
     for (const gadget of this.circuit.gadgets) {
-      const x = verifierData.slice(
-        verifierIndex,
-        (verifierIndex += gadget.arity)
-      );
-      const y = verifierData[verifierIndex];
+      const x = verifier.slice(verifierIndex, (verifierIndex += gadget.arity));
+      const y = verifier[verifierIndex];
       const z = gadget.eval(this.field, this.field.vec(x));
       if (z != y) {
         return false;

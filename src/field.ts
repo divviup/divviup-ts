@@ -1,4 +1,4 @@
-import { FiniteField, createPrimeField, Vector } from "@guildofweavers/galois";
+import { FiniteField, createPrimeField } from "@guildofweavers/galois";
 export { Vector } from "@guildofweavers/galois";
 import { integerToOctetString, octetStringToInteger, arr } from "common";
 
@@ -37,20 +37,24 @@ export class Field {
     return this.#finiteField.exp(b, exp);
   }
 
-  evalPoly(p: Vector, x: bigint): bigint {
-    return this.#finiteField.evalPolyAt(p, x);
+  evalPoly(p: bigint[], x: bigint): bigint {
+    const pVec = this.#finiteField.newVectorFrom(p);
+    return this.#finiteField.evalPolyAt(pVec, x);
   }
 
-  vec(data: number | bigint[]): Vector {
+  vec(data: number | bigint[]): bigint[] {
     if (typeof data === "number") {
-      return this.#finiteField.newVectorFrom(arr(data, () => 0n));
+      return arr(data, () => 0n);
     } else {
-      return this.#finiteField.newVectorFrom(data.map((d) => this.mod(d)));
+      return data.map((d) => this.mod(d));
     }
   }
 
-  interpolate(xs: Vector, ys: Vector): Vector {
-    return this.#finiteField.interpolate(xs, ys);
+  interpolate(xs: bigint[], ys: bigint[]): bigint[] {
+    const xsVec = this.#finiteField.newVectorFrom(xs);
+    const ysVec = this.#finiteField.newVectorFrom(ys);
+
+    return this.#finiteField.interpolate(xsVec, ysVec).toValues();
   }
 
   add(a: bigint, b: bigint): bigint {
@@ -61,29 +65,37 @@ export class Field {
     return this.#finiteField.mul(a, b);
   }
 
-  mulPolys(a: Vector, b: Vector): Vector {
-    return this.#finiteField.mulPolys(a, b);
+  mulPolys(a: bigint[], b: bigint[]): bigint[] {
+    const aVec = this.#finiteField.newVectorFrom(a);
+    const bVec = this.#finiteField.newVectorFrom(b);
+
+    return this.#finiteField.mulPolys(aVec, bVec).toValues();
   }
 
   randomElement(): bigint {
     return this.#finiteField.rand();
   }
 
-  encode(data: Vector): Buffer {
+  encode(data: bigint[]): Buffer {
     return Buffer.concat(
-      data.toValues().map((x) => integerToOctetString(x, this.encodedSize))
+      data.map((x) => integerToOctetString(x, this.encodedSize))
     );
   }
 
-  vecSub(a: Vector, b: Vector): Vector {
-    return this.#finiteField.subVectorElements(a, b);
+  vecSub(a: bigint[], b: bigint[]): bigint[] {
+    const aVec = this.#finiteField.newVectorFrom(a);
+    const bVec = this.#finiteField.newVectorFrom(b);
+
+    return this.#finiteField.subVectorElements(aVec, bVec).toValues();
   }
 
-  vecAdd(a: Vector, b: Vector): Vector {
-    return this.#finiteField.addVectorElements(a, b);
+  vecAdd(a: bigint[], b: bigint[]): bigint[] {
+    const aVec = this.#finiteField.newVectorFrom(a);
+    const bVec = this.#finiteField.newVectorFrom(b);
+    return this.#finiteField.addVectorElements(aVec, bVec).toValues();
   }
 
-  decode(encoded: Buffer): Vector {
+  decode(encoded: Buffer): bigint[] {
     const encodedSize = this.encodedSize;
     if (encoded.length % encodedSize !== 0) {
       throw new Error(
@@ -100,7 +112,7 @@ export class Field {
     );
   }
 
-  fillRandom(length: number): Vector {
+  fillRandom(length: number): bigint[] {
     return this.vec(arr(length, () => this.#finiteField.rand()));
   }
 

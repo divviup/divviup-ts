@@ -1,5 +1,5 @@
 import { Circuit } from "prio3/circuit";
-import { Field128, Vector } from "field";
+import { Field128 } from "field";
 import { PolyEval } from "prio3/gadgets/polyEval";
 
 export class Histogram extends Circuit<number> {
@@ -21,19 +21,18 @@ export class Histogram extends Circuit<number> {
     this.outputLen = buckets.length + 1;
   }
 
-  eval(input: Vector, jointRand: Vector, shares: number): bigint {
+  eval(input: bigint[], jointRand: bigint[], shares: number): bigint {
     this.ensureValidEval(input, jointRand);
-    const inputValues = input.toValues();
-    const [firstRand, secondRand] = jointRand.toValues();
+    const [firstRand, secondRand] = jointRand;
     const [gadget] = this.gadgets;
     const f = this.field;
 
-    const rangeCheck = f.sum(inputValues, (value, index) =>
+    const rangeCheck = f.sum(input, (value, index) =>
       f.mul(f.exp(firstRand, BigInt(index)), gadget.eval(f, f.vec([value])))
     );
 
     const sumCheck = f.sum(
-      [...inputValues, f.mul(-1n, f.exp(BigInt(shares), -1n))],
+      [...input, f.mul(-1n, f.exp(BigInt(shares), -1n))],
       (n) => n
     );
 
@@ -43,14 +42,14 @@ export class Histogram extends Circuit<number> {
     );
   }
 
-  encode(measurement: number): Vector {
+  encode(measurement: number): bigint[] {
     const boundaries = [...this.buckets, Infinity];
     const encoded = boundaries.map(() => 0n);
     encoded[boundaries.findIndex((b) => measurement <= b)] = 1n;
     return this.field.vec(encoded);
   }
 
-  truncate(input: Vector): Vector {
+  truncate(input: bigint[]): bigint[] {
     return input;
   }
 }

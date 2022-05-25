@@ -1,5 +1,5 @@
 import { arr } from "common";
-import { Field, Vector } from "field";
+import { Field } from "field";
 import { Gadget } from "prio3/gadget";
 
 function stripPolynomial(polynomial: bigint[]): bigint[] {
@@ -25,13 +25,13 @@ export class PolyEval extends Gadget {
     this.degree = polynomial.length - 1;
   }
 
-  eval(field: Field, input: Vector): bigint {
+  eval(field: Field, input: bigint[]): bigint {
     this.ensureArity(input);
 
-    return field.evalPoly(field.vec(this.polynomial), input.getValue(0));
+    return field.evalPoly(field.vec(this.polynomial), input[0]);
   }
 
-  evalPoly(field: Field, inputPolynomial: Vector[]): Vector {
+  evalPoly(field: Field, inputPolynomial: bigint[][]): bigint[] {
     this.ensurePolyArity(inputPolynomial);
 
     const out = arr(this.degree * inputPolynomial[0].length, () => 0n);
@@ -41,10 +41,7 @@ export class PolyEval extends Gadget {
 
     for (let i = 1; i < this.polynomial.length; i++) {
       for (let j = 0; j < x.length; j++) {
-        out[j] = field.add(
-          out[j],
-          field.mul(this.polynomial[i], x.getValue(j))
-        );
+        out[j] = field.add(out[j], field.mul(this.polynomial[i], x[j]));
       }
 
       x = field.mulPolys(x, inputPolynomial[0]);

@@ -1,4 +1,4 @@
-import { Field, Vector } from "field";
+import { Field } from "field";
 import { arr, nextPowerOf2 } from "common";
 import { Gadget } from "prio3/gadget";
 
@@ -17,17 +17,17 @@ export class Proof extends Gadget {
     ]);
   }
 
-  eval(field: Field, input: Vector): bigint {
+  eval(field: Field, input: bigint[]): bigint {
     this.callCount += 1;
 
     this.wire.forEach((wire, index) => {
-      wire[this.callCount] = input.getValue(index);
+      wire[this.callCount] = input[index];
     });
 
     return this.gadget.eval(field, input);
   }
 
-  evalPoly(field: Field, inputPoly: Vector[]): Vector {
+  evalPoly(field: Field, inputPoly: bigint[][]): bigint[] {
     return this.gadget.evalPoly(field, inputPoly);
   }
 

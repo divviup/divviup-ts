@@ -1,18 +1,18 @@
-import { Field, Vector } from "field";
+import { Field } from "field";
 import { nextPowerOf2, arr } from "common";
 import { Gadget } from "prio3/gadget";
 
 export class Query extends Gadget {
   wire: bigint[][];
   gadget: Gadget;
-  gadgetPoly: Vector;
+  gadgetPoly: bigint[];
   alpha: bigint;
   callCount = 0;
 
   constructor(
     field: Field,
     wireSeeds: bigint[],
-    gadgetPoly: Vector,
+    gadgetPoly: bigint[],
     gadget: Gadget,
     calls: number
   ) {
@@ -32,11 +32,11 @@ export class Query extends Gadget {
     );
   }
 
-  eval(field: Field, input: Vector): bigint {
+  eval(field: Field, input: bigint[]): bigint {
     this.callCount += 1;
 
     this.wire.forEach((wire, index) => {
-      wire[this.callCount] = input.getValue(index);
+      wire[this.callCount] = input[index];
     });
 
     return field.evalPoly(
@@ -45,7 +45,7 @@ export class Query extends Gadget {
     );
   }
 
-  evalPoly(_field: Field, _inputPoly: unknown): Vector {
+  evalPoly(_field: Field, _inputPoly: unknown): bigint[] {
     throw new Error("evalPoly is not implemented for QueryGadget");
   }
 

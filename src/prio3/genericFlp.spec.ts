@@ -1,5 +1,5 @@
 import { Gadget } from "prio3/gadget";
-import { Vector, Field, Field128, Field64 } from "field";
+import { Field, Field128, Field64 } from "field";
 import { Count } from "prio3/circuits/count";
 import { Sum } from "prio3/circuits/sum";
 import { Histogram } from "prio3/circuits/histogram";
@@ -29,7 +29,11 @@ function testCircuitGadgets(circuit: GenericCircuit) {
   });
 }
 
-function testCircuit<M>(circuit: Circuit<M>, input: Vector, expected: boolean) {
+function testCircuit<M>(
+  circuit: Circuit<M>,
+  input: bigint[],
+  expected: boolean
+) {
   assert.equal(input.length, circuit.inputLen);
   assert.equal(circuit.truncate(input).length, circuit.outputLen);
   const jointRand = circuit.field.fillRandom(circuit.jointRandLen);
@@ -47,24 +51,24 @@ class TestMultiGadget extends Circuit<number> {
   jointRandLen = 0;
   outputLen = 1;
 
-  eval(input: Vector, jointRand: Vector, _shares: number): bigint {
+  eval(input: bigint[], jointRand: bigint[], _shares: number): bigint {
     this.ensureValidEval(input, jointRand);
     const field = this.field;
     const [g0, g1] = this.gadgets;
-    const x = g0.eval(field, field.vec([input.getValue(0), input.getValue(0)]));
-    const y = g1.eval(field, field.vec([input.getValue(0), x]));
+    const x = g0.eval(field, field.vec([input[0], input[0]]));
+    const y = g1.eval(field, field.vec([input[0], x]));
     const z = g1.eval(field, field.vec([x, y]));
     return z;
   }
 
-  encode(measurement: number): Vector {
+  encode(measurement: number): bigint[] {
     if (![0, 1].includes(measurement)) {
       throw new Error("measurement expected to be 1 or 0");
     }
     return this.field.vec([BigInt(measurement)]);
   }
 
-  truncate(input: Vector): Vector {
+  truncate(input: bigint[]): bigint[] {
     if (input.length !== 1) {
       throw new Error("expected input length to be 1");
     }
