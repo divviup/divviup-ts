@@ -25,10 +25,6 @@ export class Field {
     );
   }
 
-  mod(i: bigint): bigint {
-    return i % this.modulus;
-  }
-
   sub(x: bigint, y: bigint): bigint {
     return this.#finiteField.sub(x, y);
   }
