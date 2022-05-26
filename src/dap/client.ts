@@ -306,7 +306,7 @@ export class DAPClient<
         if (!response.ok) {
           throw await DAPError.fromResponse(
             response,
-            `makeKeyConfigurationRequest received a ${response.status} response, aborting`
+            `fetchKeyConfiguration received a ${response.status} response, aborting`
           );
         }
 
