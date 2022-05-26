@@ -253,7 +253,7 @@ describe("DAPClient", () => {
       assert.equal(report.taskID, client.taskId);
       assert(
         Math.floor(Date.now() / 1000) - Number(report.nonce.time) <
-          1 /*1 second delta*/
+        1 /*1 second delta*/
       );
 
       const aad = Buffer.from([
@@ -286,6 +286,36 @@ describe("DAPClient", () => {
           )
         );
       }
+    });
+
+    it("generates a report that Janus can aggregate", async () => {
+      const client = new DAPClient({
+        type: "histogram",
+        // bits: 16, // "sum" only
+        buckets: [1, 10, 100, 1000], // "histogram" only
+        leader: "https://a.example.com",
+        helper: "https://b.example.com",
+        taskId: "qKjkrnvLh5z2OxBTjMMMSkudVpJX_ESpbsK0a6IIqKo",
+      });
+
+      client.aggregators[0].hpkeConfig = new HpkeConfig(
+        203,
+        hpke.Kem.X25519HkdfSha256,
+        hpke.Kdf.Sha256,
+        hpke.Aead.AesGcm128,
+        Buffer.from("e093d43d77c3970f69d41c27158031e20f43e4314d0308e8769713401ee54a15", "hex"),
+      );
+      client.aggregators[1].hpkeConfig = new HpkeConfig(
+        7,
+        hpke.Kem.X25519HkdfSha256,
+        hpke.Kdf.Sha256,
+        hpke.Aead.AesGcm128,
+        Buffer.from("f39638346735415b9dd4e0e19ed5a9442ba73998550ba87c3f15b9834466f249", "hex"),
+      );
+
+      const report = await client.generateReport(42);
+      let reportBuf = report.encode()
+      console.log("Encoded report: %s", reportBuf.toString("hex"));
     });
 
     it("fails if the measurement is not valid", async () => {
