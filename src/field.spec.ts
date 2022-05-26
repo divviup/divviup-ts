@@ -28,7 +28,7 @@ function testField(field: Field, name: string) {
       });
     });
 
-    it("does not decode when the field is not a multiple of encodedSize", () => {
+    it("does not decode when the input length is not a multiple of encodedSize", () => {
       const oneByteTooLong = Buffer.alloc(field.encodedSize + 1, 10);
       assert.throws(() => field.decode(oneByteTooLong));
 
