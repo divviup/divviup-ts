@@ -177,10 +177,8 @@ export class DAPClient<
   /**
      Produce a {@linkcode Report} from the supplied Measurement
      
-     This method depends on the key configuration already having been
-     fetched with {@linkcode DAPClient.fetchKeyConfiguration}. It will
-     throw an error if you attempt to call it without having
-     previously fetched key configuration.
+     This may make network requests to fetch key configuration from the
+     leader and helper, if needed.
 
      @param measurement The type of this argument will be determined
      by the Vdaf that this client is constructed for.
@@ -251,9 +249,10 @@ export class DAPClient<
      needed), generate a report from the provided measurement and send
      that report to the leader aggregator.
 
-     This is identical to calling {@linkcode
-     DAPClient.fetchKeyConfiguration}, {@linkcode
-     DAPClient.generateReport}, and {@linkcode DAPClient.sendReport}.
+     This will call {@linkcode DAPClient.generateReport} and
+     {@linkcode DAPClient.sendReport}, while automatically handling
+     any errors due to server key rotation with re-encryption and a
+     retry.
 
      @throws {@linkcode DAPError} if any http response is not Ok or
      `Error` if there is an issue generating the report
