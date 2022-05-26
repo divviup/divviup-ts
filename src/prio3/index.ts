@@ -264,12 +264,12 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
 
   private encodePrepareMessage(
     verifier: bigint[],
-    jointRandShares: Buffer | null
+    jointRandShare: Buffer | null
   ): Buffer {
     const verifierEncoded = this.field.encode(verifier);
 
-    if (this.flp.jointRandLen > 0 && jointRandShares) {
-      return Buffer.concat([verifierEncoded, jointRandShares]);
+    if (this.flp.jointRandLen > 0 && jointRandShare) {
+      return Buffer.concat([verifierEncoded, jointRandShare]);
     } else {
       return verifierEncoded;
     }
