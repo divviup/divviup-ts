@@ -34,7 +34,7 @@ export class PolyEval extends Gadget {
   evalPoly(field: Field, inputPolynomial: bigint[][]): bigint[] {
     this.ensurePolyArity(inputPolynomial);
 
-    const out = fill(this.degree * inputPolynomial[0].length, 0n);
+    const out = fill(this.degree * (inputPolynomial[0].length - 1) + 1, 0n);
     out[0] = this.polynomial[0];
 
     let x = inputPolynomial[0];
