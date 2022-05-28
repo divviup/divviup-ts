@@ -4,3 +4,4 @@ docs
 .log
 .nyc_output
 coverage
+.parcel-cache

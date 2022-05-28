@@ -2,6 +2,6 @@
   "cache": false,
   "extension": [".ts"],
   "check-coverage": true,
-  "include": ["src/**"],
-  "exclude": ["src/**/*.spec.*"]
+  "include": ["packages/**/src/**"],
+  "exclude": ["packages/**/src/**/*.spec.*"]
 }
