@@ -5,18 +5,14 @@
     "target": "ES2022",
     "lib": ["dom", "es2020"],
     "preserveConstEnums": true,
-    "rootDirs": ["src", "scripts"],
-    "outDir": "dist",
-    "baseUrl": "src",
     "esModuleInterop": true,
+    "declaration": true,
     "plugins": [
       {
         "name": "typescript-eslint-language-service"
       }
     ]
   },
-  "include": ["src/**/*", "scripts/*"],
-  "exclude": ["node_modules"],
   "ts-node": {
     "require": ["tsconfig-paths/register"]
   }
