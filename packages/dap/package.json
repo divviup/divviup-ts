@@ -1,0 +1,53 @@
+{
+  "name": "@divviup/dap",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "source": "src/index.ts",
+  "module": "dist/module.js",
+  "browser": "dist/browser.js",
+  "scripts": {
+    "clean": "rm -rf dist/*",
+    "build:clean": "npm run clean && npm run build",
+    "build": "npm run build:web && parcel build",
+    "build:web": "esbuild browser=src/index.ts --bundle --loader:.wasm=binary --format=esm --outdir=dist --sourcemap --minify",
+    "docs": "typedoc src",
+    "test": "ts-mocha \"src/**/*.spec.ts\"  -p ./tsconfig.json",
+    "lint": "eslint src --ext .ts && prettier -c src",
+    "format": "prettier -w src",
+    "test:coverage": "nyc --reporter=lcov --reporter=html --reporter=text --reporter=text-summary npm test",
+    "ci": "npm run lint && npm run test:coverage",
+    "benchmark": "ts-node scripts/benchmarks.ts"
+  },
+  "license": "MPL-2.0",
+  "dependencies": {
+    "@divviup/common": "../common",
+    "@divviup/prio3": "../prio3",
+    "@divviup/vdaf": "../vdaf",
+    "hpke": "file:../../hpke-0.2.0.tgz"
+  },
+  "devDependencies": {
+    "@divviup/prg": "../prg",
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "@tsconfig/node18": "^1.0.1",
+    "@types/expect": "^24.3.0",
+    "@types/mocha": "^9.1.1",
+    "@types/node": "^18.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.30.5",
+    "@typescript-eslint/parser": "^5.30.5",
+    "eslint": "^8.19.0",
+    "eslint-config-prettier": "^8.5.0",
+    "microtime": "^3.1.0",
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0",
+    "prettier": "^2.7.1",
+    "source-map-support": "^0.5.21",
+    "ts-mocha": "^10.0.0",
+    "ts-node": "^10.8.2",
+    "tsconfig-paths": "^4.0.0",
+    "typedoc": "^0.23.5",
+    "typescript": "^4.7.4",
+    "typescript-eslint-language-service": "^5.0.0"
+  }
+}
