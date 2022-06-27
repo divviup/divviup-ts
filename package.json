@@ -16,7 +16,7 @@
   "license": "MPL-2.0",
   "dependencies": {
     "@guildofweavers/galois": "^0.4.22",
-    "aes-cmac": "^1.0.3",
+    "aes-cmac": "^2.0.0",
     "hpke": "^0.2.1",
     "undici": "^5.5.1"
   },
