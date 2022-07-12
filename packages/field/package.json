@@ -16,7 +16,7 @@
     "test": "ts-mocha \"src/**/*.spec.ts\" -p ./tsconfig.json",
     "lint": "eslint src --ext .ts && prettier -c src",
     "format": "prettier -w src",
-    "test:coverage": "nyc --reporter=lcov --reporter=html --reporter=text --reporter=text-summary npm test",
+    "test:coverage": "nyc --cwd=../.. --no-clean --reporter=lcov --reporter=text --reporter=json npm test",
     "ci": "npm run lint && npm run test:coverage",
     "benchmark": "ts-node scripts/benchmarks.ts"
   },

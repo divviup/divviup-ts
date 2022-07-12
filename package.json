@@ -11,7 +11,7 @@
   "scripts": {
     "test": "lerna run test",
     "build": "lerna run build",
-    "test:coverage": "lerna run test:coverage",
+    "test:coverage": "rm -rf coverage && rm -rf .nyc_output && lerna run test:coverage",
     "lint": "lerna run lint"
   },
   "devDependencies": {
