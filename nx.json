@@ -12,7 +12,6 @@
           "test",
           "lint",
           "format",
-          "test:coverage",
           "ci",
           "benchmark",
           "build:web",
@@ -24,9 +23,7 @@
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     }
   },
   "affected": {
