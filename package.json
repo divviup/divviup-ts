@@ -17,7 +17,7 @@
   "dependencies": {
     "@guildofweavers/galois": "^0.4.22",
     "aes-cmac": "^1.0.3",
-    "hpke": "^0.2.1",
+    "hpke": "^0.3.0",
     "undici": "^5.8.1"
   },
   "devDependencies": {
