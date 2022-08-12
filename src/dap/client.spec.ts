@@ -63,8 +63,8 @@ function buildParams(): {
   return {
     type: "sum",
     bits: 16,
-    leader: "https://a.example.com",
-    helper: "https://b.example.com",
+    leader: "https://a.example.com/v1",
+    helper: "https://b.example.com/dap/",
     taskId: TaskId.random(),
   };
 }
@@ -150,11 +150,11 @@ describe("DAPClient", () => {
       const [hpkeConfig1, hpkeConfig2] = [buildHpkeConfig(), buildHpkeConfig()];
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(hpkeConfig1),
         ],
 
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(hpkeConfig2),
         ],
       });
@@ -175,10 +175,10 @@ describe("DAPClient", () => {
       const taskId = params.taskId.buffer.toString("base64url");
 
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
           { status: 418 },
         ],
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           { status: 500 },
         ],
       });
@@ -206,13 +206,13 @@ describe("DAPClient", () => {
       const params = buildParams();
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
           {
             contentType: "application/text",
             body: buildHpkeConfig().encode(),
           },
         ],
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           {
             contentType: "application/text",
             body: buildHpkeConfig().encode(),
@@ -316,10 +316,10 @@ describe("DAPClient", () => {
       const params = buildParams();
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(),
         ],
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(),
         ],
       });
@@ -333,7 +333,7 @@ describe("DAPClient", () => {
   describe("sending reports", () => {
     it("can succeed", async () => {
       const fetch = mockFetch({
-        "https://a.example.com/upload": [{ status: 200 }],
+        "https://a.example.com/v1/upload": [{ status: 200 }],
       });
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       client.fetch = fetch;
@@ -342,7 +342,7 @@ describe("DAPClient", () => {
       assert.equal(fetch.calls.length, 1);
       const [[url, args]] = fetch.calls;
       const request = new Request(url, args);
-      assert.equal(request.url, "https://a.example.com/upload");
+      assert.equal(request.url, "https://a.example.com/v1/upload");
       assert(!!args);
       assert.deepEqual(args.body, report.encode());
       assert.equal(request.method, "POST");
@@ -367,13 +367,13 @@ describe("DAPClient", () => {
       const params = buildParams();
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(),
         ],
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(),
         ],
-        "https://a.example.com/upload": [{ status: 200 }],
+        "https://a.example.com/v1/upload": [{ status: 200 }],
       });
 
       const client = new DAPClient(params);
@@ -386,15 +386,15 @@ describe("DAPClient", () => {
       const params = buildParams();
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(),
           hpkeConfigResponse(),
         ],
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(),
           hpkeConfigResponse(),
         ],
-        "https://a.example.com/upload": [
+        "https://a.example.com/v1/upload": [
           {
             status: 400,
             contentType: "application/problem+json",
@@ -423,15 +423,15 @@ describe("DAPClient", () => {
       const params = buildParams();
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(),
           hpkeConfigResponse(),
         ],
-        [`https://b.example.com/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(),
           hpkeConfigResponse(),
         ],
-        "https://a.example.com/upload": [
+        "https://a.example.com/v1/upload": [
           outdatedConfigResponse(params.taskId),
           outdatedConfigResponse(params.taskId),
         ],
