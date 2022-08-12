@@ -63,8 +63,8 @@ type Fetch = (
 ) => Promise<Response>;
 
 const ROUTES = Object.freeze({
-  keyConfig: "/hpke_config",
-  upload: "/upload",
+  keyConfig: "hpke_config",
+  upload: "upload",
 });
 
 /**
