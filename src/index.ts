@@ -9,3 +9,4 @@ export * from "prio3/circuits/histogram";
 export * from "prio3/flp";
 export * from "prio3/genericFlp";
 export * from "prio3/gadget";
+export * from "dap";
