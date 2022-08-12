@@ -10,24 +10,27 @@ describe("DAP Nonce", () => {
   });
 
   describe("construction", () => {
-    it("throws an error if rand is not exactly 8 bytes", () => {
-      assert.throws(() => new Nonce(BigInt(0), Buffer.alloc(7)));
-      assert.doesNotThrow(() => new Nonce(BigInt(0), Buffer.alloc(8)));
-      assert.throws(() => new Nonce(BigInt(0), Buffer.alloc(9)));
+    it("throws an error if rand is not exactly 16 bytes", () => {
+      assert.throws(() => new Nonce(BigInt(0), Buffer.alloc(15)));
+      assert.doesNotThrow(() => new Nonce(BigInt(0), Buffer.alloc(16)));
+      assert.throws(() => new Nonce(BigInt(0), Buffer.alloc(17)));
     });
   });
 
   describe("encode", () => {
-    it("writes 8 bytes of time and 8 bytes of rand", () => {
+    it("writes 8 bytes of time and 16 bytes of rand", () => {
       const date = BigInt(1000);
-      const rand = Buffer.alloc(8, 255);
+      const rand = Buffer.alloc(16, 255);
       const nonce = new Nonce(date, rand);
 
       assert.deepEqual(
         nonce.encode(),
         Buffer.from([
           ...[0, 0, 0, 0, 0, 0, 3, 232],
-          ...[255, 255, 255, 255, 255, 255, 255, 255],
+          ...[
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+            255, 255, 255,
+          ],
         ])
       );
     });
