@@ -164,7 +164,7 @@ describe("DAPClient", () => {
       await client.fetchKeyConfiguration();
       assert.equal(fetch.calls.length, 2);
       assert.deepEqual(fetch.calls[1][1], {
-        headers: { Accept: "message/dap-hpke-config" },
+        headers: { Accept: "application/dap-hpke-config" },
       });
       assert.deepEqual(client.aggregators[0].hpkeConfig, hpkeConfig1);
       assert.deepEqual(client.aggregators[1].hpkeConfig, hpkeConfig2);
@@ -346,7 +346,10 @@ describe("DAPClient", () => {
       assert(!!args);
       assert.deepEqual(args.body, report.encode());
       assert.equal(request.method, "POST");
-      assert.equal(request.headers.get("Content-Type"), "message/dap-report");
+      assert.equal(
+        request.headers.get("Content-Type"),
+        "application/dap-report"
+      );
     });
 
     it("throws an error on failure", async () => {
@@ -463,6 +466,6 @@ function outdatedConfigResponse(taskId: TaskId): ResponseSpec {
 function hpkeConfigResponse(config = buildHpkeConfig()): ResponseSpec {
   return {
     body: config.encode(),
-    contentType: "message/dap-hpke-config",
+    contentType: "application/dap-hpke-config",
   };
 }

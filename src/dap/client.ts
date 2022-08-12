@@ -80,8 +80,8 @@ const INPUT_SHARE_ASCII = Object.freeze([
 ]);
 
 const CONTENT_TYPES = Object.freeze({
-  REPORT: "message/dap-report",
-  HPKE_CONFIG: "message/dap-hpke-config",
+  REPORT: "application/dap-report",
+  HPKE_CONFIG: "application/dap-hpke-config",
 });
 
 interface KnownVdafs {
