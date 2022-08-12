@@ -328,9 +328,17 @@ function aggregatorsFromParameters({
   leader,
   helper,
 }: ClientParameters): Aggregator[] {
+  leader = new URL(leader);
+  if (!leader.pathname.endsWith("/")) {
+    leader.pathname += "/";
+  }
+  helper = new URL(helper);
+  if (!helper.pathname.endsWith("/")) {
+    helper.pathname += "/";
+  }
   return [
-    { url: new URL(leader), role: Role.Leader },
-    { url: new URL(helper), role: Role.Helper },
+    { url: leader, role: Role.Leader },
+    { url: helper, role: Role.Helper },
   ];
 }
 
