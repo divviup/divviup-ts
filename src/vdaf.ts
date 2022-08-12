@@ -1,5 +1,5 @@
 /** @internal */
-export const VDAF_VERSION = "vdaf-00";
+export const VDAF_VERSION = "vdaf-01";
 
 export interface Vdaf<
   Measurement,
