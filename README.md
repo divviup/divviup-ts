@@ -15,6 +15,7 @@ const client = new DAPClient({
   taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
   leader: "http://localhost:8080",
   helper: "http://localhost:8081",
+  minBatchDurationSeconds: 3600,
 });
 
 await client.sendMeasurement(42);

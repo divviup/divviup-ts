@@ -3,9 +3,18 @@ import assert from "assert";
 
 describe("DAP Nonce", () => {
   describe("generate", () => {
-    it("uses the current time in seconds as the first component", () => {
-      const nonce = Nonce.generate();
-      assert(Date.now() / 1000 - Number(nonce.time) < 500); // 500ms of delta
+    it("uses the current batch start time in seconds as the first component", () => {
+      for (const minBatchDurationSeconds of [1, 3600, 3600 * 24]) {
+        const nonce = Nonce.generate(minBatchDurationSeconds);
+        // Check that the nonce time is a multiple of the minimum batch
+        // duration.
+        assert(Number(nonce.time % BigInt(minBatchDurationSeconds)) == 0);
+        // Check that the nonce time is no older than one batch interval plus
+        // 500ms of slop.
+        assert(
+          Date.now() / 1000 - Number(nonce.time) < minBatchDurationSeconds + 0.5
+        );
+      }
     });
   });
 

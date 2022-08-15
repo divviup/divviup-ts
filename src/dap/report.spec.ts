@@ -7,7 +7,7 @@ import assert from "assert";
 describe("DAP Report", () => {
   it("encodes as expected", () => {
     const taskId = TaskId.random();
-    const nonce = Nonce.generate();
+    const nonce = Nonce.generate(3600);
 
     const ciphertext1 = new HpkeCiphertext(
       1,
