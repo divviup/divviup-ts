@@ -6,6 +6,7 @@ async function main() {
     helper: "http://localhost:8081",
     type: "histogram",
     buckets: [10, 20, 30],
+    minBatchDurationSeconds: 8 * 3600,
   });
 
   await client.sendMeasurement(1);

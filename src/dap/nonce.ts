@@ -3,19 +3,25 @@ import { randomBytes } from "common";
 
 export class Nonce implements Encodable {
   constructor(public time: bigint, public rand: Buffer) {
-    if (rand.length !== 8) {
-      throw new Error("rand must be 8 bytes");
+    if (rand.length !== 16) {
+      throw new Error("rand must be 16 bytes");
     }
   }
 
-  static generate(): Nonce {
-    return new Nonce(BigInt(Math.floor(Date.now() / 1000)), randomBytes(8));
+  static generate(minBatchDurationSeconds: number): Nonce {
+    return new Nonce(
+      BigInt(
+        Math.floor(Date.now() / 1000 / minBatchDurationSeconds) *
+          minBatchDurationSeconds
+      ),
+      randomBytes(16)
+    );
   }
 
   encode(): Buffer {
-    const buffer = Buffer.alloc(16);
+    const buffer = Buffer.alloc(24);
     buffer.writeBigInt64BE(this.time, 0);
-    this.rand.copy(buffer, 8, 0, 8);
+    this.rand.copy(buffer, 8, 0, 16);
     return buffer;
   }
 }

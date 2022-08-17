@@ -55,6 +55,11 @@ export interface ClientParameters {
      {@linkcode URL}s.
   */
   helper: string | URL;
+  /**
+     The task's minimum batch duration, in seconds. Report timestamps will be
+     rounded down to a multiple of this.
+   */
+  minBatchDurationSeconds: number;
 }
 
 type Fetch = (
@@ -134,6 +139,7 @@ export class DAPClient<
   #vdaf: ClientVdaf<Measurement>;
   #taskId: TaskId;
   #aggregators: Aggregator[];
+  #minBatchDurationSeconds: number;
   #extensions: Extension[] = [];
   #fetch: Fetch = actualFetch;
   #hpkeConfigsWereInvalid = false;
@@ -148,6 +154,10 @@ export class DAPClient<
     this.#vdaf = vdafFromSpec(parameters) as ClientVdaf<Measurement>;
     this.#taskId = taskIdFromDefinition(parameters.taskId);
     this.#aggregators = aggregatorsFromParameters(parameters);
+    if (typeof parameters.minBatchDurationSeconds !== "number") {
+      throw new Error("minBatchDurationSeconds must be a number");
+    }
+    this.#minBatchDurationSeconds = parameters.minBatchDurationSeconds;
   }
 
   /** @internal */
@@ -190,7 +200,7 @@ export class DAPClient<
 
     const inputShares = await this.#vdaf.measurementToInputShares(measurement);
 
-    const nonce = Nonce.generate();
+    const nonce = Nonce.generate(this.#minBatchDurationSeconds);
     const aad = Buffer.concat([
       this.taskId.encode(),
       nonce.encode(),

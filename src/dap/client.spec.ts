@@ -59,6 +59,7 @@ function buildParams(): {
   helper: string;
   leader: string;
   taskId: TaskId;
+  minBatchDurationSeconds: number;
 } {
   return {
     type: "sum",
@@ -66,6 +67,7 @@ function buildParams(): {
     leader: "https://a.example.com/v1",
     helper: "https://b.example.com/dap/",
     taskId: TaskId.random(),
+    minBatchDurationSeconds: 1,
   };
 }
 
@@ -114,6 +116,7 @@ describe("DAPClient", () => {
         helper: "http://helper",
         leader: "http://leader",
         taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+        minBatchDurationSeconds: 3600,
       });
 
       assert(client.vdaf instanceof Prio3Aes128Histogram);
@@ -126,6 +129,7 @@ describe("DAPClient", () => {
         helper: "http://helper",
         leader: "http://leader",
         taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+        minBatchDurationSeconds: 3600,
       });
 
       assert(client.vdaf instanceof Prio3Aes128Sum);
@@ -138,6 +142,7 @@ describe("DAPClient", () => {
         helper: "http://helper",
         leader: "http://leader",
         taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+        minBatchDurationSeconds: 3600,
       });
 
       assert(client.vdaf instanceof Prio3Aes128Count);
@@ -253,7 +258,7 @@ describe("DAPClient", () => {
       assert.equal(report.taskID, client.taskId);
       assert(
         Math.floor(Date.now() / 1000) - Number(report.nonce.time) <
-          1 /*1 second delta*/
+          2 /*2 second delta, double the minimum batch duration*/
       );
 
       const aad = Buffer.from([
