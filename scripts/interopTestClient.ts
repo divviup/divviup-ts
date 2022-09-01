@@ -31,7 +31,7 @@ interface UploadRequest {
 }
 
 function sanitizeRequest(rawBody: unknown): UploadRequest {
-    if (typeof rawBody != "object" || Array.isArray(rawBody) || rawBody === null) {
+    if (typeof rawBody !== "object" || Array.isArray(rawBody) || rawBody === null) {
         throw new Error("JSON body is not an object");
     }
 
@@ -193,7 +193,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
                     helper: body.helper,
                     minBatchDurationSeconds: body.minBatchDuration,
                     type: "count",
-                }).sendMeasurement(body.measurement != 0);
+                }).sendMeasurement(body.measurement !== 0);
                 break;
 
             case "Prio3Aes128Sum":
