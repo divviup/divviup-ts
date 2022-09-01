@@ -176,15 +176,25 @@ function assertUnreachable(_: never): never {
 }
 
 async function uploadHandler(req: Request, res: Response): Promise<void> {
+    let body;
     try {
-        const body = sanitizeRequest(req.body);
+        body = sanitizeRequest(req.body);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send({"status": "error", "error": String(error)});
+        return;
+    }
 
-        // TODO (issue #97): Implement a way to construct a report with a
-        // custom nonce timestamp.
-        if (body.nonceTime !== undefined) {
-            throw new Error("`nonceTime` is not yet supported");
-        }
+    // TODO (issue #97): Implement a way to construct a report with a
+    // custom nonce timestamp.
+    if (body.nonceTime !== undefined) {
+        const error = new Error("`nonceTime` is not yet supported");
+        console.error(error);
+        res.status(500).send({"status": "error", "error": String(error)});
+        return;
+    }
 
+    try {
         switch (body.vdaf.type) {
             case "Prio3Aes128Count":
                 await new DAPClient({
@@ -224,7 +234,9 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
         console.log("Successful upload");
         res.send({"status": "success"});
     } catch (error) {
-        console.error(error);
+        console.log("Failed upload", error);
+        // Send this with status 200 OK, as the error came from the DAP level,
+        // not the test API level.
         res.send({"status": "error", "error": String(error)});
     }
 }
