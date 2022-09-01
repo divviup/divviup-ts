@@ -179,6 +179,8 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
     try {
         const body = sanitizeRequest(req.body);
 
+        // TODO (issue #97): Implement a way to construct a report with a
+        // custom nonce timestamp.
         if (body.nonceTime !== undefined) {
             throw new Error("`nonceTime` is not yet supported");
         }
