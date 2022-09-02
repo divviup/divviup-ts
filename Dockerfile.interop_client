@@ -7,7 +7,8 @@ RUN mkdir /logs
 WORKDIR /opt/divviup-ts
 
 COPY package.json .
-RUN npm set progress=false && npm install
+COPY package-lock.json .
+RUN npm set progress=false && npm ci
 
 COPY LICENSE .
 COPY tsconfig.json .
