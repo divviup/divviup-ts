@@ -105,14 +105,14 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
 
     switch (vdaf.type) {
         case "Prio3Aes128Count":
-            if (body.measurement !== 0 && body.measurement !== 1) {
+            measurement = Number(body.measurement);
+            if (measurement !== 0 && measurement !== 1) {
                 throw new Error("Measurement is not 0 or 1");
             }
 
             vdafObject = {
                 type: vdaf.type,
             };
-            measurement = body.measurement;
             break;
 
         case "Prio3Aes128Sum":
