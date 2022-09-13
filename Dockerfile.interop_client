@@ -1,0 +1,18 @@
+# This container image implements the client role of draft-dcook-ppm-dap-interop-test-design-01.
+FROM node:18-alpine
+EXPOSE 8080
+
+RUN mkdir /opt/divviup-ts
+RUN mkdir /logs
+WORKDIR /opt/divviup-ts
+
+COPY package.json .
+COPY package-lock.json .
+RUN npm set progress=false && npm ci
+
+COPY LICENSE .
+COPY tsconfig.json .
+COPY src/ src/
+COPY scripts/ scripts/
+
+CMD ["/bin/sh", "-c", "npm exec -- ts-node scripts/interopTestClient.ts >/logs/stdout.log 2>/logs/stderr.log"]
