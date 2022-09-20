@@ -1,7 +1,7 @@
 import { Field128 } from "@divviup/field";
 import { Vdaf, testVdaf } from ".";
 
-type PrepareMessage = {
+type PrepareState = {
   inputRange: { min: number; max: number };
   encodedInputShare: Buffer;
 };
@@ -13,7 +13,7 @@ type Measurement = number;
 type TestVdaf = Vdaf<
   Measurement,
   AggregationParameter,
-  PrepareMessage,
+  PrepareState,
   AggregatorShare,
   AggregationResult,
   OutputShare
@@ -41,13 +41,13 @@ export class VdafTest implements TestVdaf {
     ]);
   }
 
-  initialPrepareMessage(
+  initialPrepareState(
     _verifyKey: Buffer,
     _aggregatorId: number,
     _aggParam: AggregationParameter,
     _nonce: Buffer,
     inputShare: Buffer
-  ): Promise<PrepareMessage> {
+  ): Promise<PrepareState> {
     return Promise.resolve({
       inputRange: this.inputRange,
       encodedInputShare: inputShare,
@@ -55,13 +55,13 @@ export class VdafTest implements TestVdaf {
   }
 
   prepareNext(
-    prepareMessage: PrepareMessage,
+    prepareState: PrepareState,
     inbound: Buffer | null
   ):
-    | { prepareMessage: PrepareMessage; prepareShare: Buffer }
+    | { prepareState: PrepareState; prepareShare: Buffer }
     | { outputShare: bigint[] } {
     if (!inbound) {
-      return { prepareMessage, prepareShare: prepareMessage.encodedInputShare };
+      return { prepareState, prepareShare: prepareState.encodedInputShare };
     }
 
     const measurement = Number(this.field.decode(inbound)[0]);
@@ -70,7 +70,7 @@ export class VdafTest implements TestVdaf {
       throw new Error(`measurement ${measurement} was not in [${min}, ${max})`);
     }
 
-    return { outputShare: this.field.decode(prepareMessage.encodedInputShare) };
+    return { outputShare: this.field.decode(prepareState.encodedInputShare) };
   }
 
   prepSharesToPrepareMessage(

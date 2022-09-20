@@ -8,7 +8,7 @@ export const VDAF_VERSION = "vdaf-01";
 export interface Vdaf<
   Measurement,
   AggregationParameter,
-  PrepareMessage,
+  PrepareState,
   AggregatorShare,
   AggregationResult,
   OutputShare
@@ -19,19 +19,19 @@ export interface Vdaf<
 
   measurementToInputShares(measurement: Measurement): Promise<Buffer[]>;
 
-  initialPrepareMessage(
+  initialPrepareState(
     verifyKey: Buffer,
     aggId: number,
     aggParam: AggregationParameter,
     nonce: Buffer,
     inputShare: Buffer
-  ): Promise<PrepareMessage>;
+  ): Promise<PrepareState>;
 
   prepareNext(
-    prepareMessage: PrepareMessage,
+    prepareState: PrepareState,
     inbound: Buffer | null
   ):
-    | { prepareMessage: PrepareMessage; prepareShare: Buffer }
+    | { prepareState: PrepareState; prepareShare: Buffer }
     | { outputShare: OutputShare };
 
   prepSharesToPrepareMessage(
@@ -103,7 +103,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
 
       const prepStates: P[] = await Promise.all(
         arr(vdaf.shares, (aggregatorId) =>
-          vdaf.initialPrepareMessage(
+          vdaf.initialPrepareState(
             Buffer.from(verifyKey),
             aggregatorId,
             aggregationParameter,
@@ -118,10 +118,10 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
         const outbound: Buffer[] = prepStates.map(
           (state, aggregatorId, states) => {
             const out = vdaf.prepareNext(state, inbound);
-            if (!("prepareMessage" in out) || !("prepareShare" in out)) {
-              throw new Error("expected prepareMessage and prepareShare");
+            if (!("prepareState" in out) || !("prepareShare" in out)) {
+              throw new Error("expected prepareState and prepareShare");
             }
-            states[aggregatorId] = out.prepareMessage;
+            states[aggregatorId] = out.prepareState;
             return out.prepareShare;
           }
         );
