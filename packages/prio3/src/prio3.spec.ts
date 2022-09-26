@@ -22,8 +22,8 @@ describe("prio3 vdaf", () => {
 
   it("sum", async () => {
     const sum = new Prio3Aes128Sum({ shares: 2, bits: 8 });
-    await testVdaf(sum, null, [0, 147, 1, 0, 11, 0], [159]);
-    await testVdaf(sum, null, [100], [100], true);
+    await testVdaf(sum, null, [0n, 147n, 1n, 0n, 11n, 0n], [159]);
+    await testVdaf(sum, null, [100n], [100n], true);
   });
 
   it("histogram", async () => {

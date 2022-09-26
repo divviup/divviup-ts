@@ -104,9 +104,9 @@ describe("flp generic", () => {
     });
 
     it("examples", () => {
-      testCircuit(circuit, circuit.encode(0), true);
-      testCircuit(circuit, circuit.encode(100), true);
-      testCircuit(circuit, circuit.encode(2 ** 10 - 1), true);
+      testCircuit(circuit, circuit.encode(0n), true);
+      testCircuit(circuit, circuit.encode(100n), true);
+      testCircuit(circuit, circuit.encode(2n ** 10n - 1n), true);
       testCircuit(circuit, circuit.field.fillRandom(10), false);
     });
   });

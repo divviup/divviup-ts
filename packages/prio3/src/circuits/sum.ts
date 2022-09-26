@@ -3,7 +3,7 @@ import { Field128 } from "@divviup/field";
 import { PolyEval } from "../gadgets/polyEval";
 import { arr } from "@divviup/common";
 
-export class Sum extends Circuit<number> {
+export class Sum extends Circuit<number | bigint> {
   gadgets = [new PolyEval([0n, -1n, 1n])];
   gadgetCalls: number[];
   inputLen: number;
@@ -35,11 +35,10 @@ export class Sum extends Circuit<number> {
     );
   }
 
-  encode(measurement: number): bigint[] {
+  encode(measurement: number | bigint): bigint[] {
     if (
-      measurement !== Math.floor(measurement) ||
-      measurement < 0 ||
-      measurement >= 2 ** this.inputLen
+      typeof measurement === "number" &&
+      measurement !== Math.trunc(measurement)
     ) {
       throw new Error(
         `measurement ${measurement} was not an integer in [0, ${
@@ -48,7 +47,23 @@ export class Sum extends Circuit<number> {
       );
     }
 
-    return arr(this.inputLen, (index) => BigInt((measurement >> index) & 1));
+    const bigintMeasurement = BigInt(measurement);
+
+    if (
+      bigintMeasurement < 0n ||
+      bigintMeasurement >= BigInt(2 ** this.inputLen)
+    ) {
+      throw new Error(
+        `measurement ${bigintMeasurement} was not an integer in [0, ${
+          2 ** this.inputLen
+        })`
+      );
+    }
+
+    return arr(
+      this.inputLen,
+      (index) => (bigintMeasurement >> BigInt(index)) & 1n
+    );
   }
 
   truncate(input: bigint[]): bigint[] {
