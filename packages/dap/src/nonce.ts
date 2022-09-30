@@ -9,12 +9,12 @@ export class Nonce implements Encodable {
     }
   }
 
-  static generate(minBatchDurationSeconds: number): Nonce {
-    return new Nonce(
-      Math.floor(Date.now() / 1000 / minBatchDurationSeconds) *
-        minBatchDurationSeconds,
-      randomBytes(16)
-    );
+  static generate(minBatchDurationSeconds: number, date?: Date): Nonce {
+    const epochSeconds = (date ? date.getTime() : Date.now()) / 1000;
+    const batchRoundedSeconds =
+      Math.floor(epochSeconds / minBatchDurationSeconds) *
+      minBatchDurationSeconds;
+    return new Nonce(batchRoundedSeconds, randomBytes(16));
   }
 
   encode(): Buffer {
