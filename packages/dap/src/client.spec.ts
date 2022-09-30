@@ -296,7 +296,7 @@ describe("DAPClient", () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       await assert.rejects(
         client.generateReport(-25.25),
-        /measurement -25.25 was not an integer in \[0, 65536\)/ // this is specific to the Sum circuit as configured
+        /measurement -25.25 was not an integer/ // this is specific to the Sum circuit as configured
       );
     });
 

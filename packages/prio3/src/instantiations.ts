@@ -17,7 +17,7 @@ export class Prio3Aes128Histogram extends Prio3<number> {
   }
 }
 
-export class Prio3Aes128Sum extends Prio3<number> {
+export class Prio3Aes128Sum extends Prio3<number | bigint> {
   constructor({ shares, bits }: { shares: number; bits: number }) {
     super(PrgAes128, new FlpGeneric(new Sum(bits)), shares);
   }
