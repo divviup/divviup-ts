@@ -29,6 +29,10 @@ interface Aggregator {
   hpkeConfig?: HpkeConfig;
 }
 
+export interface ReportOptions {
+  nonceTimestamp?: Date;
+}
+
 /**
    Parameters from which to build a DAPClient
    @typeParam Measurement The Measurement for the provided vdaf, usually inferred from the vdaf.
@@ -190,12 +194,19 @@ export class DAPClient<
 
      @throws `Error` if there is any issue in generating the report
    */
-  async generateReport(measurement: Measurement): Promise<Report> {
+  async generateReport(
+    measurement: Measurement,
+    options?: ReportOptions
+  ): Promise<Report> {
     await this.fetchKeyConfiguration();
 
     const inputShares = await this.#vdaf.measurementToInputShares(measurement);
 
-    const nonce = Nonce.generate(this.#minBatchDurationSeconds);
+    const nonce = Nonce.generate(
+      this.#minBatchDurationSeconds,
+      options?.nonceTimestamp
+    );
+
     const aad = Buffer.concat([
       this.taskId.encode(),
       nonce.encode(),
@@ -262,8 +273,11 @@ export class DAPClient<
      @throws {@linkcode DAPError} if any http response is not Ok or
      `Error` if there is an issue generating the report
    */
-  async sendMeasurement(measurement: Measurement): Promise<void> {
-    const report = await this.generateReport(measurement);
+  async sendMeasurement(
+    measurement: Measurement,
+    options?: ReportOptions
+  ): Promise<void> {
+    const report = await this.generateReport(measurement, options);
 
     try {
       await this.sendReport(report);

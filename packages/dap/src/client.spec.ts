@@ -229,6 +229,7 @@ describe("DAPClient", () => {
       assert.equal(fetch.calls.length, 2);
     });
   });
+
   describe("generating reports", () => {
     it("can succeed", async () => {
       const privateKeys = [] as [Buffer, number][];
@@ -290,6 +291,17 @@ describe("DAPClient", () => {
           )
         );
       }
+    });
+
+    it("accepts an optional nonceTimestamp", async () => {
+      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const fetch = mockFetch({});
+      client.fetch = fetch;
+      const nonceTimestamp = new Date(0);
+      const report = await client.generateReport(1, {
+        nonceTimestamp,
+      });
+      assert.equal(report.nonce.time, nonceTimestamp.getTime());
     });
 
     it("fails if the measurement is not valid", async () => {
