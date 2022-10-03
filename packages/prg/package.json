@@ -18,8 +18,8 @@
   },
   "license": "MPL-2.0",
   "dependencies": {
-    "@divviup/common": "../common",
-    "@divviup/field": "../field",
+    "@divviup/common": "^0.1.0",
+    "@divviup/field": "^0.1.0",
     "aes-cmac": "^2.0.x",
     "one-webcrypto": "^1.0.3"
   },

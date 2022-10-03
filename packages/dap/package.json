@@ -21,13 +21,13 @@
   },
   "license": "MPL-2.0",
   "dependencies": {
-    "@divviup/common": "../common",
-    "@divviup/prio3": "../prio3",
-    "@divviup/vdaf": "../vdaf",
+    "@divviup/common": "^0.1.0",
+    "@divviup/prio3": "^0.1.0",
+    "@divviup/vdaf": "^0.1.0",
     "hpke": "^0.4.0"
   },
   "devDependencies": {
-    "@divviup/prg": "../prg",
+    "@divviup/prg": "^0.1.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@tsconfig/node18": "^1.0.1",
     "@types/expect": "^24.3.0",
