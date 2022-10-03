@@ -198,9 +198,9 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     const { flp, prg, field } = this;
     const jointRandCheck = Buffer.alloc(prg.seedSize);
 
-    const verifier = encodedPrepShares.reduce((verifier, encodedPrepState) => {
+    const verifier = encodedPrepShares.reduce((verifier, encodedPrepShare) => {
       const { verifier: shareVerifier, jointRand: shareJointRand } =
-        this.decodePrepareMessage(encodedPrepState);
+        this.decodePrepareMessage(encodedPrepShare);
 
       if (flp.jointRandLen > 0 && shareJointRand) {
         xorInPlace(jointRandCheck, shareJointRand);
