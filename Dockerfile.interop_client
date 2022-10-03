@@ -12,7 +12,9 @@ RUN npm set progress=false && npm ci
 
 COPY LICENSE .
 COPY tsconfig.json .
-COPY src/ src/
+COPY lerna.json .
+COPY nx.json .
+COPY packages/ packages/
 COPY scripts/ scripts/
 
 CMD ["/bin/sh", "-c", "npm exec -- ts-node scripts/interopTestClient.ts >/logs/stdout.log 2>/logs/stderr.log"]
