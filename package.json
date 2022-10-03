@@ -12,7 +12,8 @@
     "test": "lerna run test",
     "build": "lerna run build",
     "test:coverage": "rm -rf coverage && rm -rf .nyc_output && lerna run test:coverage",
-    "lint": "lerna run lint"
+    "lint": "lerna run lint",
+    "ci": "npm run lint && npm run test:coverage"
   },
   "devDependencies": {
     "@parcel/packager-ts": "^2.7.0",
