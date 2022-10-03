@@ -19,10 +19,10 @@
   },
   "license": "MPL-2.0",
   "dependencies": {
-    "@divviup/common": "../common",
-    "@divviup/field": "../field",
-    "@divviup/prg": "../prg",
-    "@divviup/vdaf": "../vdaf",
+    "@divviup/common": "^0.1.0",
+    "@divviup/field": "^0.1.0",
+    "@divviup/prg": "^0.1.0",
+    "@divviup/vdaf": "^0.1.0",
     "buffer": "^6.0.3"
   },
   "devDependencies": {
