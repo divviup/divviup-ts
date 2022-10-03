@@ -5,7 +5,7 @@ import { Field } from "@divviup/field";
 import { Flp } from "./flp";
 import { Buffer } from "buffer";
 
-type PrepareMessage = {
+type PrepareState = {
   outputShare: OutputShare;
   jointRandSeed: Buffer | null;
   outboundMessage: Buffer;
@@ -17,7 +17,7 @@ type OutputShare = bigint[];
 type Prio3Vdaf<Measurement> = Vdaf<
   Measurement,
   AggregationParameter,
-  PrepareMessage,
+  PrepareState,
   AggregatorShare,
   AggregationResult,
   OutputShare
@@ -104,13 +104,13 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     return this.encodeShares([leaderShare, ...helperShares]);
   }
 
-  async initialPrepareMessage(
+  async initialPrepareState(
     verifyKey: Buffer,
     aggregatorId: number,
     _aggParam: AggregationParameter,
     nonce: Buffer,
     encodedInputShare: Buffer
-  ): Promise<PrepareMessage> {
+  ): Promise<PrepareState> {
     const { prg, flp, field } = this;
 
     const share = await this.decodeShare(aggregatorId, encodedInputShare);
@@ -164,28 +164,31 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   }
 
   prepareNext(
-    prepareMessage: PrepareMessage,
+    prepareState: PrepareState,
     inbound: Buffer | null
   ):
-    | { prepareMessage: PrepareMessage; prepareShare: Buffer }
+    | { prepareState: PrepareState; prepareShare: Buffer }
     | { outputShare: OutputShare } {
     if (!inbound) {
-      return { prepareMessage, prepareShare: prepareMessage.outboundMessage };
+      return {
+        prepareState,
+        prepareShare: prepareState.outboundMessage,
+      };
     }
 
     const { verifier, jointRand } = this.decodePrepareMessage(inbound);
 
     const jointRandEquality =
       (jointRand &&
-        prepareMessage.jointRandSeed &&
-        0 === Buffer.compare(jointRand, prepareMessage.jointRandSeed)) ||
-      jointRand === prepareMessage.jointRandSeed; // both null
+        prepareState.jointRandSeed &&
+        0 === Buffer.compare(jointRand, prepareState.jointRandSeed)) ||
+      jointRand === prepareState.jointRandSeed; // both null
 
     if (!jointRandEquality || !this.flp.decide(verifier)) {
       throw new Error("Verify error");
     }
 
-    return { outputShare: prepareMessage.outputShare };
+    return { outputShare: prepareState.outputShare };
   }
 
   prepSharesToPrepareMessage(
@@ -195,19 +198,16 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     const { flp, prg, field } = this;
     const jointRandCheck = Buffer.alloc(prg.seedSize);
 
-    const verifier = encodedPrepShares.reduce(
-      (verifier, encodedPrepMessage) => {
-        const { verifier: shareVerifier, jointRand: shareJointRand } =
-          this.decodePrepareMessage(encodedPrepMessage);
+    const verifier = encodedPrepShares.reduce((verifier, encodedPrepShare) => {
+      const { verifier: shareVerifier, jointRand: shareJointRand } =
+        this.decodePrepareMessage(encodedPrepShare);
 
-        if (flp.jointRandLen > 0 && shareJointRand) {
-          xorInPlace(jointRandCheck, shareJointRand);
-        }
+      if (flp.jointRandLen > 0 && shareJointRand) {
+        xorInPlace(jointRandCheck, shareJointRand);
+      }
 
-        return field.vecAdd(verifier, shareVerifier);
-      },
-      fill(flp.verifierLen, 0n)
-    );
+      return field.vecAdd(verifier, shareVerifier);
+    }, fill(flp.verifierLen, 0n));
 
     return this.encodePrepareMessage(verifier, jointRandCheck);
   }
