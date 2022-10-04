@@ -214,7 +214,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
           minBatchDurationSeconds: body.minBatchDuration,
           type: "sum",
           bits: body.vdaf.bits,
-        }).sendMeasurement(Number(body.measurement));
+        }).sendMeasurement(BigInt(body.measurement as string));
         break;
 
       case "Prio3Aes128Histogram":
