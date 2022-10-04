@@ -12,7 +12,12 @@ RUN npm set progress=false && npm ci
 
 COPY LICENSE .
 COPY tsconfig.json .
-COPY src/ src/
+COPY lerna.json .
+COPY nx.json .
+COPY packages/ packages/
 COPY scripts/ scripts/
+# Re-run clean-install to set up bin symlinks.
+RUN npm ci
+RUN npx lerna run build --scope interop-test-client --no-progress && rm -rf node_modules/.cache/nx
 
-CMD ["/bin/sh", "-c", "npm exec -- ts-node scripts/interopTestClient.ts >/logs/stdout.log 2>/logs/stderr.log"]
+CMD ["/bin/sh", "-c", "npx interop-test-client >/logs/stdout.log 2>/logs/stderr.log"]

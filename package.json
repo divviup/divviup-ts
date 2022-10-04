@@ -6,7 +6,8 @@
     "./packages/prg",
     "./packages/vdaf",
     "./packages/prio3",
-    "./packages/dap"
+    "./packages/dap",
+    "./packages/interop-test-client"
   ],
   "scripts": {
     "test": "lerna run test",
