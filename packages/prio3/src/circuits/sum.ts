@@ -29,7 +29,7 @@ export class Sum extends Circuit<number | bigint> {
 
     return field.sum(input, (value, index) =>
       field.mul(
-        field.exp(jointRandZero, BigInt(index)),
+        field.exp(jointRandZero, BigInt(index + 1)),
         poly.eval(field, [value])
       )
     );
