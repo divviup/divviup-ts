@@ -116,21 +116,31 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
       break;
 
     case "Prio3Aes128Sum":
-      if (!("bits" in vdaf)) {
-        throw new Error("VDAF definition is missing number of bits");
-      }
-      if (typeof vdaf.bits !== "number") {
-        throw new Error("VDAF definition's `bits` parameter is not a number");
-      }
-      if (typeof body.measurement !== "string") {
-        throw new Error("Measurement is not a string");
-      }
+      {
+        let bits;
+        if (!("bits" in vdaf)) {
+          throw new Error("VDAF definition is missing number of bits");
+        }
+        if (typeof vdaf.bits === "number") {
+          bits = vdaf.bits;
+        } else if (typeof vdaf.bits == "string") {
+          bits = parseInt(vdaf.bits, 10);
+          if (isNaN(bits)) {
+            throw new Error("VDAF definition's `bits` parameter is not a valid base 10 integer");
+          }
+        } else {
+          throw new Error("VDAF definition's `bits` parameter is not a number or string");
+        }
+        if (typeof body.measurement !== "string") {
+          throw new Error("Measurement is not a string");
+        }
 
-      vdafObject = {
-        type: vdaf.type,
-        bits: vdaf.bits,
-      };
-      measurement = body.measurement;
+        vdafObject = {
+          type: vdaf.type,
+          bits: bits,
+        };
+        measurement = body.measurement;
+      }
       break;
 
     case "Prio3Aes128Histogram":
@@ -214,7 +224,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
           minBatchDurationSeconds: body.minBatchDuration,
           type: "sum",
           bits: body.vdaf.bits,
-        }).sendMeasurement(Number(body.measurement));
+        }).sendMeasurement(BigInt(body.measurement as string));
         break;
 
       case "Prio3Aes128Histogram":
