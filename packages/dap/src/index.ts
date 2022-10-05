@@ -1,1 +1,1 @@
-export { DAPClient as default } from "./client";
+export { DAPClient, DAPClient as default } from "./client";
