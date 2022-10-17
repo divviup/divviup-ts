@@ -14,14 +14,25 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Build
-      run: docker build -f Dockerfile.interop_client -t docker.io/divviup/divviup_ts_interop_client:dap-draft-01 .
+      run: docker build -f Dockerfile.interop_client -t us-west2-docker.pkg.dev/janus-artifacts/divviup_ts/divviup_ts_interop_client:dap-draft-01 .
+    - id: "gcp-auth"
+      name: Authenticate to GCP
+      if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      uses: "google-github-actions/auth@v0"
+      with:
+        workload_identity_provider: ${{ secrets.GCP_ARTIFACT_PUBLISHER_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.GCP_ARTIFACT_PUBLISHER_DEPLOY_SERVICE_ACCOUNT }}
+        token_format: "access_token"
+        access_token_lifetime: "3600s"
+        access_token_scopes: "https://www.googleapis.com/auth/cloud-platform"
+        export_environment_variables: true
     - name: Docker Hub Login
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       uses: "docker/login-action@v2"
       with:
-        registry: "docker.io"
-        username: "divviup"
-        password: ${{ secrets.DOCKER_HUB_DIVVIUP_ACCESS_TOKEN }}
+        registry: "us-west2-docker.pkg.dev"
+        username: "oauth2accesstoken"
+        password: ${{ steps.gcp-auth.outputs.access_token }}
     - name: Push
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-      run: docker push docker.io/divviup/divviup_ts_interop_client:dap-draft-01
+      run: docker push us-west2-docker.pkg.dev/janus-artifacts/divviup_ts/divviup_ts_interop_client:dap-draft-01
