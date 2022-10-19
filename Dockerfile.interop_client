@@ -1,9 +1,7 @@
 # This container image implements the client role of draft-dcook-ppm-dap-interop-test-design-01.
-FROM node:18-alpine
-EXPOSE 8080
+FROM node:18-alpine as builder
 
 RUN mkdir /opt/divviup-ts
-RUN mkdir /logs
 WORKDIR /opt/divviup-ts
 
 COPY package.json .
@@ -15,9 +13,24 @@ COPY tsconfig.json .
 COPY lerna.json .
 COPY nx.json .
 COPY packages/ packages/
-COPY scripts/ scripts/
 # Re-run clean-install to set up bin symlinks.
 RUN npm ci
 RUN npx lerna run build --scope interop-test-client --no-progress && rm -rf node_modules/.cache/nx
+
+FROM node:18-alpine
+EXPOSE 8080
+ENV NODE_ENV=production
+
+RUN mkdir /opt/divviup-ts
+RUN mkdir /logs
+WORKDIR /opt/divviup-ts
+
+COPY --from=builder /opt/divviup-ts/LICENSE  /opt/divviup-ts/LICENSE
+COPY --from=builder /opt/divviup-ts/packages/interop-test-client/bin/ /opt/divviup-ts/packages/interop-test-client/bin/
+COPY --from=builder /opt/divviup-ts/package.json /opt/divviup-ts/package.json
+COPY --from=builder /opt/divviup-ts/package-lock.json /opt/divviup-ts/package-lock.json
+RUN npm set progress=false && npm ci && npm cache clean --force
+# This copy will include all /dist/ subdirectories, produced by the builder.
+COPY --from=builder /opt/divviup-ts/packages/ /opt/divviup-ts/packages/
 
 CMD ["/bin/sh", "-c", "npx interop-test-client >/logs/stdout.log 2>/logs/stderr.log"]
