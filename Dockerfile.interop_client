@@ -29,7 +29,7 @@ COPY --from=builder /opt/divviup-ts/LICENSE  /opt/divviup-ts/LICENSE
 COPY --from=builder /opt/divviup-ts/packages/interop-test-client/bin/ /opt/divviup-ts/packages/interop-test-client/bin/
 COPY --from=builder /opt/divviup-ts/package.json /opt/divviup-ts/package.json
 COPY --from=builder /opt/divviup-ts/package-lock.json /opt/divviup-ts/package-lock.json
-RUN npm set progress=false && npm ci
+RUN npm set progress=false && npm ci && npm cache clean --force
 # This copy will include all /dist/ subdirectories, produced by the builder.
 COPY --from=builder /opt/divviup-ts/packages/ /opt/divviup-ts/packages/
 
