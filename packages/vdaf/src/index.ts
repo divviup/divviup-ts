@@ -5,6 +5,11 @@ import { Buffer } from "buffer";
 /** @internal */
 export const VDAF_VERSION = "vdaf-03";
 
+export type Shares = {
+  publicShare: Buffer;
+  inputShares: Buffer[];
+};
+
 export interface Vdaf<
   Measurement,
   AggregationParameter,
@@ -17,13 +22,14 @@ export interface Vdaf<
   rounds: number;
   verifyKeySize: number;
 
-  measurementToInputShares(measurement: Measurement): Promise<Buffer[]>;
+  measurementToInputShares(measurement: Measurement): Promise<Shares>;
 
   initialPrepareState(
     verifyKey: Buffer,
     aggId: number,
     aggParam: AggregationParameter,
     nonce: Buffer,
+    publicShare: Buffer,
     inputShare: Buffer
   ): Promise<PrepareState>;
 
@@ -54,7 +60,7 @@ export interface ClientVdaf<Measurement> {
   shares: number;
   rounds: number;
 
-  measurementToInputShares(measurement: Measurement): Promise<Buffer[]>;
+  measurementToInputShares(measurement: Measurement): Promise<Shares>;
 }
 
 export async function testVdaf<M, AP, P, AS, AR, OS>(
@@ -95,7 +101,9 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
         out_shares: [],
       };
 
-      const inputShares = await vdaf.measurementToInputShares(measurement);
+      const { publicShare, inputShares } = await vdaf.measurementToInputShares(
+        measurement
+      );
 
       for (const share of inputShares) {
         prepTestVector.input_shares.push(share.toString("hex"));
@@ -108,6 +116,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
             aggregatorId,
             aggregationParameter,
             nonce,
+            publicShare,
             inputShares[aggregatorId]
           )
         )

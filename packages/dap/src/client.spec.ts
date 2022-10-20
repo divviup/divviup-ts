@@ -58,7 +58,7 @@ function buildParams(): {
   helper: string;
   leader: string;
   taskId: TaskId;
-  minBatchDurationSeconds: number;
+  timePrecisionSeconds: number;
 } {
   return {
     type: "sum",
@@ -66,7 +66,7 @@ function buildParams(): {
     leader: "https://a.example.com/v1",
     helper: "https://b.example.com/dap/",
     taskId: TaskId.random(),
-    minBatchDurationSeconds: 1,
+    timePrecisionSeconds: 1,
   };
 }
 
@@ -115,7 +115,7 @@ describe("DAPClient", () => {
         helper: "http://helper",
         leader: "http://leader",
         taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
-        minBatchDurationSeconds: 3600,
+        timePrecisionSeconds: 3600,
       });
 
       assert(client.vdaf instanceof Prio3Aes128Histogram);
@@ -128,7 +128,7 @@ describe("DAPClient", () => {
         helper: "http://helper",
         leader: "http://leader",
         taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
-        minBatchDurationSeconds: 3600,
+        timePrecisionSeconds: 3600,
       });
 
       assert(client.vdaf instanceof Prio3Aes128Sum);
@@ -141,7 +141,7 @@ describe("DAPClient", () => {
         helper: "http://helper",
         leader: "http://leader",
         taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
-        minBatchDurationSeconds: 3600,
+        timePrecisionSeconds: 3600,
       });
 
       assert(client.vdaf instanceof Prio3Aes128Count);
@@ -257,14 +257,14 @@ describe("DAPClient", () => {
       assert.equal(report.encryptedInputShares.length, 2);
       assert.equal(report.taskID, client.taskId);
       assert(
-        Math.floor(Date.now() / 1000) - Number(report.nonce.time) <
+        Math.floor(Date.now() / 1000) - Number(report.metadata.time) <
           2 /*2 second delta, double the minimum batch duration*/
       );
 
       const aad = Buffer.from([
         ...fill(32, 1),
-        ...report.nonce.encode(),
-        ...[0, 0],
+        ...report.metadata.encode(),
+        ...report.publicShare,
       ]);
 
       for (const [[privateKey, role], share] of zip(
@@ -293,15 +293,15 @@ describe("DAPClient", () => {
       }
     });
 
-    it("accepts an optional nonceTimestamp", async () => {
+    it("accepts an optional timestamp", async () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       const fetch = mockFetch({});
       client.fetch = fetch;
-      const nonceTimestamp = new Date(0);
+      const timestamp = new Date(0);
       const report = await client.generateReport(1, {
-        nonceTimestamp,
+        timestamp,
       });
-      assert.equal(report.nonce.time, nonceTimestamp.getTime());
+      assert.equal(report.metadata.time, timestamp.getTime());
     });
 
     it("fails if the measurement is not valid", async () => {

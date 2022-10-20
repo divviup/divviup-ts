@@ -1,4 +1,4 @@
-import { Vdaf, VDAF_VERSION } from "@divviup/vdaf";
+import { Shares, Vdaf, VDAF_VERSION } from "@divviup/vdaf";
 import { PrgConstructor } from "@divviup/prg";
 import { fill, arr, xor, split, xorInPlace } from "@divviup/common";
 import { Field } from "@divviup/field";
@@ -72,7 +72,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     return this.flp.field;
   }
 
-  async measurementToInputShares(measurement: Measurement): Promise<Buffer[]> {
+  async measurementToInputShares(measurement: Measurement): Promise<Shares> {
     const { flp, prg, field } = this;
     const jointRandSeed = Buffer.alloc(prg.seedSize);
     const helperShares = await this.buildHelperShares();
@@ -101,7 +101,10 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
       ),
     };
 
-    return this.encodeShares([leaderShare, ...helperShares]);
+    return {
+      publicShare: Buffer.alloc(0),
+      inputShares: this.encodeShares([leaderShare, ...helperShares]),
+    };
   }
 
   async initialPrepareState(
@@ -109,6 +112,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     aggregatorId: number,
     _aggParam: AggregationParameter,
     nonce: Buffer,
+    _publicShare: Buffer,
     encodedInputShare: Buffer
   ): Promise<PrepareState> {
     const { prg, flp, field } = this;

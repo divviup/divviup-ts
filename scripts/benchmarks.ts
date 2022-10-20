@@ -34,7 +34,7 @@ function buildClient<
       helper: "http://helper.example.com",
       leader: "http://leader.example.com",
       taskId: TaskId.random(),
-      minBatchDurationSeconds: 1,
+      timePrecisionSeconds: 1,
       ...spec,
     })
   );

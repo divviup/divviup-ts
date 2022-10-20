@@ -31,7 +31,7 @@ describe("DAP HpkeCiphertext", () => {
         100, // config id
         ...[0, 5], // encapsulated context length
         ...[1, 1, 1, 1, 1], // encapcapsulated context
-        ...[0, 10], // payload length
+        ...[0, 0, 0, 10], // payload length
         ...[255, 255, 255, 255, 255, 255, 255, 255, 255, 255], //payload
       ])
     );
