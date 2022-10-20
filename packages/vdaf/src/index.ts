@@ -3,7 +3,7 @@ import assert from "assert";
 import { Buffer } from "buffer";
 
 /** @internal */
-export const VDAF_VERSION = "vdaf-01";
+export const VDAF_VERSION = "vdaf-03";
 
 export interface Vdaf<
   Measurement,

@@ -1,4 +1,4 @@
-// This script implements the client role of draft-dcook-ppm-dap-interop-test-design-01.
+// This script implements the client role of draft-dcook-ppm-dap-interop-test-design-02.
 import express, { Request, Response } from "express";
 import DAPClient from "@divviup/dap";
 

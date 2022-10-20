@@ -75,7 +75,7 @@ const ROUTES = Object.freeze({
    The protocol version for this DAP implementation. Usually of the
    form `dap-{nn}`.
 */
-const DAP_VERSION = "dap-01";
+const DAP_VERSION = "dap-02";
 
 /** A Buffer that will always equal `${DAP_VERSION} input share\x01` */
 const INPUT_SHARE_ASCII = Object.freeze([
@@ -125,11 +125,11 @@ function vdafFromSpec<Spec extends KnownVdafSpec>(
 
 /**
    A client for interacting with DAP servers, as specified by
-   [draft-ietf-ppm-dap-00](https://datatracker.ietf.org/doc/html/draft-ietf-ppm-dap). Instances
+   [draft-ietf-ppm-dap-02](https://datatracker.ietf.org/doc/html/draft-ietf-ppm-dap). Instances
    of this class contain all of the necessary functionality to
    generate a privacy-preserving measurement report for the provided
    {@linkcode ClientVdaf}, such as an implementation of Prio3, as specified by
-   [draft-irtf-cfrg-vdaf-00](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf).
+   [draft-irtf-cfrg-vdaf-03](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf).
 */
 export class DAPClient<
   Spec extends KnownVdafSpec,
