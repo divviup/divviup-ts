@@ -4,6 +4,7 @@ import {
   octetStringToInteger,
   nextPowerOf2,
   nextPowerOf2Big,
+  randomBytes,
   zip,
   concat,
   arr,
@@ -105,6 +106,19 @@ describe("common", () => {
 
     it("does not have an answer for negative numbers", () => {
       assert.throws(() => nextPowerOf2Big(-100n));
+    });
+  });
+
+  describe("randomBytes", () => {
+    it("generates different data", () => {
+      if (process.env.TEST_VECTOR) {
+        assert.equal(randomBytes(8), Buffer.from([1, 1, 1, 1, 1, 1, 1, 1]));
+      } else {
+        // this is a weak test but it's probably fine because the code is simple
+        const first = randomBytes(16);
+        const second = randomBytes(16);
+        assert.notEqual(Buffer.from(first).compare(Buffer.from(second)), 0);
+      }
     });
   });
 
