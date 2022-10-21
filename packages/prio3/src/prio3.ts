@@ -39,7 +39,8 @@ interface Share {
   proofShareSeed?: Buffer;
 }
 
-const DOMAIN_SEPARATION_TAG = Buffer.from(`${VDAF_VERSION} prio3`, "ascii");
+const DOMAIN_SEPARATION_TAG_BASE = Buffer.from(VDAF_VERSION, "ascii");
+const DST_LEN = DOMAIN_SEPARATION_TAG_BASE.length + 4;
 export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   readonly rounds = 1;
   readonly verifyKeySize: number;
@@ -47,7 +48,8 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   constructor(
     public readonly prg: PrgConstructor,
     public readonly flp: Flp<Measurement>,
-    public readonly shares: number
+    public readonly shares: number,
+    public readonly algorithmId: number
   ) {
     this.verifyKeySize = prg.seedSize;
   }
@@ -58,12 +60,20 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     info?: number
   ): Promise<bigint[]> {
     const { prg, field } = this;
+
+    const domainSeparationTag = Buffer.alloc(DST_LEN);
+    DOMAIN_SEPARATION_TAG_BASE.copy(domainSeparationTag, 0);
+    domainSeparationTag.writeUInt32BE(
+      this.algorithmId,
+      DOMAIN_SEPARATION_TAG_BASE.length
+    );
+
     return prg.expandIntoVec(
       field,
       seed || prg.randomSeed(),
       typeof info === "number"
-        ? Buffer.from([...DOMAIN_SEPARATION_TAG, info])
-        : DOMAIN_SEPARATION_TAG,
+        ? Buffer.from([...domainSeparationTag, info])
+        : domainSeparationTag,
       len
     );
   }
