@@ -76,27 +76,6 @@ export function zip<A, B>(a: A[], b: B[]): [A, B][] {
 }
 
 /** @internal */
-export function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
-  if (a.length !== b.length)
-    throw new Error("cannot xor two buffers of unequal length");
-  const returnBuffer = new Uint8Array(a.length);
-  for (let i = 0; i < returnBuffer.length; i++) returnBuffer[i] = a[i] ^ b[i];
-  return returnBuffer;
-}
-
-/** @internal */
-export function xorInPlace(
-  arrayThatChanges: Uint8Array,
-  arrayThatIsUnchanged: Uint8Array
-) {
-  if (arrayThatChanges.length !== arrayThatIsUnchanged.length)
-    throw new Error("cannot xor two buffers of unequal length");
-
-  for (let i = 0; i < arrayThatChanges.length; i++)
-    arrayThatChanges[i] ^= arrayThatIsUnchanged[i];
-}
-
-/** @internal */
 export function split<T extends { slice(start: number, end?: number): T }>(
   sliceable: T,
   index: number

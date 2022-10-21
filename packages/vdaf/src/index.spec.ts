@@ -80,12 +80,14 @@ export class VdafTest implements TestVdaf {
   prepSharesToPrepareMessage(
     _aggParam: AggregationParameter,
     prepShares: Buffer[]
-  ): Buffer {
+  ): Promise<Buffer> {
     const { field } = this;
-    return Buffer.from(
-      field.encode([
-        field.sum(prepShares, (encoded) => field.decode(encoded)[0]),
-      ])
+    return Promise.resolve(
+      Buffer.from(
+        field.encode([
+          field.sum(prepShares, (encoded) => field.decode(encoded)[0]),
+        ])
+      )
     );
   }
 

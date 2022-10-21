@@ -5,8 +5,6 @@ import {
   nextPowerOf2,
   nextPowerOf2Big,
   zip,
-  xor,
-  xorInPlace,
   concat,
   arr,
   fill,
@@ -121,40 +119,6 @@ describe("common", () => {
 
     it("throws when the lengths are not the same", () => {
       assert.throws(() => zip([0, 1], ["a", "b", "c"]));
-    });
-  });
-
-  describe("xor", () => {
-    it("returns a new buffer with the bitwise exclusive or when provided with two buffers of the same length", () => {
-      const a = Buffer.from([0, 1, 0, 1]);
-      const b = Buffer.from([1, 0, 1, 0]);
-      assert.deepEqual(xor(a, b), Buffer.from([1, 1, 1, 1]));
-      assert.deepEqual(a, Buffer.from([0, 1, 0, 1])); // a is unchanged
-      assert.deepEqual(b, Buffer.from([1, 0, 1, 0])); // b is unchanged
-    });
-
-    it("throws when the buffers are not the same length", () => {
-      assert.throws(
-        () => xor(Buffer.alloc(10), Buffer.alloc(5)),
-        /cannot xor two buffers of unequal length/
-      );
-    });
-  });
-
-  describe("xor", () => {
-    it("returns a new buffer with the bitwise exclusive or when provided with two buffers of the same length", () => {
-      const a = Buffer.from([0, 1, 0, 1]);
-      const b = Buffer.from([1, 0, 1, 0]);
-      xorInPlace(a, b);
-      assert.deepEqual(a, Buffer.from([1, 1, 1, 1])); // a is CHANGED
-      assert.deepEqual(b, Buffer.from([1, 0, 1, 0])); // b is unchanged
-    });
-
-    it("throws when the buffers are not the same length", () => {
-      assert.throws(
-        () => xorInPlace(Buffer.alloc(10), Buffer.alloc(5)),
-        /cannot xor two buffers of unequal length/
-      );
     });
   });
 

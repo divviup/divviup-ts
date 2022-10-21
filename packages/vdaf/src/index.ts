@@ -43,7 +43,7 @@ export interface Vdaf<
   prepSharesToPrepareMessage(
     aggParam: AggregationParameter,
     prepShares: Buffer[]
-  ): Buffer;
+  ): Promise<Buffer>;
 
   outputSharesToAggregatorShare(
     aggParam: AggregationParameter,
@@ -139,7 +139,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
           prepTestVector.prep_shares[round].push(prepShare.toString("hex"));
         }
 
-        inbound = vdaf.prepSharesToPrepareMessage(
+        inbound = await vdaf.prepSharesToPrepareMessage(
           aggregationParameter,
           outbound
         );
