@@ -65,20 +65,22 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   private async pseudorandom(
     len: number,
     seed?: Buffer,
-    info?: number
+    info?: number | Buffer
   ): Promise<bigint[]> {
     const { prg, field } = this;
 
     const domainSeparationTag = this.domainSeparationTag();
 
-    return prg.expandIntoVec(
-      field,
-      seed || prg.randomSeed(),
-      typeof info === "number"
-        ? Buffer.from([...domainSeparationTag, info])
-        : domainSeparationTag,
-      len
-    );
+    let prgInfo;
+    if (typeof info === "number") {
+      prgInfo = Buffer.from([...domainSeparationTag, info]);
+    } else if (info instanceof Buffer) {
+      prgInfo = Buffer.concat([domainSeparationTag, info]);
+    } else {
+      prgInfo = domainSeparationTag;
+    }
+
+    return prg.expandIntoVec(field, seed || prg.randomSeed(), prgInfo, len);
   }
 
   private get field(): Field {
@@ -143,14 +145,10 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
 
     const outputShare = flp.truncate(share.inputShare);
 
-    const queryRandSeed = await prg.deriveSeed(
-      verifyKey,
-      Buffer.from([255, ...nonce])
-    );
-
     const queryRand = await this.pseudorandom(
       flp.queryRandLen,
-      Buffer.from(queryRandSeed)
+      verifyKey,
+      Buffer.from([255, ...nonce])
     );
 
     let jointRand: bigint[];
