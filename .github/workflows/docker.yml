@@ -33,7 +33,6 @@ jobs:
         token_format: "access_token"
         access_token_lifetime: "3600s"
         access_token_scopes: "https://www.googleapis.com/auth/cloud-platform"
-        export_environment_variables: true
     - id: "gcp-auth-public"
       name: Authenticate to GCP (public repository)
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
@@ -44,7 +43,6 @@ jobs:
         token_format: "access_token"
         access_token_lifetime: "3600s"
         access_token_scopes: "https://www.googleapis.com/auth/cloud-platform"
-        export_environment_variables: true
     - name: Docker Login (private)
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       uses: "docker/login-action@v2"
