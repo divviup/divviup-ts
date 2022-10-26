@@ -17,11 +17,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Build
-      run: docker build \
-        -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:dap-draft-01 \
-        -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:dap-draft-01 \
-        -f Dockerfile.interop_client \
-        .
+      run: |-
+        docker build \
+          -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:dap-draft-01 \
+          -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:dap-draft-01 \
+          -f Dockerfile.interop_client \
+          .
     - id: "gcp-auth-private"
       name: Authenticate to GCP (private repository)
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
