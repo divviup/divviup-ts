@@ -5,7 +5,7 @@ describe("DAP ReportID", () => {
   describe("random", () => {
     it("generates a random ReportID", () => {
       const reportId = ReportId.random();
-      assert.equal(reportId.buffer.length, 16);
+      assert.equal(reportId.bytes.length, 16);
     });
   });
 

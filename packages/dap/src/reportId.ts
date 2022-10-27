@@ -3,12 +3,8 @@ import { randomBytes } from "@divviup/common";
 import { Buffer } from "buffer";
 
 export class ReportId implements Encodable {
-  buffer: Buffer;
-
-  constructor(input: Buffer) {
-    this.buffer = input;
-
-    if (this.buffer.length !== 16) {
+  constructor(public bytes: Buffer) {
+    if (this.bytes.length !== 16) {
       throw new Error("expected ReportId to be 16 bytes");
     }
   }
@@ -18,6 +14,6 @@ export class ReportId implements Encodable {
   }
 
   encode(): Buffer {
-    return this.buffer;
+    return this.bytes;
   }
 }

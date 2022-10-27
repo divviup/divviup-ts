@@ -41,7 +41,7 @@ interface Share {
 }
 
 const DOMAIN_SEPARATION_TAG_BASE = Buffer.from(VDAF_VERSION, "ascii");
-const DST_LEN = DOMAIN_SEPARATION_TAG_BASE.length + 4;
+const DOMAIN_SEPARATION_TAG_LEN = DOMAIN_SEPARATION_TAG_BASE.length + 4;
 export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   readonly rounds = 1;
   readonly verifyKeySize: number;
@@ -56,7 +56,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   }
 
   private domainSeparationTag(): Buffer {
-    const buffer = Buffer.alloc(DST_LEN);
+    const buffer = Buffer.alloc(DOMAIN_SEPARATION_TAG_LEN);
     DOMAIN_SEPARATION_TAG_BASE.copy(buffer, 0);
     buffer.writeUInt32BE(this.algorithmId, DOMAIN_SEPARATION_TAG_BASE.length);
     return buffer;
@@ -299,7 +299,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
       [jointRandPart, encoded] = split(encoded, prg.seedSize);
     }
 
-    if (encoded.length) {
+    if (encoded.length > 0) {
       throw new Error("unused bytes at end of prepare message");
     }
 
@@ -319,16 +319,15 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     }
   }
 
-  private decodePrepareMessage(input: Buffer): Buffer | null {
+  private decodePrepareMessage(encoded: Buffer): Buffer | null {
     const { flp, prg } = this;
 
     let jointRandCheck = null;
-    let encoded = input;
     if (flp.jointRandLen > 0) {
       [jointRandCheck, encoded] = split(encoded, prg.seedSize);
     }
 
-    if (encoded.length) {
+    if (encoded.length > 0) {
       throw new Error("unused bytes at end of prepare message share");
     }
 
@@ -453,7 +452,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
       }
     }
 
-    if (encoded.length) {
+    if (encoded.length > 0) {
       throw new Error("unexpected extra leader share bytes");
     }
 
@@ -492,7 +491,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
       }
     }
 
-    if (encoded.length) {
+    if (encoded.length > 0) {
       throw new Error("unused bytes in decoding helper share");
     }
 

@@ -124,11 +124,11 @@ function vdafFromSpec<Spec extends KnownVdafSpec>(
 
 /**
    A client for interacting with DAP servers, as specified by
-   [draft-ietf-ppm-dap-02](https://datatracker.ietf.org/doc/html/draft-ietf-ppm-dap). Instances
+   [draft-ietf-ppm-dap-02](https://datatracker.ietf.org/doc/html/draft-ietf-ppm-dap/02/). Instances
    of this class contain all of the necessary functionality to
    generate a privacy-preserving measurement report for the provided
    {@linkcode ClientVdaf}, such as an implementation of Prio3, as specified by
-   [draft-irtf-cfrg-vdaf-03](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf).
+   [draft-irtf-cfrg-vdaf-03](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf/03/).
 */
 export class DAPClient<
   Spec extends KnownVdafSpec,
