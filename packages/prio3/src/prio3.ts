@@ -32,12 +32,12 @@ interface DecodedShare {
 
 interface Share {
   blind: Buffer;
-  jointRandPart: Uint8Array;
+  jointRandPart: Buffer;
   inputShare: bigint[];
   proofShare: bigint[];
   inputShareSeed?: Buffer;
   proofShareSeed?: Buffer;
-  jointRandPartsHint?: Uint8Array[];
+  jointRandPartsHint?: Buffer[];
 }
 
 const DOMAIN_SEPARATION_TAG_BASE = Buffer.from(VDAF_VERSION, "ascii");
@@ -340,7 +340,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   ): Promise<{
     inputShare: bigint[];
     blind: Buffer;
-    jointRandPart: Uint8Array;
+    jointRandPart: Buffer;
   }> {
     const { prg, field } = this;
     const inputShare = helperShares.reduce(
@@ -349,9 +349,11 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     );
     const blind = Buffer.from(prg.randomSeed());
     const encoded = field.encode(inputShare);
-    const jointRandPart = await prg.deriveSeed(
-      blind,
-      Buffer.from([...this.domainSeparationTag(), 0, ...encoded])
+    const jointRandPart = Buffer.from(
+      await prg.deriveSeed(
+        blind,
+        Buffer.from([...this.domainSeparationTag(), 0, ...encoded])
+      )
     );
     return { inputShare, blind, jointRandPart };
   }
@@ -368,9 +370,11 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
           j + 1
         );
         const encoded = field.encode(inputShare);
-        const jointRandPart = await prg.deriveSeed(
-          blind,
-          Buffer.from([...this.domainSeparationTag(), j + 1, ...encoded])
+        const jointRandPart = Buffer.from(
+          await prg.deriveSeed(
+            blind,
+            Buffer.from([...this.domainSeparationTag(), j + 1, ...encoded])
+          )
         );
         const proofShareSeed = Buffer.from(prg.randomSeed());
         const proofShare = await this.pseudorandom(
@@ -391,9 +395,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     );
   }
 
-  private async deriveJointRandomness(
-    parts: Uint8Array[]
-  ): Promise<Uint8Array> {
+  private async deriveJointRandomness(parts: Buffer[]): Promise<Buffer> {
     const prg = this.prg;
 
     const info = Buffer.concat([
@@ -401,7 +403,7 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
       new Uint8Array([255]),
       ...parts,
     ]);
-    return await prg.deriveSeed(Buffer.alloc(prg.seedSize), info);
+    return Buffer.from(await prg.deriveSeed(Buffer.alloc(prg.seedSize), info));
   }
 
   private encodeShares(shares: Share[]): Buffer[] {
