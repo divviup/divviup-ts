@@ -1,4 +1,4 @@
-# This container image implements the client role of draft-dcook-ppm-dap-interop-test-design-01.
+# This container image implements the client role of draft-dcook-ppm-dap-interop-test-design-02.
 FROM node:18-alpine as builder
 
 RUN mkdir /opt/divviup-ts

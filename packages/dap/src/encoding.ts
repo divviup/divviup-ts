@@ -12,9 +12,24 @@ export function encodeArray16<T extends Encodable>(items: T[]): Buffer {
   return content;
 }
 
+export function encodeArray32<T extends Encodable>(items: T[]): Buffer {
+  const content = Buffer.concat([
+    Buffer.alloc(4),
+    ...items.map((item) => item.encode()),
+  ]);
+  content.writeUInt32BE(content.length - 4, 0);
+  return content;
+}
+
 export function encodeOpaque16(buffer: Buffer): Buffer {
   const returnBuffer = Buffer.concat([Buffer.alloc(2), buffer]);
   returnBuffer.writeUInt16BE(buffer.length, 0);
+  return returnBuffer;
+}
+
+export function encodeOpaque32(buffer: Buffer): Buffer {
+  const returnBuffer = Buffer.concat([Buffer.alloc(4), buffer]);
+  returnBuffer.writeUInt32BE(buffer.length, 0);
   return returnBuffer;
 }
 

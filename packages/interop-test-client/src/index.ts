@@ -1,6 +1,6 @@
-// This script implements the client role of draft-dcook-ppm-dap-interop-test-design-01.
+// This script implements the client role of draft-dcook-ppm-dap-interop-test-design-02.
 import express, { Request, Response } from "express";
-import DAPClient from "@divviup/dap";
+import DAPClient, { ReportOptions } from "@divviup/dap";
 
 interface CountVdafObject {
   type: "Prio3Aes128Count",
@@ -21,13 +21,13 @@ type VdafObject = CountVdafObject | SumVdafObject | HistogramVdafObject;
 type Measurement = number | string | string[];
 
 interface UploadRequest {
-  taskId: string,
+  task_id: string,
   leader: string,
   helper: string,
   vdaf: VdafObject,
   measurement: Measurement,
-  nonceTime?: number,
-  minBatchDuration: number,
+  time?: number,
+  time_precision: number,
 }
 
 function sanitizeRequest(rawBody: unknown): UploadRequest {
@@ -35,7 +35,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
     throw new Error("JSON body is not an object");
   }
 
-  if (!("taskId" in rawBody)) {
+  if (!("task_id" in rawBody)) {
     throw new Error("Task ID is missing");
   }
   if (!("leader" in rawBody)) {
@@ -50,21 +50,21 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
   if (!("measurement" in rawBody)) {
     throw new Error("Measurement is missing");
   }
-  if (!("minBatchDuration" in rawBody)) {
-    throw new Error("Minimum batch duration is missing");
+  if (!("time_precision" in rawBody)) {
+    throw new Error("Time precision is missing");
   }
 
   const body = rawBody as {
-    taskId: unknown,
+    task_id: unknown,
     leader: unknown,
     helper: unknown,
     vdaf: unknown,
     measurement: unknown,
-    nonceTime?: unknown,
-    minBatchDuration: unknown,
+    time?: unknown,
+    time_precision: unknown,
   };
 
-  if (typeof body.taskId !== "string") {
+  if (typeof body.task_id !== "string") {
     throw new Error("Task ID is not a string");
   }
   if (typeof body.leader !== "string") {
@@ -79,11 +79,11 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
   if (typeof body.measurement !== "number" && typeof body.measurement !== "string" && !Array.isArray(body.measurement)) {
     throw new Error("Measurement is not a number, string, or array");
   }
-  if (body.nonceTime !== undefined && typeof body.nonceTime !== "number") {
-    throw new Error("Nonce timestamp is not a number");
+  if (body.time !== undefined && typeof body.time !== "number") {
+    throw new Error("Timestamp is not a number");
   }
-  if (typeof body.minBatchDuration !== "number") {
-    throw new Error("Minimum batch duration is not a number");
+  if (typeof body.time_precision !== "number") {
+    throw new Error("Time precision is not a number");
   }
 
   if (!("type" in body.vdaf)) {
@@ -171,13 +171,13 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
   }
 
   return {
-    taskId: body.taskId,
+    task_id: body.task_id,
     leader: body.leader,
     helper: body.helper,
     vdaf: vdafObject,
     measurement: measurement,
-    nonceTime: body.nonceTime,
-    minBatchDuration: body.minBatchDuration,
+    time: body.time,
+    time_precision: body.time_precision,
   }
 }
 
@@ -195,47 +195,43 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // TODO (issue #97): Implement a way to construct a report with a
-  // custom nonce timestamp.
-  if (body.nonceTime !== undefined) {
-    const error = new Error("`nonceTime` is not yet supported");
-    console.error(error);
-    res.status(500).send({"status": "error", "error": String(error)});
-    return;
+  const options: ReportOptions = {};
+  if (body.time !== undefined) {
+    options.timestamp = new Date(body.time);
   }
 
   try {
     switch (body.vdaf.type) {
       case "Prio3Aes128Count":
         await new DAPClient({
-          taskId: body.taskId,
+          taskId: body.task_id,
           leader: body.leader,
           helper: body.helper,
-          minBatchDurationSeconds: body.minBatchDuration,
+          timePrecisionSeconds: body.time_precision,
           type: "count",
-        }).sendMeasurement(body.measurement !== 0);
+        }).sendMeasurement(body.measurement !== 0, options);
         break;
 
       case "Prio3Aes128Sum":
         await new DAPClient({
-          taskId: body.taskId,
+          taskId: body.task_id,
           leader: body.leader,
           helper: body.helper,
-          minBatchDurationSeconds: body.minBatchDuration,
+          timePrecisionSeconds: body.time_precision,
           type: "sum",
           bits: body.vdaf.bits,
-        }).sendMeasurement(BigInt(body.measurement as string));
+        }).sendMeasurement(BigInt(body.measurement as string), options);
         break;
 
       case "Prio3Aes128Histogram":
         await new DAPClient({
-          taskId: body.taskId,
+          taskId: body.task_id,
           leader: body.leader,
           helper: body.helper,
-          minBatchDurationSeconds: body.minBatchDuration,
+          timePrecisionSeconds: body.time_precision,
           type: "histogram",
           buckets: body.vdaf.buckets.map(Number),
-        }).sendMeasurement(Number(body.measurement));
+        }).sendMeasurement(Number(body.measurement), options);
         break;
 
       default:

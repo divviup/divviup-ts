@@ -10,7 +10,7 @@ import { testVdaf } from "@divviup/vdaf";
 
 describe("prio3 vdaf", () => {
   it("test flp", async () => {
-    const testFlp = new Prio3(PrgAes128, new TestFlp128(), 2);
+    const testFlp = new Prio3(PrgAes128, new TestFlp128(), 2, 0xffff0000);
     await testVdaf(testFlp, null, [1, 2, 3, 4, 4], [14], true);
   });
 
@@ -23,7 +23,12 @@ describe("prio3 vdaf", () => {
   it("sum", async () => {
     const sum = new Prio3Aes128Sum({ shares: 2, bits: 8 });
     await testVdaf(sum, null, [0n, 147n, 1n, 0n, 11n, 0n], [159]);
-    await testVdaf(sum, null, [100n], [100n], true);
+    await testVdaf(sum, null, [100n], [100], true);
+  });
+
+  it("more aggregators", async () => {
+    const sum = new Prio3Aes128Sum({ shares: 3, bits: 8 });
+    await testVdaf(sum, null, [0n, 147n, 1n, 0n, 11n, 0n], [159]);
   });
 
   it("histogram", async () => {

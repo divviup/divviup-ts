@@ -4,9 +4,8 @@ import {
   octetStringToInteger,
   nextPowerOf2,
   nextPowerOf2Big,
+  randomBytes,
   zip,
-  xor,
-  xorInPlace,
   concat,
   arr,
   fill,
@@ -110,6 +109,19 @@ describe("common", () => {
     });
   });
 
+  describe("randomBytes", () => {
+    it("generates different data", () => {
+      if (process.env.TEST_VECTOR) {
+        assert.equal(randomBytes(8), Buffer.from([1, 1, 1, 1, 1, 1, 1, 1]));
+      } else {
+        // this is a weak test but it's probably fine because the code is simple
+        const first = randomBytes(16);
+        const second = randomBytes(16);
+        assert.notEqual(Buffer.from(first).compare(Buffer.from(second)), 0);
+      }
+    });
+  });
+
   describe("zip", () => {
     it("returns the pairwise elements when the lengths are the same", () => {
       assert.deepEqual(zip([0, 1, 2], ["a", "b", "c"]), [
@@ -121,40 +133,6 @@ describe("common", () => {
 
     it("throws when the lengths are not the same", () => {
       assert.throws(() => zip([0, 1], ["a", "b", "c"]));
-    });
-  });
-
-  describe("xor", () => {
-    it("returns a new buffer with the bitwise exclusive or when provided with two buffers of the same length", () => {
-      const a = Buffer.from([0, 1, 0, 1]);
-      const b = Buffer.from([1, 0, 1, 0]);
-      assert.deepEqual(xor(a, b), Buffer.from([1, 1, 1, 1]));
-      assert.deepEqual(a, Buffer.from([0, 1, 0, 1])); // a is unchanged
-      assert.deepEqual(b, Buffer.from([1, 0, 1, 0])); // b is unchanged
-    });
-
-    it("throws when the buffers are not the same length", () => {
-      assert.throws(
-        () => xor(Buffer.alloc(10), Buffer.alloc(5)),
-        /cannot xor two buffers of unequal length/
-      );
-    });
-  });
-
-  describe("xor", () => {
-    it("returns a new buffer with the bitwise exclusive or when provided with two buffers of the same length", () => {
-      const a = Buffer.from([0, 1, 0, 1]);
-      const b = Buffer.from([1, 0, 1, 0]);
-      xorInPlace(a, b);
-      assert.deepEqual(a, Buffer.from([1, 1, 1, 1])); // a is CHANGED
-      assert.deepEqual(b, Buffer.from([1, 0, 1, 0])); // b is unchanged
-    });
-
-    it("throws when the buffers are not the same length", () => {
-      assert.throws(
-        () => xorInPlace(Buffer.alloc(10), Buffer.alloc(5)),
-        /cannot xor two buffers of unequal length/
-      );
     });
   });
 

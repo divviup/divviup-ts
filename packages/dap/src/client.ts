@@ -1,11 +1,10 @@
 import { Buffer } from "buffer";
 import { TaskId } from "./taskId";
-import { Nonce } from "./nonce";
-import { Report } from "./report";
+import { ReportId } from "./reportId";
+import { Report, ReportMetadata } from "./report";
 import { HpkeConfig } from "./hpkeConfig";
 import { ClientVdaf } from "@divviup/vdaf";
 import { Extension } from "./extension";
-import { encodeArray16 } from "./encoding";
 import { DAPError } from "./errors";
 
 export { TaskId } from "./taskId";
@@ -30,7 +29,7 @@ interface Aggregator {
 }
 
 export interface ReportOptions {
-  nonceTimestamp?: Date;
+  timestamp?: Date;
 }
 
 /**
@@ -58,7 +57,7 @@ export interface ClientParameters {
      The task's minimum batch duration, in seconds. Report timestamps will be
      rounded down to a multiple of this.
    */
-  minBatchDurationSeconds: number;
+  timePrecisionSeconds: number;
 }
 
 type Fetch = (
@@ -75,7 +74,7 @@ const ROUTES = Object.freeze({
    The protocol version for this DAP implementation. Usually of the
    form `dap-{nn}`.
 */
-const DAP_VERSION = "dap-01";
+const DAP_VERSION = "dap-02";
 
 /** A Buffer that will always equal `${DAP_VERSION} input share\x01` */
 const INPUT_SHARE_ASCII = Object.freeze([
@@ -125,11 +124,11 @@ function vdafFromSpec<Spec extends KnownVdafSpec>(
 
 /**
    A client for interacting with DAP servers, as specified by
-   [draft-ietf-ppm-dap-00](https://datatracker.ietf.org/doc/html/draft-ietf-ppm-dap). Instances
+   [draft-ietf-ppm-dap-02](https://datatracker.ietf.org/doc/html/draft-ietf-ppm-dap/02/). Instances
    of this class contain all of the necessary functionality to
    generate a privacy-preserving measurement report for the provided
    {@linkcode ClientVdaf}, such as an implementation of Prio3, as specified by
-   [draft-irtf-cfrg-vdaf-00](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf).
+   [draft-irtf-cfrg-vdaf-03](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf/03/).
 */
 export class DAPClient<
   Spec extends KnownVdafSpec,
@@ -138,7 +137,7 @@ export class DAPClient<
   #vdaf: ClientVdaf<Measurement>;
   #taskId: TaskId;
   #aggregators: Aggregator[];
-  #minBatchDurationSeconds: number;
+  #timePrecisionSeconds: number;
   #extensions: Extension[] = [];
   #fetch: Fetch = globalThis.fetch.bind(globalThis);
   #hpkeConfigsWereInvalid = false;
@@ -153,10 +152,10 @@ export class DAPClient<
     this.#vdaf = vdafFromSpec(parameters) as ClientVdaf<Measurement>;
     this.#taskId = taskIdFromDefinition(parameters.taskId);
     this.#aggregators = aggregatorsFromParameters(parameters);
-    if (typeof parameters.minBatchDurationSeconds !== "number") {
-      throw new Error("minBatchDurationSeconds must be a number");
+    if (typeof parameters.timePrecisionSeconds !== "number") {
+      throw new Error("timePrecisionSeconds must be a number");
     }
-    this.#minBatchDurationSeconds = parameters.minBatchDurationSeconds;
+    this.#timePrecisionSeconds = parameters.timePrecisionSeconds;
   }
 
   /** @internal */
@@ -200,17 +199,17 @@ export class DAPClient<
   ): Promise<Report> {
     await this.fetchKeyConfiguration();
 
-    const inputShares = await this.#vdaf.measurementToInputShares(measurement);
+    const { publicShare, inputShares } =
+      await this.#vdaf.measurementToInputShares(measurement);
 
-    const nonce = Nonce.generate(
-      this.#minBatchDurationSeconds,
-      options?.nonceTimestamp
-    );
+    const reportId = ReportId.random();
+    const time = roundedTime(this.#timePrecisionSeconds, options?.timestamp);
+    const metadata = new ReportMetadata(reportId, time, this.#extensions);
 
     const aad = Buffer.concat([
       this.taskId.encode(),
-      nonce.encode(),
-      encodeArray16(this.#extensions),
+      metadata.encode(),
+      publicShare,
     ]);
 
     const ciphertexts = this.#aggregators.map((aggregator, i) => {
@@ -228,7 +227,7 @@ export class DAPClient<
       return aggregator.hpkeConfig.seal(info, inputShares[i], aad);
     });
 
-    return new Report(this.#taskId, nonce, this.#extensions, ciphertexts);
+    return new Report(this.#taskId, metadata, publicShare, ciphertexts);
   }
 
   /**
@@ -366,4 +365,11 @@ function taskIdFromDefinition(
 ): TaskId {
   if (taskIdDefinition instanceof TaskId) return taskIdDefinition;
   else return new TaskId(taskIdDefinition);
+}
+
+function roundedTime(timePrecisionSeconds: number, date?: Date): number {
+  const epochSeconds = (date ? date.getTime() : Date.now()) / 1000;
+  const roundedSeconds =
+    Math.floor(epochSeconds / timePrecisionSeconds) * timePrecisionSeconds;
+  return roundedSeconds;
 }

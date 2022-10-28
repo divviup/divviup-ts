@@ -1,5 +1,5 @@
 import { Field128 } from "@divviup/field";
-import { Vdaf, testVdaf } from ".";
+import { Shares, Vdaf, testVdaf } from ".";
 
 type PrepareState = {
   inputRange: { min: number; max: number };
@@ -26,7 +26,7 @@ export class VdafTest implements TestVdaf {
   inputRange = { min: 0, max: 5 };
   verifyKeySize = 0;
 
-  measurementToInputShares(measurement: Measurement): Promise<Buffer[]> {
+  measurementToInputShares(measurement: Measurement): Promise<Shares> {
     const { field } = this;
     const helperShares = field.fillRandom(this.shares - 1);
 
@@ -35,10 +35,13 @@ export class VdafTest implements TestVdaf {
       BigInt(measurement)
     );
 
-    return Promise.resolve([
-      field.encode([leaderShare]),
-      ...helperShares.map((hs) => field.encode([hs])),
-    ]);
+    return Promise.resolve({
+      publicShare: Buffer.alloc(0),
+      inputShares: [
+        Buffer.from(field.encode([leaderShare])),
+        ...helperShares.map((hs) => Buffer.from(field.encode([hs]))),
+      ],
+    });
   }
 
   initialPrepareState(
@@ -46,6 +49,7 @@ export class VdafTest implements TestVdaf {
     _aggregatorId: number,
     _aggParam: AggregationParameter,
     _nonce: Buffer,
+    _publicShare: Buffer,
     inputShare: Buffer
   ): Promise<PrepareState> {
     return Promise.resolve({
@@ -76,11 +80,15 @@ export class VdafTest implements TestVdaf {
   prepSharesToPrepareMessage(
     _aggParam: AggregationParameter,
     prepShares: Buffer[]
-  ): Buffer {
+  ): Promise<Buffer> {
     const { field } = this;
-    return field.encode([
-      field.sum(prepShares, (encoded) => field.decode(encoded)[0]),
-    ]);
+    return Promise.resolve(
+      Buffer.from(
+        field.encode([
+          field.sum(prepShares, (encoded) => field.decode(encoded)[0]),
+        ])
+      )
+    );
   }
 
   outputSharesToAggregatorShare(

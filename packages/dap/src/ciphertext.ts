@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import { Encodable, encodeOpaque16 } from "./encoding";
+import { Encodable, encodeOpaque16, encodeOpaque32 } from "./encoding";
 
 export class HpkeCiphertext implements Encodable {
   constructor(
@@ -16,7 +16,7 @@ export class HpkeCiphertext implements Encodable {
     return Buffer.concat([
       Buffer.from([this.configId]),
       encodeOpaque16(this.encapsulatedContext),
-      encodeOpaque16(this.payload),
+      encodeOpaque32(this.payload),
     ]);
   }
 }
