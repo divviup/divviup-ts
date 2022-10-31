@@ -206,9 +206,12 @@ export class DAPClient<
     const time = roundedTime(this.#timePrecisionSeconds, options?.timestamp);
     const metadata = new ReportMetadata(reportId, time, this.#extensions);
 
+    const publicShareLength = Buffer.alloc(4);
+    publicShareLength.writeUInt32BE(publicShare.length);
     const aad = Buffer.concat([
       this.taskId.encode(),
       metadata.encode(),
+      publicShareLength,
       publicShare,
     ]);
 

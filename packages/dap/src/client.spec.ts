@@ -264,6 +264,7 @@ describe("DAPClient", () => {
       const aad = Buffer.from([
         ...fill(32, 1),
         ...report.metadata.encode(),
+        ...[0, 0, 0, 0], // length of empty public share
         ...report.publicShare,
       ]);
 
