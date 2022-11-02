@@ -33,4 +33,5 @@ RUN npm set progress=false && npm ci && npm cache clean --force
 # This copy will include all /dist/ subdirectories, produced by the builder.
 COPY --from=builder /opt/divviup-ts/packages/ /opt/divviup-ts/packages/
 
+HEALTHCHECK CMD ["/bin/sh", "-c", "netstat -tl | grep -q http-alt"]
 CMD ["/bin/sh", "-c", "npx interop-test-client >/logs/stdout.log 2>/logs/stderr.log"]
