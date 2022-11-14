@@ -31,7 +31,7 @@ jobs:
     - id: "gcp-auth-private"
       name: Authenticate to GCP (private repository)
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-      uses: "google-github-actions/auth@v0"
+      uses: "google-github-actions/auth@v1"
       with:
         workload_identity_provider: ${{ secrets.GCP_ARTIFACT_PUBLISHER_WORKLOAD_IDENTITY_PROVIDER }}
         service_account: ${{ secrets.GCP_ARTIFACT_PUBLISHER_DEPLOY_SERVICE_ACCOUNT }}
@@ -42,7 +42,7 @@ jobs:
     - id: "gcp-auth-public"
       name: Authenticate to GCP (public repository)
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-      uses: "google-github-actions/auth@v0"
+      uses: "google-github-actions/auth@v1"
       with:
         workload_identity_provider: ${{ secrets.GCP_PUBLIC_ARTIFACT_PUBLISHER_WORKLOAD_IDENTITY_PROVIDER }}
         service_account: ${{ secrets.GCP_PUBLIC_ARTIFACT_PUBLISHER_DEPLOY_SERVICE_ACCOUNT }}
