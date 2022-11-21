@@ -21,7 +21,7 @@
     "@parcel/packager-ts": "^2.8.0",
     "@parcel/transformer-typescript-types": "^2.8.0",
     "lerna": "^6.0.3",
-    "nx": "15.2.0",
+    "nx": "15.2.1",
     "parcel": "^2.8.0"
   }
 }
