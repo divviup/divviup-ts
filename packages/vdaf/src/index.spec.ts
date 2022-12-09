@@ -8,7 +8,7 @@ type PrepareState = {
 type AggregationParameter = null;
 type AggregatorShare = Buffer;
 type OutputShare = bigint[];
-type AggregationResult = number[];
+type AggregationResult = number;
 type Measurement = number;
 type TestVdaf = Vdaf<
   Measurement,
@@ -104,16 +104,14 @@ export class VdafTest implements TestVdaf {
     _aggParam: AggregationParameter,
     aggShares: Buffer[]
   ): AggregationResult {
-    return [
-      Number(
-        this.field.sum(aggShares, (aggShare) => this.field.decode(aggShare)[0])
-      ),
-    ];
+    return Number(
+      this.field.sum(aggShares, (aggShare) => this.field.decode(aggShare)[0])
+    );
   }
 }
 
 describe("test vdaf", () => {
   it("behaves as expected", async () => {
-    await testVdaf(new VdafTest(), null, [1, 2, 3, 4], [10]);
+    await testVdaf(new VdafTest(), null, [1, 2, 3, 4], 10);
   });
 });
