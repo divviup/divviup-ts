@@ -11,7 +11,7 @@
     "build": "parcel build",
     "docs": "typedoc src",
     "test": "ts-mocha \"src/**/*.spec.ts\" -p ./tsconfig.json",
-    "lint": "eslint src --ext .ts && prettier -c src",
+    "lint": "eslint src --ext .ts && prettier -c src --ignore-path ../../.prettierignore",
     "format": "prettier -w src",
     "test:coverage": "nyc --cwd=../.. --no-clean --reporter=lcov --reporter=text --reporter=json npm test"
   },

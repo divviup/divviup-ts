@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
+    "resolveJsonModule": true,
     "sourceMap": true,
     "target": "ES2022",
     "lib": ["dom", "es2020"],
