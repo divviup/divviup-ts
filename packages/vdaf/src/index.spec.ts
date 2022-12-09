@@ -6,9 +6,9 @@ type PrepareState = {
   encodedInputShare: Buffer;
 };
 type AggregationParameter = null;
-type AggregatorShare = bigint[];
+type AggregatorShare = Buffer;
 type OutputShare = bigint[];
-type AggregationResult = number;
+type AggregationResult = number[];
 type Measurement = number;
 type TestVdaf = Vdaf<
   Measurement,
@@ -27,8 +27,8 @@ export class VdafTest implements TestVdaf {
   verifyKeySize = 0;
 
   measurementToInputShares(measurement: Measurement): Promise<Shares> {
-    const { field } = this;
-    const helperShares = field.fillRandom(this.shares - 1);
+    const { field, shares } = this;
+    const helperShares = field.fillRandom(shares - 1);
 
     const leaderShare = helperShares.reduce(
       (ls, hs) => field.sub(ls, hs),
@@ -36,7 +36,7 @@ export class VdafTest implements TestVdaf {
     );
 
     return Promise.resolve({
-      publicShare: Buffer.alloc(0),
+      publicShare: Buffer.from("dummy public share", "ascii"),
       inputShares: [
         Buffer.from(field.encode([leaderShare])),
         ...helperShares.map((hs) => Buffer.from(field.encode([hs]))),
@@ -94,20 +94,26 @@ export class VdafTest implements TestVdaf {
   outputSharesToAggregatorShare(
     _aggParam: null,
     outShares: bigint[][]
-  ): bigint[] {
-    return [this.field.sum(outShares, (share) => share[0])];
+  ): Buffer {
+    return Buffer.from(
+      this.field.encode([this.field.sum(outShares, (share) => share[0])])
+    );
   }
 
   aggregatorSharesToResult(
     _aggParam: AggregationParameter,
-    aggShares: AggregatorShare[]
+    aggShares: Buffer[]
   ): AggregationResult {
-    return Number(this.field.sum(aggShares, (share) => share[0]));
+    return [
+      Number(
+        this.field.sum(aggShares, (aggShare) => this.field.decode(aggShare)[0])
+      ),
+    ];
   }
 }
 
 describe("test vdaf", () => {
   it("behaves as expected", async () => {
-    await testVdaf(new VdafTest(), null, [1, 2, 3, 4], 10);
+    await testVdaf(new VdafTest(), null, [1, 2, 3, 4], [10]);
   });
 });
