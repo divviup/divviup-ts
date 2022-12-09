@@ -59,7 +59,7 @@ export function nextPowerOf2Big(n: bigint): bigint {
 
 /** @internal */
 export function randomBytes(n: number): Uint8Array {
-  if ("TEST_VECTOR" in globalThis) {
+  if (randomBytes.deterministicMode) {
     return Uint8Array.from(fill(n, 1));
   } else {
     const buffer = new Uint8Array(n);
@@ -67,6 +67,8 @@ export function randomBytes(n: number): Uint8Array {
     return buffer;
   }
 }
+
+randomBytes.deterministicMode = false;
 
 /** @internal */
 export function zip<A, B>(a: A[], b: B[]): [A, B][] {

@@ -10,17 +10,10 @@ describe("DAP TaskId", () => {
   });
 
   it("generates a random TaskId", () => {
-    if (process.env.TEST_VECTOR) {
-      assert.equal(
-        TaskId.random().toString(),
-        "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE"
-      );
-    } else {
-      // this is a weak test but it's probably fine because the code is simple
-      const taskId = TaskId.random();
-      const otherTaskId = TaskId.random();
-      assert.notEqual(taskId.toString(), otherTaskId.toString());
-    }
+    // this is a weak test but it's probably fine because the code is simple
+    const taskId = TaskId.random();
+    const otherTaskId = TaskId.random();
+    assert.notEqual(taskId.toString(), otherTaskId.toString());
   });
 
   it("stringifies as the base64url representation", () => {
