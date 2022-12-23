@@ -102,7 +102,7 @@ export const PrgAes128: PrgConstructor = class PrgAes128 extends Prg {
     const counter = new Uint8Array(16);
     new DataView(counter.buffer).setUint32(12, block, false);
 
-    const encryptedData = (await webcrypto.subtle.encrypt(
+    const encryptedData = await webcrypto.subtle.encrypt(
       {
         name: "AES-CTR",
         length: 128,
@@ -110,7 +110,7 @@ export const PrgAes128: PrgConstructor = class PrgAes128 extends Prg {
       },
       this.#cryptoKey,
       new Uint8Array(offset + length)
-    )) as ArrayBuffer;
+    );
 
     this.#lengthConsumed += length;
     return new Uint8Array(encryptedData.slice(-length));

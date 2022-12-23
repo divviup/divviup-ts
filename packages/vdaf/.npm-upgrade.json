@@ -1,8 +1,0 @@
-{
-  "ignore": {
-    "typescript": {
-      "versions": "*",
-      "reason": "incompatible with parcel at the moment"
-    }
-  }
-}
