@@ -1,7 +1,35 @@
 import { Buffer } from "buffer";
 import * as hpke from "hpke";
-import { Parser, Parseable, Encodable } from "./encoding";
+import { Parser, ParseSource, Encodable, encodeArray16 } from "./encoding";
 import { HpkeCiphertext } from "./ciphertext";
+
+export class HpkeConfigList implements Encodable {
+  #selectedConfig?: HpkeConfig;
+  constructor(public configs: HpkeConfig[]) {}
+
+  static parse(parseable: ParseSource): HpkeConfigList {
+    return new HpkeConfigList(Parser.from(parseable).array16(HpkeConfig));
+  }
+
+  encode(): Buffer {
+    return encodeArray16(this.configs);
+  }
+
+  selectConfig(): HpkeConfig {
+    if (this.#selectedConfig) return this.#selectedConfig;
+    for (const config of this.configs) {
+      try {
+        config.config();
+        this.#selectedConfig = config;
+        return config;
+      } catch (_) {
+        // skip over unrecognized configs
+      }
+    }
+
+    throw new Error("no hpke configurations were recognized");
+  }
+}
 
 export class HpkeConfig implements Encodable {
   constructor(
@@ -39,7 +67,7 @@ export class HpkeConfig implements Encodable {
     }
   }
 
-  static parse(parsable: Parseable): HpkeConfig {
+  static parse(parsable: ParseSource): HpkeConfig {
     const parser = Parser.from(parsable);
     return new HpkeConfig(
       parser.uint8(),

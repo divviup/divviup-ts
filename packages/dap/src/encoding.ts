@@ -33,13 +33,16 @@ export function encodeOpaque32(buffer: Buffer): Buffer {
   return returnBuffer;
 }
 
-export type Parseable = Parser | ArrayBuffer | Buffer;
+export type ParseSource = Parser | ArrayBuffer | Buffer;
+interface Parseable<U> {
+  parse(source: ParseSource): U;
+}
 
 export class Parser {
   index = 0;
   buffer: Buffer;
 
-  static from(p: Parseable): Parser {
+  static from(p: ParseSource): Parser {
     return p instanceof Parser ? p : new Parser(p);
   }
 
@@ -56,9 +59,29 @@ export class Parser {
     return ret;
   }
 
+  array16<T extends Parseable<U>, U>(Parseable: T): U[] {
+    const length = this.uint16();
+    const endIndex = this.index + length;
+    const arr = [] as U[];
+
+    while (this.index < endIndex) {
+      arr.push(Parseable.parse(this));
+    }
+
+    if (this.index !== endIndex) {
+      throw new Error(
+        `expected to read exactly ${length} but read ${
+          this.index - endIndex
+        } over`
+      );
+    }
+
+    return arr;
+  }
+
   slice(bytes: number): Buffer {
     return this.increment(bytes, () =>
-      this.buffer.slice(this.index, this.index + bytes)
+      Buffer.from(this.buffer.subarray(this.index, this.index + bytes))
     );
   }
 

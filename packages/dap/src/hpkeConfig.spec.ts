@@ -1,6 +1,80 @@
-import { HpkeConfig } from "./hpkeConfig";
+import { HpkeConfig, HpkeConfigList } from "./hpkeConfig";
 import assert from "assert";
 import { Kem, Kdf, Aead, Keypair } from "hpke";
+
+describe("DAP HpkeConfigList", () => {
+  it("encodes as expected", () => {
+    const config1 = new HpkeConfig(
+      255,
+      Kem.DhP256HkdfSha256,
+      Kdf.Sha256,
+      Aead.AesGcm128,
+      Buffer.from("public key")
+    );
+    const config2 = new HpkeConfig(
+      255,
+      Kem.X25519HkdfSha256,
+      Kdf.Sha384,
+      Aead.ChaCha20Poly1305,
+      Buffer.from("public key")
+    );
+    const list = new HpkeConfigList([config1, config2]);
+    assert.deepEqual(
+      [...list.encode()],
+      [0, 38, ...config1.encode(), ...config2.encode()]
+    );
+  });
+
+  it("decodes as expected", () => {
+    const config1 = new HpkeConfig(
+      255,
+      Kem.DhP256HkdfSha256,
+      Kdf.Sha256,
+      Aead.AesGcm128,
+      Buffer.from("public key")
+    );
+    const config2 = new HpkeConfig(
+      255,
+      Kem.X25519HkdfSha256,
+      Kdf.Sha384,
+      Aead.ChaCha20Poly1305,
+      Buffer.from("public key")
+    );
+
+    const list = HpkeConfigList.parse(
+      Buffer.from([0, 38, ...config1.encode(), ...config2.encode()])
+    );
+
+    assert.deepEqual(list.configs, [config1, config2]);
+  });
+
+  it("selects the first config that it recognizes", () => {
+    const validConfig = new HpkeConfig(
+      255,
+      Kem.DhP256HkdfSha256,
+      Kdf.Sha256,
+      Aead.AesGcm128,
+      Buffer.from("public key")
+    );
+
+    const invalidConfig = new HpkeConfig(
+      100,
+      Kem.X25519HkdfSha256,
+      Kdf.Sha512,
+      Aead.ChaCha20Poly1305,
+      Buffer.from("public key")
+    );
+
+    // none of these are known ids, so we skip the invalid config
+    invalidConfig.aeadId = 100;
+    invalidConfig.kdfId = 100;
+    invalidConfig.kemId = 100;
+
+    const list = new HpkeConfigList([invalidConfig, validConfig]);
+
+    assert.deepEqual(list.selectConfig(), validConfig);
+  });
+});
 
 describe("DAP HpkeConfig", () => {
   it("encodes as expected", () => {
