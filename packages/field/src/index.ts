@@ -43,11 +43,10 @@ export class Field {
     return this.#primeField.evalPolyAt(pVec, x);
   }
 
-  interpolate(xs: bigint[], ys: bigint[]): bigint[] {
-    const xsVec = this.#primeField.newVectorFrom(xs);
+  interpolate(rootsOfUnity: bigint[], ys: bigint[]): bigint[] {
+    const rootsOfUnityVec = this.#primeField.newVectorFrom(rootsOfUnity);
     const ysVec = this.#primeField.newVectorFrom(ys);
-
-    return this.#primeField.interpolate(xsVec, ysVec).toValues();
+    return this.#primeField.interpolateRoots(rootsOfUnityVec, ysVec).toValues();
   }
 
   add(a: bigint, b: bigint): bigint {
