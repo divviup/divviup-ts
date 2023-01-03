@@ -79,14 +79,19 @@ function testField(field: Field, name: string) {
     });
 
     it("correctly interpolates polynomials", () => {
-      const p = field.fillRandom(10);
-      const xs = arr(10, BigInt);
-      const ys = xs.map((x) => field.evalPoly(p, x));
-      const q = field.interpolate(xs, ys);
-      for (const x of xs) {
-        const a = field.evalPoly(p, x);
-        const b = field.evalPoly(q, x);
-        assert.equal(a, b);
+      for (const count of [2, 4, 8, 16, 32, 64, 128]) {
+        const roots = arr(count, (n) =>
+          field.exp(
+            field.exp(field.generator, field.genOrder / BigInt(count)),
+            BigInt(n)
+          )
+        );
+
+        const poly = field.fillRandom(count);
+        const points = arr(count, (n) => field.evalPoly(poly, roots[n]));
+        const interpolated = field.interpolate(roots, points);
+
+        assert.deepEqual(interpolated, poly);
       }
     });
   });
