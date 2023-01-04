@@ -23,9 +23,9 @@ jobs:
       run: |-
         docker build \
           -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} \
-          -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:dap-draft-02 \
+          -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:dap-draft-03 \
           -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} \
-          -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:dap-draft-02 \
+          -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:dap-draft-03 \
           -f Dockerfile.interop_client \
           .
     - id: "gcp-auth-private"
@@ -61,7 +61,7 @@ jobs:
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       run: |-
         docker push us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} && \
-          docker push us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:dap-draft-02
+          docker push us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:dap-draft-03
     - name: Docker Login (public)
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       uses: "docker/login-action@v2"
@@ -73,4 +73,4 @@ jobs:
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       run: |-
         docker push us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} && \
-          docker push us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:dap-draft-02
+          docker push us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:dap-draft-03
