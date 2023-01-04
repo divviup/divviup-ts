@@ -1,32 +1,25 @@
 import { Buffer } from "buffer";
 import { TaskId } from "./taskId";
 import { ReportId } from "./reportId";
-import { Report, ReportMetadata } from "./report";
-import { HpkeConfig } from "./hpkeConfig";
+import {
+  Report,
+  ReportMetadata,
+  InputShareAad,
+  PlaintextInputShare,
+} from "./report";
+import { HpkeConfigList } from "./hpkeConfig";
 import { ClientVdaf } from "@divviup/vdaf";
 import { Extension } from "./extension";
 import { DAPError } from "./errors";
-
-export { TaskId } from "./taskId";
-
+import { CONTENT_TYPES, DAP_VERSION, ROUTES } from "./constants";
+import { Aggregator } from "./aggregator";
 import {
   Prio3Aes128Count,
   Prio3Aes128Histogram,
   Prio3Aes128Sum,
 } from "@divviup/prio3";
 
-enum Role {
-  Collector = 0,
-  Client = 1,
-  Leader = 2,
-  Helper = 3,
-}
-
-interface Aggregator {
-  url: URL;
-  role: Role;
-  hpkeConfig?: HpkeConfig;
-}
+export { TaskId } from "./taskId";
 
 export interface ReportOptions {
   timestamp?: Date;
@@ -64,28 +57,6 @@ type Fetch = (
   input: RequestInfo,
   init?: RequestInit | undefined
 ) => Promise<Response>;
-
-const ROUTES = Object.freeze({
-  keyConfig: "hpke_config",
-  upload: "upload",
-});
-
-/**
-   The protocol version for this DAP implementation. Usually of the
-   form `dap-{nn}`.
-*/
-const DAP_VERSION = "dap-02";
-
-/** A Buffer that will always equal `${DAP_VERSION} input share\x01` */
-const INPUT_SHARE_ASCII = Object.freeze([
-  ...Buffer.from(`${DAP_VERSION} input share`, "ascii"),
-  1,
-]);
-
-const CONTENT_TYPES = Object.freeze({
-  REPORT: "application/dap-report",
-  HPKE_CONFIG: "application/dap-hpke-config",
-});
 
 interface KnownVdafs {
   sum: typeof Prio3Aes128Sum;
@@ -204,28 +175,14 @@ export class DAPClient<
 
     const reportId = ReportId.random();
     const time = roundedTime(this.#timePrecisionSeconds, options?.timestamp);
-    const metadata = new ReportMetadata(reportId, time, this.#extensions);
-
-    const aad = Buffer.concat([
-      this.taskId.encode(),
-      metadata.encode(),
-      publicShare,
-    ]);
-
-    const ciphertexts = this.#aggregators.map((aggregator, i) => {
-      if (!aggregator.hpkeConfig) {
-        // This exists entirely to tell typescript it's ok to use the hpkeConfig.
-        // Throwing an explicit error is preferable to `as HpkeConfig`
-        throw new Error(
-          "We fetched key configuration but this aggregator is missing hpkeConfig. " +
-            "This should be unreachable; please file a bug report."
-        );
-      }
-
-      const info = Buffer.from([...INPUT_SHARE_ASCII, aggregator.role]);
-
-      return aggregator.hpkeConfig.seal(info, inputShares[i], aad);
-    });
+    const metadata = new ReportMetadata(reportId, time);
+    const aad = new InputShareAad(this.taskId, metadata, publicShare);
+    const ciphertexts = this.#aggregators.map((aggregator, i) =>
+      aggregator.seal(
+        new PlaintextInputShare(this.#extensions, inputShares[i]),
+        aad
+      )
+    );
 
     return new Report(this.#taskId, metadata, publicShare, ciphertexts);
   }
@@ -255,7 +212,7 @@ export class DAPClient<
   }
 
   private hasKeyConfiguration(): boolean {
-    return this.#aggregators.every((aggregator) => !!aggregator.hpkeConfig);
+    return this.#aggregators.every((aggregator) => !!aggregator.hpkeConfigList);
   }
 
   /**
@@ -298,7 +255,7 @@ export class DAPClient<
   invalidateHpkeConfig() {
     this.#hpkeConfigsWereInvalid = true;
     for (const aggregator of this.#aggregators) {
-      delete aggregator.hpkeConfig;
+      delete aggregator.hpkeConfigList;
     }
   }
 
@@ -318,7 +275,7 @@ export class DAPClient<
         url.searchParams.append("task_id", this.#taskId.toString());
 
         const response = await this.#fetch(url.toString(), {
-          headers: { Accept: CONTENT_TYPES.HPKE_CONFIG },
+          headers: { Accept: CONTENT_TYPES.HPKE_CONFIG_LIST },
         });
 
         if (!response.ok) {
@@ -330,13 +287,17 @@ export class DAPClient<
 
         const blob = await response.blob();
 
-        if (blob.type !== CONTENT_TYPES.HPKE_CONFIG) {
+        if (blob.type !== CONTENT_TYPES.HPKE_CONFIG_LIST) {
           throw new Error(
-            `expected ${CONTENT_TYPES.HPKE_CONFIG} content-type header, aborting`
+            `expected ${CONTENT_TYPES.HPKE_CONFIG_LIST} content-type header, aborting`
           );
         }
 
-        aggregator.hpkeConfig = HpkeConfig.parse(await blob.arrayBuffer());
+        aggregator.hpkeConfigList = HpkeConfigList.parse(
+          await blob.arrayBuffer()
+        );
+
+        aggregator.hpkeConfigList.selectConfig();
       })
     );
   }
@@ -346,18 +307,7 @@ function aggregatorsFromParameters({
   leader,
   helper,
 }: ClientParameters): Aggregator[] {
-  leader = new URL(leader);
-  if (!leader.pathname.endsWith("/")) {
-    leader.pathname += "/";
-  }
-  helper = new URL(helper);
-  if (!helper.pathname.endsWith("/")) {
-    helper.pathname += "/";
-  }
-  return [
-    { url: leader, role: Role.Leader },
-    { url: helper, role: Role.Helper },
-  ];
+  return [Aggregator.leader(leader), Aggregator.helper(helper)];
 }
 
 function taskIdFromDefinition(

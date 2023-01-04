@@ -1,10 +1,11 @@
 import assert from "assert";
 import { DAPClient, KnownVdafSpec, VdafMeasurement } from "./client";
-import { HpkeConfig } from "./hpkeConfig";
+import { HpkeConfig, HpkeConfigList } from "./hpkeConfig";
 import * as hpke from "hpke";
 import { TaskId } from "./taskId";
 import { DAPError } from "./errors";
-import { fill, zip } from "@divviup/common";
+import { zip } from "@divviup/common";
+import { encodeOpaque32 } from "./encoding";
 import {
   Prio3Aes128Count,
   Prio3Aes128Histogram,
@@ -42,14 +43,16 @@ function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
   return fakeFetch;
 }
 
-function buildHpkeConfig(): HpkeConfig {
-  return new HpkeConfig(
-    Math.floor(Math.random() * 255),
-    hpke.Kem.DhP256HkdfSha256,
-    hpke.Kdf.Sha256,
-    hpke.Aead.AesGcm128,
-    Buffer.from(new hpke.Keypair(hpke.Kem.DhP256HkdfSha256).public_key)
-  );
+function buildHpkeConfigList(): HpkeConfigList {
+  return new HpkeConfigList([
+    new HpkeConfig(
+      Math.floor(Math.random() * 255),
+      hpke.Kem.DhP256HkdfSha256,
+      hpke.Kdf.Sha256,
+      hpke.Aead.AesGcm128,
+      Buffer.from(new hpke.Keypair(hpke.Kem.DhP256HkdfSha256).public_key)
+    ),
+  ]);
 }
 
 function buildParams(): {
@@ -75,7 +78,7 @@ function withHpkeConfigs<
   Measurement extends VdafMeasurement<Spec>
 >(dapClient: DAPClient<Spec, Measurement>): DAPClient<Spec, Measurement> {
   for (const aggregator of dapClient.aggregators) {
-    aggregator.hpkeConfig = buildHpkeConfig();
+    aggregator.hpkeConfigList = buildHpkeConfigList();
   }
   return dapClient;
 }
@@ -146,12 +149,26 @@ describe("DAPClient", () => {
 
       assert(client.vdaf instanceof Prio3Aes128Count);
     });
+
+    it("throws if the timePrecisionSeconds is not a number", () => {
+      assert.throws(
+        () =>
+          new DAPClient({
+            ...buildParams(),
+            timePrecisionSeconds: "ten" as unknown as number,
+          }),
+        (e: Error) => e.message == "timePrecisionSeconds must be a number"
+      );
+    });
   });
 
   describe("fetching key configuration", () => {
     it("can succeed", async () => {
       const params = buildParams();
-      const [hpkeConfig1, hpkeConfig2] = [buildHpkeConfig(), buildHpkeConfig()];
+      const [hpkeConfig1, hpkeConfig2] = [
+        buildHpkeConfigList(),
+        buildHpkeConfigList(),
+      ];
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
         [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
@@ -168,10 +185,10 @@ describe("DAPClient", () => {
       await client.fetchKeyConfiguration();
       assert.equal(fetch.calls.length, 2);
       assert.deepEqual(fetch.calls[1][1], {
-        headers: { Accept: "application/dap-hpke-config" },
+        headers: { Accept: "application/dap-hpke-config-list" },
       });
-      assert.deepEqual(client.aggregators[0].hpkeConfig, hpkeConfig1);
-      assert.deepEqual(client.aggregators[1].hpkeConfig, hpkeConfig2);
+      assert.deepEqual(client.aggregators[0].hpkeConfigList, hpkeConfig1);
+      assert.deepEqual(client.aggregators[1].hpkeConfigList, hpkeConfig2);
     });
 
     it("throws an error if the status is not 200", async () => {
@@ -213,13 +230,13 @@ describe("DAPClient", () => {
         [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
           {
             contentType: "application/text",
-            body: buildHpkeConfig().encode(),
+            body: buildHpkeConfigList().encode(),
           },
         ],
         [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           {
             contentType: "application/text",
-            body: buildHpkeConfig().encode(),
+            body: buildHpkeConfigList().encode(),
           },
         ],
       });
@@ -244,13 +261,15 @@ describe("DAPClient", () => {
       for (const aggregator of client.aggregators) {
         const { private_key, public_key } = new hpke.Keypair(kem);
         privateKeys.push([Buffer.from(private_key), aggregator.role]);
-        aggregator.hpkeConfig = new HpkeConfig(
-          Math.floor(Math.random() * 255),
-          kem,
-          kdf,
-          aead,
-          Buffer.from(public_key)
-        );
+        aggregator.hpkeConfigList = new HpkeConfigList([
+          new HpkeConfig(
+            Math.floor(Math.random() * 255),
+            kem,
+            kdf,
+            aead,
+            Buffer.from(public_key)
+          ),
+        ]);
       }
 
       const report = await client.generateReport(21);
@@ -261,10 +280,10 @@ describe("DAPClient", () => {
           2 /*2 second delta, double the minimum batch duration*/
       );
 
-      const aad = Buffer.from([
-        ...fill(32, 1),
-        ...report.metadata.encode(),
-        ...report.publicShare,
+      const aad = Buffer.concat([
+        report.taskID.encode(),
+        report.metadata.encode(),
+        encodeOpaque32(report.publicShare),
       ]);
 
       for (const [[privateKey, role], share] of zip(
@@ -272,7 +291,7 @@ describe("DAPClient", () => {
         report.encryptedInputShares
       )) {
         const info = Buffer.from([
-          ...Buffer.from("dap-02 input share"),
+          ...Buffer.from("dap-03 input share"),
           1,
           role,
         ]);
@@ -314,8 +333,8 @@ describe("DAPClient", () => {
 
     it("fails if there is an hpke error", async () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
-      assert(client.aggregators[0].hpkeConfig);
-      client.aggregators[0].hpkeConfig.publicKey = Buffer.from(
+      assert(client.aggregators[0].hpkeConfigList);
+      client.aggregators[0].hpkeConfigList.configs[0].publicKey = Buffer.from(
         "not a valid public key"
       );
       await assert.rejects(client.generateReport(21));
@@ -323,8 +342,8 @@ describe("DAPClient", () => {
 
     it("fails if the HpkeConfig cannot be converted to a hpke.Config", async () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
-      assert(client.aggregators[0].hpkeConfig);
-      client.aggregators[0].hpkeConfig.aeadId = 500.25;
+      assert(client.aggregators[0].hpkeConfigList);
+      client.aggregators[0].hpkeConfigList.configs[0].aeadId = 500.25;
       await assert.rejects(client.generateReport(21));
     });
 
@@ -479,9 +498,9 @@ function outdatedConfigResponse(taskId: TaskId): ResponseSpec {
   };
 }
 
-function hpkeConfigResponse(config = buildHpkeConfig()): ResponseSpec {
+function hpkeConfigResponse(config = buildHpkeConfigList()): ResponseSpec {
   return {
     body: config.encode(),
-    contentType: "application/dap-hpke-config",
+    contentType: "application/dap-hpke-config-list",
   };
 }
