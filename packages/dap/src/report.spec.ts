@@ -72,7 +72,7 @@ describe("DAP PlaintextInputShare", () => {
       plaintextInputShare.encode(),
       Buffer.from([
         ...[0, 0], //array16 extensions
-        ...[0, 0, 0, payload.length], // opaque32 payload length length
+        ...[0, 0, 0, payload.length], // opaque32 payload length
         ...payload,
       ])
     );
