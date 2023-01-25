@@ -22,12 +22,21 @@ jobs:
     - name: Build
       run: |-
         docker build \
+          -t divviup_ts_interop_client \
           -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} \
           -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:dap-draft-03 \
           -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} \
           -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:dap-draft-03 \
           -f Dockerfile.interop_client \
           .
+    - name: Test
+      run: |
+        docker run -d --name test-container divviup_ts_interop_client
+        sleep 60
+        STATUS="$(docker container inspect test-container --format="{{.State.Health.Status}}")"
+        echo "$STATUS"
+        docker rm -f test-container
+        if [ "$STATUS" != "healthy" ]; then exit 1; fi
     - id: "gcp-auth-private"
       name: Authenticate to GCP (private repository)
       if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
