@@ -5,9 +5,18 @@
 
 [docs for main](https://divviup.github.io/divviup-ts/)
 
-## Protocol Versions
+## Protocol Versions and Release Branches
 
-This repository is current to [version DAP-03](https://www.ietf.org/archive/id/draft-ietf-ppm-dap-03.html) and [version VDAF-03](https://www.ietf.org/archive/id/draft-irtf-cfrg-vdaf-03.html)
+The `main` branch is under continuous development and will usually be partway between DAP and VDAF drafts. divviup-ts uses stable release branches to maintain implementations of different draft versions. Artifacts for some draft version are published from a corresponding `release/dap-draft-xy` branch. Only supported release branches receive dependency updates and backports.
+
+| Git branch | Draft version | Conforms to specification? | Status |
+| ---------- | ------------- | -------------------------- | ------ |
+| `release/dap-draft-02` | [`draft-ietf-ppm-dap-02`][dap-02] | Yes | Unmaintained |
+| `release/dap-draft-03` | [`draft-ietf-ppm-dap-03`][dap-03] | Yes | Supported |
+| `main` | `draft-ietf-ppm-dap-04` (forthcoming) | Partially | Supported |
+
+[dap-02]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/02/
+[dap-03]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/03/
 
 ## Usage
 
