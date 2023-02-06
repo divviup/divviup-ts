@@ -284,14 +284,13 @@ describe("DAPClient", () => {
 
       const report = await client.generateReport(21);
       assert.equal(report.encryptedInputShares.length, 2);
-      assert.equal(report.taskID, client.taskId);
       assert(
         Math.floor(Date.now() / 1000) - Number(report.metadata.time) <
           2 /*2 second delta, double the minimum batch duration*/
       );
 
       const aad = Buffer.concat([
-        report.taskID.encode(),
+        client.taskId.encode(),
         report.metadata.encode(),
         encodeOpaque32(report.publicShare),
       ]);
@@ -377,20 +376,25 @@ describe("DAPClient", () => {
 
   describe("sending reports", () => {
     it("can succeed", async () => {
+      const params = buildParams();
+      const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
-        "https://a.example.com/v1/upload": [{ status: 200 }],
+        [`https://a.example.com/v1/tasks/${taskId}/reports`]: [{ status: 201 }],
       });
-      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const client = withHpkeConfigs(new DAPClient(params));
       client.fetch = fetch;
       const report = await client.generateReport(100);
       await client.sendReport(report);
       assert.equal(fetch.calls.length, 1);
       const [[url, args]] = fetch.calls;
       const request = new Request(url, args);
-      assert.equal(request.url, "https://a.example.com/v1/upload");
+      assert.equal(
+        request.url,
+        `https://a.example.com/v1/tasks/${taskId}/reports`
+      );
       assert(!!args);
       assert.deepEqual(args.body, report.encode());
-      assert.equal(request.method, "POST");
+      assert.equal(request.method, "PUT");
       assert.equal(
         request.headers.get("Content-Type"),
         "application/dap-report"
@@ -418,7 +422,7 @@ describe("DAPClient", () => {
         [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           hpkeConfigResponse(),
         ],
-        "https://a.example.com/v1/upload": [{ status: 200 }],
+        [`https://a.example.com/v1/tasks/${taskId}/reports`]: [{ status: 201 }],
       });
 
       const client = new DAPClient(params);
@@ -439,7 +443,7 @@ describe("DAPClient", () => {
           hpkeConfigResponse(),
           hpkeConfigResponse(),
         ],
-        "https://a.example.com/v1/upload": [
+        [`https://a.example.com/v1/tasks/${taskId}/reports`]: [
           {
             status: 400,
             contentType: "application/problem+json",
@@ -476,7 +480,7 @@ describe("DAPClient", () => {
           hpkeConfigResponse(),
           hpkeConfigResponse(),
         ],
-        "https://a.example.com/v1/upload": [
+        [`https://a.example.com/v1/tasks/${taskId}/reports`]: [
           outdatedConfigResponse(params.taskId),
           outdatedConfigResponse(params.taskId),
         ],

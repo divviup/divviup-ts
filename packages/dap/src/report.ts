@@ -24,7 +24,6 @@ export class ReportMetadata implements Encodable {
 
 export class Report implements Encodable {
   constructor(
-    public taskID: TaskId,
     public metadata: ReportMetadata,
     public publicShare: Buffer,
     public encryptedInputShares: HpkeCiphertext[]
@@ -32,7 +31,6 @@ export class Report implements Encodable {
 
   encode(): Buffer {
     return Buffer.concat([
-      this.taskID.encode(),
       this.metadata.encode(),
       encodeOpaque32(this.publicShare),
       encodeArray32(this.encryptedInputShares),

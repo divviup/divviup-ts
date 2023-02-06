@@ -1,8 +1,3 @@
-export const ROUTES = Object.freeze({
-  keyConfig: "hpke_config",
-  upload: "upload",
-});
-
 /**
    The protocol version for this DAP implementation. Usually of the
    form `dap-{nn}`.

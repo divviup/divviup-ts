@@ -13,7 +13,6 @@ import { Role } from "./constants";
 
 describe("DAP Report", () => {
   it("encodes as expected", () => {
-    const taskId = TaskId.random();
     const reportId = ReportId.random();
 
     const ciphertext1 = new HpkeCiphertext(
@@ -29,7 +28,7 @@ describe("DAP Report", () => {
     );
 
     const reportMetadata = new ReportMetadata(reportId, 0);
-    const report = new Report(taskId, reportMetadata, Buffer.alloc(0), [
+    const report = new Report(reportMetadata, Buffer.alloc(0), [
       ciphertext1,
       ciphertext2,
     ]);
@@ -37,7 +36,6 @@ describe("DAP Report", () => {
     assert.deepEqual(
       report.encode(),
       Buffer.from([
-        ...taskId.encode(), // tested in taskId.spec
         ...reportMetadata.encode(), // tested below
         ...[0, 0, 0, 0], // length of the (empty) public share
         ...[0, 0, 0, 17 + 11], // length of the combined ciphertext encodings
