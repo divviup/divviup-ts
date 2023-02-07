@@ -11,6 +11,7 @@ import {
   Prio3Aes128Histogram,
   Prio3Aes128Sum,
 } from "@divviup/prio3";
+import { inspect } from "node:util";
 
 interface Fetch {
   (input: RequestInfo, init?: RequestInit | undefined): Promise<Response>;
@@ -30,7 +31,16 @@ function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
   ): Promise<Response> {
     fakeFetch.calls.push([input, init]);
     const responseSpec = mocks[input.toString()];
-    const response = responseSpec.shift() || { status: 404 };
+    const response = responseSpec?.shift();
+
+    if (!response) {
+      throw new Error(
+        `received unhandled request.\n\nurl: ${input.toString()}.\n\nmocks: ${inspect(
+          mocks
+        ).slice(1, -1)}`
+      );
+    }
+
     return Promise.resolve(
       new Response(Buffer.from(response.body || ""), {
         status: response.status || 200,
