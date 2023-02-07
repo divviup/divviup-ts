@@ -5,6 +5,7 @@ on:
   push:
     branches:
     - main
+    - release/**
 
 jobs:
   docker:
@@ -19,14 +20,27 @@ jobs:
     - name: Get commit hash
       id: get_commit
       run: echo "COMMIT=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
+    - name: Get DAP draft
+      id: get_dap_draft
+      run: |
+        echo -n "DAP_DRAFT=" >> $GITHUB_OUTPUT
+        if [[ ${{ github.ref_name }} == "main" ]]; then
+          echo dap-draft-04 >> $GITHUB_OUTPUT
+        else
+          echo "${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+        fi
+    - name: Check if artifacts should be published
+      id: check_should_publish
+      if: ${{ github.event_name == 'push' && ( github.ref_name == 'main' || startsWith(github.ref_name, 'release/')) }}
+      run: echo "SHOULD_PUBLISH=true" >> $GITHUB_OUTPUT
     - name: Build
       run: |-
         docker build \
           -t divviup_ts_interop_client \
           -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} \
-          -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:dap-draft-03 \
+          -t us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:${{ steps.get_dap_draft.outputs.DAP_DRAFT }} \
           -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} \
-          -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:dap-draft-03 \
+          -t us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:${{ steps.get_dap_draft.outputs.DAP_DRAFT }} \
           -f Dockerfile.interop_client \
           .
     - name: Test
@@ -39,7 +53,7 @@ jobs:
         if [ "$STATUS" != "healthy" ]; then exit 1; fi
     - id: "gcp-auth-private"
       name: Authenticate to GCP (private repository)
-      if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      if: ${{ steps.check_should_publish.outputs.SHOULD_PUBLISH == 'true' }}
       uses: "google-github-actions/auth@v1"
       with:
         workload_identity_provider: ${{ secrets.GCP_ARTIFACT_PUBLISHER_WORKLOAD_IDENTITY_PROVIDER }}
@@ -50,7 +64,7 @@ jobs:
         export_environment_variables: false
     - id: "gcp-auth-public"
       name: Authenticate to GCP (public repository)
-      if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      if: ${{ steps.check_should_publish.outputs.SHOULD_PUBLISH == 'true' }}
       uses: "google-github-actions/auth@v1"
       with:
         workload_identity_provider: ${{ secrets.GCP_PUBLIC_ARTIFACT_PUBLISHER_WORKLOAD_IDENTITY_PROVIDER }}
@@ -60,26 +74,26 @@ jobs:
         access_token_scopes: "https://www.googleapis.com/auth/cloud-platform"
         export_environment_variables: false
     - name: Docker Login (private)
-      if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      if: ${{ steps.check_should_publish.outputs.SHOULD_PUBLISH == 'true' }}
       uses: "docker/login-action@v2"
       with:
         registry: "us-west2-docker.pkg.dev"
         username: "oauth2accesstoken"
         password: ${{ steps.gcp-auth-private.outputs.access_token }}
     - name: Push (private)
-      if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      if: ${{ steps.check_should_publish.outputs.SHOULD_PUBLISH == 'true' }}
       run: |-
         docker push us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} && \
-          docker push us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:dap-draft-03
+          docker push us-west2-docker.pkg.dev/janus-artifacts/divviup-ts/divviup_ts_interop_client:${{ steps.get_dap_draft.outputs.DAP_DRAFT }}
     - name: Docker Login (public)
-      if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      if: ${{ steps.check_should_publish.outputs.SHOULD_PUBLISH == 'true' }}
       uses: "docker/login-action@v2"
       with:
         registry: "us-west2-docker.pkg.dev"
         username: "oauth2accesstoken"
         password: ${{ steps.gcp-auth-public.outputs.access_token }}
     - name: Push (public)
-      if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      if: ${{ steps.check_should_publish.outputs.SHOULD_PUBLISH == 'true' }}
       run: |-
         docker push us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:${{ steps.get_commit.outputs.COMMIT }} && \
-          docker push us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:dap-draft-03
+          docker push us-west2-docker.pkg.dev/divviup-artifacts-public/divviup-ts/divviup_ts_interop_client:${{ steps.get_dap_draft.outputs.DAP_DRAFT }}
