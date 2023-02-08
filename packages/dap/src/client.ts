@@ -11,7 +11,7 @@ import { HpkeConfigList } from "./hpkeConfig";
 import { ClientVdaf } from "@divviup/vdaf";
 import { Extension } from "./extension";
 import { DAPError } from "./errors";
-import { CONTENT_TYPES, DAP_VERSION, ROUTES } from "./constants";
+import { CONTENT_TYPES, DAP_VERSION } from "./constants";
 import { Aggregator } from "./aggregator";
 import {
   Prio3Aes128Count,
@@ -184,7 +184,7 @@ export class DAPClient<
       )
     );
 
-    return new Report(this.#taskId, metadata, publicShare, ciphertexts);
+    return new Report(metadata, publicShare, ciphertexts);
   }
 
   /**
@@ -197,10 +197,11 @@ export class DAPClient<
   async sendReport(report: Report) {
     const body = report.encode();
     const leader = this.#aggregators[0];
+    const taskId = this.#taskId.toString();
     const response = await this.#fetch(
-      new URL(ROUTES.upload, leader.url).toString(),
+      new URL(`tasks/${taskId}/reports`, leader.url).toString(),
       {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": CONTENT_TYPES.REPORT },
         body,
       }
@@ -271,7 +272,7 @@ export class DAPClient<
     if (this.hasKeyConfiguration()) return;
     await Promise.all(
       this.#aggregators.map(async (aggregator) => {
-        const url = new URL(ROUTES.keyConfig, aggregator.url);
+        const url = new URL("hpke_config", aggregator.url);
         url.searchParams.append("task_id", this.#taskId.toString());
 
         const response = await this.#fetch(url.toString(), {
