@@ -100,11 +100,11 @@ describe("DAP InputShareInfo", () => {
   it("encodes as expected", () => {
     assert.deepEqual(
       new InputShareInfo(Role.Helper).encode(),
-      Buffer.from([...Buffer.from("dap-03 input share"), 1, 3])
+      Buffer.from([...Buffer.from("dap-04 input share"), 1, 3])
     );
     assert.deepEqual(
       new InputShareInfo(Role.Leader).encode(),
-      Buffer.from([...Buffer.from("dap-03 input share"), 1, 2])
+      Buffer.from([...Buffer.from("dap-04 input share"), 1, 2])
     );
   });
 });
