@@ -171,6 +171,7 @@ class Aggregator extends Container {
     role: string,
     leaderEndpoint: URL,
     helperEndpoint: URL,
+    vdaf: object,
     aggregatorAuthToken: string,
     collectorAuthToken: string | null,
     vdafVerifyKey: EncodedBlob,
@@ -184,9 +185,7 @@ class Aggregator extends Container {
       task_id: taskId.toString(),
       leader: leaderEndpoint.toString(),
       helper: helperEndpoint.toString(),
-      vdaf: {
-        type: "Prio3Aes128Count",
-      },
+      vdaf: vdaf,
       leader_authentication_token: aggregatorAuthToken,
       role: role,
       vdaf_verify_key: vdafVerifyKey.toString(),
@@ -209,14 +208,13 @@ class Collector extends Container {
   async addTask(
     taskId: EncodedBlob,
     leaderEndpoint: URL,
+    vdaf: object,
     collectorAuthToken: string
   ): Promise<string> {
     const rawBody = await this.sendRequest("add_task", {
       task_id: taskId.toString(),
       leader: leaderEndpoint.toString(),
-      vdaf: {
-        type: "Prio3Aes128Count",
-      },
+      vdaf: vdaf,
       collector_authentication_token: collectorAuthToken,
       query_type: 1,
     });
@@ -303,6 +301,8 @@ async function upload(
   taskId: EncodedBlob,
   leaderEndpoint: URL,
   helperEndpoint: URL,
+  vdaf: object,
+  measurement: unknown,
   timePrecision: number
 ): Promise<void> {
   const response = await fetch(
@@ -316,10 +316,8 @@ async function upload(
         task_id: taskId.toString(),
         leader: leaderEndpoint.toString(),
         helper: helperEndpoint.toString(),
-        vdaf: {
-          type: "Prio3Aes128Count",
-        },
-        measurement: "1",
+        vdaf: vdaf,
+        measurement: measurement,
         time_precision: timePrecision,
       }),
     }
@@ -381,12 +379,13 @@ async function runIntegrationTest(
   clientOnLocalhost: boolean,
   leader: Aggregator,
   helper: Aggregator,
-  collector: Collector
+  collector: Collector,
+  vdaf: object,
+  measurements: Array<unknown>,
+  expectedResult: unknown
 ) {
-  const reportCount = 10;
-
   const maxBatchQueryCount = 1;
-  const minBatchSize = 10;
+  const minBatchSize = measurements.length;
   const timePrecision = 300;
   const taskExpiration = 9000000000;
 
@@ -406,6 +405,7 @@ async function runIntegrationTest(
   const collectorHpkeConfig = await collector.addTask(
     taskId,
     leaderEndpoint,
+    vdaf,
     collectorAuthToken
   );
   await leader.addTask(
@@ -413,6 +413,7 @@ async function runIntegrationTest(
     "leader",
     leaderEndpoint,
     helperEndpoint,
+    vdaf,
     aggregatorAuthToken,
     collectorAuthToken,
     vdafVerifyKey,
@@ -427,6 +428,7 @@ async function runIntegrationTest(
     "helper",
     leaderEndpoint,
     helperEndpoint,
+    vdaf,
     aggregatorAuthToken,
     null,
     vdafVerifyKey,
@@ -456,12 +458,14 @@ async function runIntegrationTest(
   }
 
   const start = new Date();
-  for (let i = 0; i < reportCount; i++) {
+  for (const measurement of measurements) {
     await upload(
       clientPort,
       taskId,
       leaderEndpointForClient,
       helperEndpointForClient,
+      vdaf,
+      measurement,
       timePrecision
     );
   }
@@ -478,18 +482,47 @@ async function runIntegrationTest(
       continue;
     }
 
-    if (collection.reportCount != reportCount) {
+    if (collection.reportCount != measurements.length) {
       throw new Error("Number of reports did not match");
     }
-    if (parseInt(collection.result as string, 10) != reportCount) {
-      throw new Error("Aggregate result did not match");
+
+    if (Array.isArray(collection.result) && Array.isArray(expectedResult)) {
+      if (collection.result.length !== expectedResult.length) {
+        throw new Error("Aggregate result had wrong length");
+      }
+      for (let i = 0; i < expectedResult.length; i++) {
+        if (parseInt(collection.result[i], 10) !== expectedResult[i]) {
+          throw new Error(
+            `Aggregate result did not match, got ${JSON.stringify(
+              collection.result
+            )}, expected ${JSON.stringify(expectedResult)}`
+          );
+        }
+      }
+    } else if (
+      typeof collection.result === "string" &&
+      typeof expectedResult === "number"
+    ) {
+      if (parseInt(collection.result, 10) !== expectedResult) {
+        throw new Error(
+          `Aggregate result did not match, got ${collection.result}, expected ${expectedResult}`
+        );
+      }
+    } else {
+      throw new Error("`result` was of unexpected type");
     }
+
     return;
   }
   throw new Error("Timed out waiting for collection to finish");
 }
 
-async function runIntegrationTestWithHostClient(clientPort: number) {
+async function runIntegrationTestWithHostClient(
+  clientPort: number,
+  vdaf: object,
+  measurement: Array<unknown>,
+  expectedResult: unknown
+) {
   const suffix = randomSuffix();
   const network = new Network(`divviup-ts-interop-${suffix}`);
   try {
@@ -511,7 +544,16 @@ async function runIntegrationTestWithHostClient(clientPort: number) {
           network
         );
         try {
-          await runIntegrationTest(clientPort, true, leader, helper, collector);
+          await runIntegrationTest(
+            clientPort,
+            true,
+            leader,
+            helper,
+            collector,
+            vdaf,
+            measurement,
+            expectedResult
+          );
         } finally {
           collector.delete();
         }
@@ -529,17 +571,60 @@ async function runIntegrationTestWithHostClient(clientPort: number) {
   }
 }
 
+function startServer(): Promise<Server> {
+  return new Promise((resolve) => {
+    const server: Server = app().listen(0, "127.0.0.1", 511, () =>
+      resolve(server)
+    );
+  });
+}
+
 describe("interoperation test", function () {
   this.timeout(60000);
-  it("is compatible with Janus", async () => {
-    const server: Server = await new Promise((resolve) => {
-      const server: Server = app().listen(0, "127.0.0.1", 511, () =>
-        resolve(server)
-      );
-    });
+
+  it("Prio3Aes128Count is compatible with Janus", async () => {
+    const server: Server = await startServer();
     try {
       const clientPort = (server.address() as AddressInfo).port;
-      await runIntegrationTestWithHostClient(clientPort);
+      await runIntegrationTestWithHostClient(
+        clientPort,
+        { type: "Prio3Aes128Count" },
+        arr(10, () => 1),
+        10
+      );
+    } finally {
+      server.close();
+    }
+  });
+
+  it("Prio3Aes128Sum is compatible with Janus", async () => {
+    const server: Server = await startServer();
+    try {
+      const clientPort = (server.address() as AddressInfo).port;
+      await runIntegrationTestWithHostClient(
+        clientPort,
+        {
+          type: "Prio3Aes128Sum",
+          bits: "16",
+        },
+        arr(10, (i) => `${i}`),
+        (9 * 10) / 2
+      );
+    } finally {
+      server.close();
+    }
+  });
+
+  it("Prio3Aes128Histogram is compatible with Janus", async () => {
+    const server: Server = await startServer();
+    try {
+      const clientPort = (server.address() as AddressInfo).port;
+      await runIntegrationTestWithHostClient(
+        clientPort,
+        { type: "Prio3Aes128Histogram", buckets: ["10", "100", "1000"] },
+        ["67", "216", "2012", "52", "10"],
+        [1, 2, 1, 1]
+      );
     } finally {
       server.close();
     }
