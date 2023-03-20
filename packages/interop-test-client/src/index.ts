@@ -272,6 +272,7 @@ export function app(): express.Express {
   app.use(express.json());
 
   app.post("/internal/test/ready", (_req, res) => {
+    console.log("Ready request");
     res.send({});
   });
 
