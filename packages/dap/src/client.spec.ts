@@ -300,7 +300,7 @@ describe("DAPClient", () => {
         report.encryptedInputShares
       )) {
         const info = Buffer.from([
-          ...Buffer.from("dap-03 input share"),
+          ...Buffer.from("dap-04 input share"),
           1,
           role,
         ]);
