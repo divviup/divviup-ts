@@ -15,7 +15,8 @@
     "test:coverage": "rm -rf coverage && rm -rf .nyc_output && lerna run test:coverage",
     "lint": "lerna run lint",
     "ci": "npm run lint && npm run test:coverage",
-    "upgrade-interactive": "lerna exec -- npm-upgrade"
+    "upgrade-interactive": "lerna exec -- npm-upgrade",
+    "docs": "lerna run docs"
   },
   "devDependencies": {
     "@parcel/packager-ts": "^2.8.3",
