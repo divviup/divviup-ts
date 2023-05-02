@@ -22,7 +22,7 @@
     "@parcel/transformer-typescript-types": "^2.8.3",
     "lerna": "^6.6.1",
     "npm-upgrade": "^3.1.0",
-    "nx": "15.9.2",
+    "nx": "16.0.2",
     "parcel": "^2.8.3",
     "typescript": "^5.0.3"
   }
