@@ -15,7 +15,8 @@
     "test:coverage": "rm -rf coverage && rm -rf .nyc_output && lerna run test:coverage",
     "lint": "lerna run lint",
     "ci": "npm run lint && npm run test:coverage",
-    "upgrade-interactive": "lerna exec -- npm-upgrade"
+    "upgrade-interactive": "lerna exec -- npm-upgrade",
+    "docs": "typedoc"
   },
   "devDependencies": {
     "@parcel/packager-ts": "^2.8.3",
@@ -24,6 +25,7 @@
     "npm-upgrade": "^3.1.0",
     "nx": "15.8.9",
     "parcel": "^2.8.3",
+    "typedoc-plugin-missing-exports": "^2.0.0",
     "typescript": "^5.0.2"
   }
 }

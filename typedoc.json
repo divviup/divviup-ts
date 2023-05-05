@@ -1,6 +1,13 @@
 {
-  "entryPointStrategy": "expand",
-  "exclude": ["**/*.spec.ts"],
-  "excludeInternal": true,
-  "excludePrivate": true
+  "extends": ["./typedoc.base.json"],
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "packages/common",
+    "packages/dap",
+    "packages/field",
+    "packages/prg",
+    "packages/prio3",
+    "packages/vdaf"
+  ],
+  "plugin": "typedoc-plugin-missing-exports"
 }
