@@ -8,6 +8,7 @@
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "declaration": true,
+    "declarationMap": true,
     "plugins": [
       {
         "name": "typescript-eslint-language-service"
