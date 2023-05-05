@@ -14,6 +14,7 @@ jobs:
       with:
         node-version: 18
     - run: npm ci
+    - run: npm run build
     - run: npm run docs
     - name: deploy
       uses: JamesIves/github-pages-deploy-action@v4.4.1
