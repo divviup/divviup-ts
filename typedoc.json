@@ -8,5 +8,6 @@
     "packages/prg",
     "packages/prio3",
     "packages/vdaf"
-  ]
+  ],
+  "plugin": "typedoc-plugin-missing-exports"
 }

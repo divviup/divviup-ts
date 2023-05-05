@@ -25,6 +25,7 @@
     "npm-upgrade": "^3.1.0",
     "nx": "16.0.2",
     "parcel": "^2.8.3",
+    "typedoc-plugin-missing-exports": "^2.0.0",
     "typescript": "^5.0.3"
   }
 }
