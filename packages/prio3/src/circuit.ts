@@ -17,9 +17,10 @@ export interface GenericCircuit {
   eval(input: bigint[], jointRand: bigint[], shares: number): bigint;
   encode(measurement: unknown): bigint[];
   truncate(input: bigint[]): bigint[];
+  decode(output: bigint[], measurementCount: number): unknown;
 }
 
-export abstract class Circuit<M> implements GenericCircuit {
+export abstract class Circuit<M, AR> implements GenericCircuit {
   abstract field: Field;
   abstract jointRandLen: number;
   abstract inputLen: number;
@@ -30,6 +31,7 @@ export abstract class Circuit<M> implements GenericCircuit {
   abstract eval(input: bigint[], jointRand: bigint[], shares: number): bigint;
   abstract encode(measurement: M): bigint[];
   abstract truncate(input: bigint[]): bigint[];
+  abstract decode(output: bigint[], measurementCount: number): AR;
 
   get proveRandLen(): number {
     return this.gadgets.reduce((sum, gadget) => sum + gadget.arity, 0);

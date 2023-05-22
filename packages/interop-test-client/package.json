@@ -2,20 +2,13 @@
   "name": "interop-test-client",
   "version": "0.0.0",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "source": "src/index.ts",
-  "module": "dist/module.js",
-  "bin": {
-    "interop-test-client": "bin/interop-test-client"
-  },
-  "files": [
-    "bin",
-    "src"
-  ],
+  "main": "src/index.ts",
+  "type": "module",
   "scripts": {
-    "clean": "rm -rf dist/*",
-    "build": "parcel build"
+    "check": "tsc --noEmit -p ./tsconfig.json",
+    "start": "node --no-warnings --experimental-specifier-resolution=node --experimental-loader=ts-node/esm src/index.ts",
+    "lint": "eslint src --ext .ts && prettier -c src --ignore-path ../../.prettierignore",
+    "format": "prettier -w src"
   },
   "dependencies": {
     "@divviup/dap": "^0.1.0",

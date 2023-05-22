@@ -7,45 +7,25 @@
   "source": "src/index.ts",
   "module": "dist/module.js",
   "browser": "dist/browser.js",
+  "type": "module",
+  "license": "MPL-2.0",
   "scripts": {
     "clean": "rm -rf dist/*",
     "build:clean": "npm run clean && npm run build",
-    "build": "npm run build:web && parcel build",
+    "build": "npm run build:web && npm run build:node",
     "build:web": "esbuild browser=src/index.ts --bundle --loader:.wasm=binary --format=esm --outdir=dist --sourcemap --minify",
+    "build:node": "tsc -p ./tsconfig.json",
     "docs": "typedoc src",
-    "test": "ts-mocha \"src/**/*.spec.ts\"  -p ./tsconfig.json",
+    "test": "mocha \"src/**/*.spec.ts\"",
     "lint": "eslint src --ext .ts && prettier -c src",
     "format": "prettier -w src",
-    "test:coverage": "nyc --cwd=../.. --no-clean --reporter=lcov --reporter=text --reporter=json npm test"
+    "check": "tsc --noEmit -p ./tsconfig.json",
+    "test:coverage": "c8 npm test"
   },
-  "license": "MPL-2.0",
   "dependencies": {
     "@divviup/common": "^0.1.0",
     "@divviup/prio3": "^0.1.0",
     "@divviup/vdaf": "^0.1.0",
     "hpke": "^0.5.0"
-  },
-  "devDependencies": {
-    "@divviup/prg": "^0.1.0",
-    "@istanbuljs/nyc-config-typescript": "^1.0.2",
-    "@tsconfig/node18": "^2.0.1",
-    "@types/expect": "^24.3.0",
-    "@types/mocha": "^10.0.1",
-    "@types/node": "^20.2.3",
-    "@typescript-eslint/eslint-plugin": "^5.59.7",
-    "@typescript-eslint/parser": "^5.59.7",
-    "esbuild": "^0.17.19",
-    "eslint": "^8.41.0",
-    "eslint-config-prettier": "^8.8.0",
-    "mocha": "^10.2.0",
-    "nyc": "^15.1.0",
-    "prettier": "^2.8.8",
-    "source-map-support": "^0.5.21",
-    "ts-mocha": "^10.0.0",
-    "ts-node": "^10.9.1",
-    "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.0.4",
-    "typedoc": "^0.24.7",
-    "typescript-eslint-language-service": "^5.0.5"
   }
 }

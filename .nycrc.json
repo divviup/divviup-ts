@@ -1,7 +1,0 @@
-{
-  "cache": false,
-  "extension": [".ts"],
-  "check-coverage": true,
-  "include": ["packages/**/src/**"],
-  "exclude": ["packages/**/src/**/*.spec.*"]
-}

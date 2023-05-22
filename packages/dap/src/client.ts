@@ -13,11 +13,8 @@ import { Extension } from "./extension";
 import { DAPError } from "./errors";
 import { CONTENT_TYPES, DAP_VERSION } from "./constants";
 import { Aggregator } from "./aggregator";
-import {
-  Prio3Aes128Count,
-  Prio3Aes128Histogram,
-  Prio3Aes128Sum,
-} from "@divviup/prio3";
+import { Prio3Count, Prio3Histogram, Prio3Sum } from "@divviup/prio3";
+import { randomBytes } from "@divviup/common";
 
 export { TaskId } from "./taskId";
 
@@ -59,9 +56,9 @@ type Fetch = (
 ) => Promise<Response>;
 
 interface KnownVdafs {
-  sum: typeof Prio3Aes128Sum;
-  count: typeof Prio3Aes128Count;
-  histogram: typeof Prio3Aes128Histogram;
+  sum: typeof Prio3Sum;
+  count: typeof Prio3Count;
+  histogram: typeof Prio3Histogram;
 }
 
 type KnownVdafNames = keyof KnownVdafs;
@@ -82,14 +79,14 @@ function vdafFromSpec<Spec extends KnownVdafSpec>(
 ): VdafInstance<Spec> {
   switch (spec.type) {
     case "count":
-      return new Prio3Aes128Count({ ...spec, shares }) as VdafInstance<Spec>;
+      return new Prio3Count({ ...spec, shares }) as VdafInstance<Spec>;
     case "histogram":
-      return new Prio3Aes128Histogram({
+      return new Prio3Histogram({
         ...spec,
         shares,
       }) as VdafInstance<Spec>;
     case "sum":
-      return new Prio3Aes128Sum({ ...spec, shares }) as VdafInstance<Spec>;
+      return new Prio3Sum({ ...spec, shares }) as VdafInstance<Spec>;
   }
 }
 
@@ -169,11 +166,15 @@ export class DAPClient<
     options?: ReportOptions
   ): Promise<Report> {
     await this.fetchKeyConfiguration();
-
-    const { publicShare, inputShares } =
-      await this.#vdaf.measurementToInputShares(measurement);
-
     const reportId = ReportId.random();
+    const rand = Buffer.from(randomBytes(this.#vdaf.randSize));
+    const { publicShare, inputShares } =
+      await this.#vdaf.measurementToInputShares(
+        measurement,
+        reportId.encode(),
+        rand
+      );
+
     const time = roundedTime(this.#timePrecisionSeconds, options?.timestamp);
     const metadata = new ReportMetadata(reportId, time);
     const aad = new InputShareAad(this.taskId, metadata, publicShare);

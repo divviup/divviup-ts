@@ -1,6 +1,6 @@
 import { Field } from "@divviup/field";
 
-export interface Flp<M> {
+export interface Flp<Measurement, AggResult> {
   jointRandLen: number;
   proveRandLen: number;
   queryRandLen: number;
@@ -10,7 +10,7 @@ export interface Flp<M> {
   verifierLen: number;
   field: Field;
 
-  encode(measurement: M): bigint[];
+  encode(measurement: Measurement): bigint[];
 
   prove(input: bigint[], proveRand: bigint[], jointRand: bigint[]): bigint[];
 
@@ -25,4 +25,6 @@ export interface Flp<M> {
   decide(input: bigint[]): boolean;
 
   truncate(input: bigint[]): bigint[];
+
+  decode(output: bigint[], num_measurements: number): AggResult;
 }

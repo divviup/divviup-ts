@@ -3,7 +3,7 @@ import { Field128 } from "@divviup/field";
 import { PolyEval } from "../gadgets/polyEval";
 import { arr } from "@divviup/common";
 
-export class Sum extends Circuit<number | bigint> {
+export class Sum extends Circuit<number | bigint, number | bigint> {
   gadgets = [new PolyEval([0n, -1n, 1n])];
   gadgetCalls: number[];
   inputLen: number;
@@ -73,5 +73,9 @@ export class Sum extends Circuit<number | bigint> {
         field.mul(field.exp(2n, BigInt(index)), value)
       ),
     ];
+  }
+
+  decode(output: bigint[], _measurementCount: number): bigint {
+    return output[0];
   }
 }

@@ -2,8 +2,8 @@ import assert from "assert";
 import { Field, Field128 } from "@divviup/field";
 import { Flp } from "./flp";
 
-export function runFlp<M>(
-  flp: Flp<M>,
+export function runFlp<M, AR>(
+  flp: Flp<M, AR>,
   input: bigint[],
   shares: number
 ): boolean {
@@ -17,7 +17,7 @@ export function runFlp<M>(
   return flp.decide(verifier);
 }
 
-class TestFlp implements Flp<number> {
+class TestFlp implements Flp<number, number> {
   jointRandLen = 1;
   proveRandLen = 2;
   queryRandLen = 3;
@@ -67,6 +67,10 @@ class TestFlp implements Flp<number> {
 
   truncate(input: bigint[]): bigint[] {
     return [input[0]];
+  }
+
+  decode(output: bigint[], _num_measurements: number): number {
+    return Number(output[0]);
   }
 }
 

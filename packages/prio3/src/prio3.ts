@@ -1,134 +1,103 @@
-import { Shares, Vdaf, VDAF_VERSION } from "@divviup/vdaf";
+import { Shares, Vdaf } from "@divviup/vdaf";
 import { PrgConstructor } from "@divviup/prg";
-import { fill, arr, split } from "@divviup/common";
+import { fill, arr, concat } from "@divviup/common";
 import { Field } from "@divviup/field";
 import { Flp } from "./flp";
 import { Buffer } from "buffer";
 
 type PrepareState = {
   outputShare: OutputShare;
-  jointRandSeed: Buffer | null;
+  correctedJointRand: Buffer;
   outboundMessage: Buffer;
 };
 type AggregationParameter = null;
 type AggregatorShare = bigint[];
-type AggregationResult = number[];
 type OutputShare = bigint[];
-type Prio3Vdaf<Measurement> = Vdaf<
+
+interface DecodedShare {
+  measurementShare: bigint[];
+  proofShare: bigint[];
+  blind: Buffer;
+}
+
+interface Share {
+  measurementShare: bigint[];
+  wireMeasurementShare: Buffer;
+  blind: Buffer;
+  wireProofShare: Buffer;
+  proofShare: bigint[];
+  jointRandSeed: Buffer;
+}
+
+enum Usage {
+  MeasurementShare = 1,
+  ProofShare = 2,
+  JointRandomness = 3,
+  ProveRandomness = 4,
+  QueryRandomness = 5,
+  JointRandSeed = 6,
+  JointRandPart = 7,
+}
+
+export class Prio3<Measurement, AggregationResult> extends Vdaf<
   Measurement,
   AggregationParameter,
   PrepareState,
   AggregatorShare,
   AggregationResult,
   OutputShare
->;
-
-interface DecodedShare {
-  inputShare: bigint[];
-  proofShare: bigint[];
-  blind: Buffer | null;
-  jointRandPartsHint: Buffer[] | null;
-}
-
-interface Share {
-  blind: Buffer;
-  jointRandPart: Buffer;
-  inputShare: bigint[];
-  proofShare: bigint[];
-  inputShareSeed?: Buffer;
-  proofShareSeed?: Buffer;
-  jointRandPartsHint?: Buffer[];
-}
-
-const DOMAIN_SEPARATION_TAG_BASE = Buffer.from(VDAF_VERSION, "ascii");
-const DOMAIN_SEPARATION_TAG_LEN = DOMAIN_SEPARATION_TAG_BASE.length + 4;
-export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
+> {
   readonly rounds = 1;
   readonly verifyKeySize: number;
+  readonly nonceSize = 16;
+  readonly randSize: number;
 
   constructor(
     public readonly prg: PrgConstructor,
-    public readonly flp: Flp<Measurement>,
+    public readonly flp: Flp<Measurement, AggregationResult>,
     public readonly shares: number,
-    public readonly algorithmId: number
+    public readonly id: number
   ) {
+    super();
     this.verifyKeySize = prg.seedSize;
+    this.randSize =
+      prg.seedSize *
+      (1 + 2 * (shares - 1) + (flp.jointRandLen === 0 ? 0 : shares));
   }
 
-  private domainSeparationTag(): Buffer {
-    const buffer = Buffer.alloc(DOMAIN_SEPARATION_TAG_LEN);
-    DOMAIN_SEPARATION_TAG_BASE.copy(buffer, 0);
-    buffer.writeUInt32BE(this.algorithmId, DOMAIN_SEPARATION_TAG_BASE.length);
-    return buffer;
-  }
+  async measurementToInputShares(
+    measurement: Measurement,
+    nonce: Buffer,
+    rand: Buffer
+  ): Promise<Shares> {
+    const { flp } = this;
 
-  private async pseudorandom(
-    len: number,
-    seed?: Buffer,
-    info?: number | Buffer
-  ): Promise<bigint[]> {
-    const { prg, field } = this;
-
-    const domainSeparationTag = this.domainSeparationTag();
-
-    let prgInfo;
-    if (typeof info === "number") {
-      prgInfo = Buffer.from([...domainSeparationTag, info]);
-    } else if (info instanceof Buffer) {
-      prgInfo = Buffer.concat([domainSeparationTag, info]);
-    } else {
-      prgInfo = domainSeparationTag;
+    if (rand.length !== this.randSize) {
+      throw new Error(
+        `rand length was ${rand.length} but must be ${this.randSize}`
+      );
     }
 
-    return prg.expandIntoVec(field, seed || prg.randomSeed(), prgInfo, len);
-  }
-
-  private get field(): Field {
-    return this.flp.field;
-  }
-
-  async measurementToInputShares(measurement: Measurement): Promise<Shares> {
-    const { flp, field } = this;
-    const helperShares = await this.buildHelperShares();
+    const helperShares = await this.buildHelperShares(nonce, rand);
     const input = flp.encode(measurement);
-    const leader = await this.buildLeaderShare(input, helperShares);
-
-    const jointRandParts = [leader, ...helperShares].map(
-      (share) => share.jointRandPart
-    );
-    const jointRandSeed = await this.deriveJointRandomness(jointRandParts);
-
-    // Each aggregator gets a "hint" consisting of the "joint randomness part"
-    // seeds derived from every other aggregator's shares. The aggregators
-    // compute a "joint randomness part" seed from their own share, reassemble
-    // the list of parts, and derive the final joint randomness seed from that
-    // list.
-    for (let i = 0; i < helperShares.length; i++) {
-      helperShares[i].jointRandPartsHint = [
-        ...jointRandParts.slice(0, i + 1),
-        ...jointRandParts.slice(i + 2),
-      ];
-    }
-
-    const proof = flp.prove(
+    const partialLeaderShare = await this.buildLeaderShare(
       input,
-      await this.pseudorandom(flp.proveRandLen),
-      await this.pseudorandom(flp.jointRandLen, Buffer.from(jointRandSeed))
+      helperShares,
+      nonce,
+      rand
     );
 
-    const leaderShare = {
-      ...leader,
-      proofShare: helperShares.reduce(
-        (proofShare, helper) => field.vecSub(proofShare, helper.proofShare),
-        proof
-      ),
-      jointRandPartsHint: jointRandParts.slice(1),
-    };
+    const { publicShare, jointRand } = await this.jointRand([
+      partialLeaderShare,
+      ...helperShares,
+    ]);
 
-    return {
-      publicShare: Buffer.alloc(0),
-      inputShares: this.encodeShares([leaderShare, ...helperShares]),
-    };
+    const proveRand = await this.proveRand(rand);
+    const proof = flp.prove(input, proveRand, jointRand);
+    const shares = this.addProof(proof, partialLeaderShare, helperShares);
+    const inputShares = this.encodeShares(shares);
+
+    return { publicShare, inputShares };
   }
 
   async initialPrepareState(
@@ -136,62 +105,67 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     aggregatorId: number,
     _aggParam: AggregationParameter,
     nonce: Buffer,
-    _publicShare: Buffer,
+    publicShare: Buffer,
     encodedInputShare: Buffer
   ): Promise<PrepareState> {
-    const { prg, flp, field } = this;
+    const { prg, flp, field, shares } = this;
+    const { jointRandLen } = flp;
 
-    const share = await this.decodeShare(aggregatorId, encodedInputShare);
+    const { jointRandParts } = this.decodePublicShare(publicShare);
 
-    const outputShare = flp.truncate(share.inputShare);
+    const { blind, measurementShare, proofShare } = await this.decodeShare(
+      aggregatorId,
+      encodedInputShare
+    );
+
+    const outputShare = flp.truncate(measurementShare);
 
     const queryRand = await this.pseudorandom(
       flp.queryRandLen,
+      Usage.QueryRandomness,
       verifyKey,
-      Buffer.from([255, ...nonce])
+      nonce
     );
-
     let jointRand: bigint[];
-    let jointRandSeed: Buffer | null;
-    let shareJointRandPart: Buffer | null;
+    let correctedJointRand: Buffer;
 
-    if (flp.jointRandLen > 0 && share.blind && share.jointRandPartsHint) {
-      const encoded = field.encode(share.inputShare);
-      shareJointRandPart = Buffer.from(
-        await prg.deriveSeed(
-          share.blind,
-          Buffer.from([...this.domainSeparationTag(), aggregatorId, ...encoded])
-        )
+    if (this.useJointRand()) {
+      const encoded = field.encode(measurementShare);
+
+      jointRandParts[aggregatorId] = await this.deriveSeed(
+        blind,
+        Usage.JointRandPart,
+        [Uint8Array.of(aggregatorId), nonce, encoded]
       );
-      const jointRandParts = [
-        ...share.jointRandPartsHint.slice(0, aggregatorId),
-        shareJointRandPart,
-        ...share.jointRandPartsHint.slice(aggregatorId),
-      ];
-      jointRandSeed = Buffer.from(
-        await this.deriveJointRandomness(jointRandParts)
+      correctedJointRand = await this.deriveSeed(
+        Buffer.alloc(prg.seedSize),
+        Usage.JointRandSeed,
+        jointRandParts
       );
-      jointRand = await this.pseudorandom(flp.jointRandLen, jointRandSeed);
+      jointRand = await this.pseudorandom(
+        jointRandLen,
+        Usage.JointRandomness,
+        correctedJointRand
+      );
     } else {
       jointRand = [];
-      jointRandSeed = null;
-      shareJointRandPart = null;
+      correctedJointRand = Buffer.alloc(0);
     }
 
     const verifierShare = flp.query(
-      share.inputShare,
-      share.proofShare,
+      measurementShare,
+      proofShare,
       queryRand,
       jointRand,
-      this.shares
+      shares
     );
 
     const outboundMessage = this.encodePrepareShare(
       verifierShare,
-      shareJointRandPart
+      jointRandParts[aggregatorId]
     );
 
-    return { outputShare, jointRandSeed, outboundMessage };
+    return { outputShare, correctedJointRand, outboundMessage };
   }
 
   prepareNext(
@@ -207,47 +181,44 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
       };
     }
 
-    const jointRandCheck = this.decodePrepareMessage(inbound);
+    const { correctedJointRand, outputShare } = prepareState;
 
-    const jointRandEquality =
-      (jointRandCheck &&
-        prepareState.jointRandSeed &&
-        0 === Buffer.compare(jointRandCheck, prepareState.jointRandSeed)) ||
-      jointRandCheck === prepareState.jointRandSeed; // both null
-
-    if (!jointRandEquality) {
+    if (!this.decodePrepareMessage(inbound).equals(correctedJointRand)) {
       throw new Error("Verify error");
     }
 
-    return { outputShare: prepareState.outputShare };
+    return { outputShare };
   }
 
-  async prepSharesToPrepareMessage(
+  prepSharesToPrepareMessage(
     _aggParam: AggregationParameter,
-    encodedPrepShares: Buffer[]
+    prepShares: Buffer[]
   ): Promise<Buffer> {
-    const { flp, field } = this;
-    const jointRandParts: Buffer[] = [];
-
-    const verifier = encodedPrepShares.reduce((verifier, encodedPrepShare) => {
-      const { verifier: shareVerifier, jointRandPart: shareJointRandPart } =
-        this.decodePrepareShare(encodedPrepShare);
-
-      if (flp.jointRandLen > 0 && shareJointRandPart) {
-        jointRandParts.push(shareJointRandPart);
-      }
-
-      return field.vecAdd(verifier, shareVerifier);
-    }, fill(flp.verifierLen, 0n));
+    const { flp, field, prg } = this;
+    const { verifier, jointRandParts } = prepShares.reduce(
+      ({ verifier, jointRandParts }, prepShare) => {
+        const { verifier: shareVerifier, jointRandPart } =
+          this.decodePrepareShare(prepShare);
+        return {
+          verifier: field.vecAdd(verifier, shareVerifier),
+          jointRandParts: [...jointRandParts, jointRandPart],
+        };
+      },
+      { verifier: fill(flp.verifierLen, 0n), jointRandParts: [] as Buffer[] }
+    );
 
     if (!flp.decide(verifier)) {
       throw new Error("Verify error");
     }
 
-    if (flp.jointRandLen > 0) {
-      return Buffer.from(await this.deriveJointRandomness(jointRandParts));
+    if (this.useJointRand()) {
+      return this.deriveSeed(
+        Buffer.alloc(prg.seedSize),
+        Usage.JointRandSeed,
+        jointRandParts
+      );
     } else {
-      return Buffer.alloc(0);
+      return Promise.resolve(Buffer.alloc(0));
     }
   }
 
@@ -264,13 +235,20 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
 
   aggregatorSharesToResult(
     _aggParam: AggregationParameter,
-    aggShares: AggregatorShare[]
+    aggShares: AggregatorShare[],
+    measurementCount: number
   ): AggregationResult {
     const { field, flp } = this;
-    return aggShares
-      .reduce((agg, share) => field.vecAdd(agg, share), fill(flp.outputLen, 0n))
-      .map(Number);
+    return flp.decode(
+      aggShares.reduce(
+        (agg, share) => field.vecAdd(agg, share),
+        fill(flp.outputLen, 0n)
+      ),
+      measurementCount
+    );
   }
+
+  /** private below here  */
 
   private async decodeShare(
     aggregatorId: number,
@@ -283,26 +261,25 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
 
   private decodePrepareShare(input: Buffer): {
     verifier: bigint[];
-    jointRandPart: Buffer | null;
+    jointRandPart: Buffer;
   } {
-    const { flp, prg, field } = this;
-    // eslint-disable-next-line prefer-const
-    let [encodedVerifier, encoded] = split(
-      input,
-      field.encodedSize * flp.verifierLen
-    );
+    const {
+      flp: { verifierLen },
+      prg: { seedSize },
+      field,
+    } = this;
+    const { encodedSize } = field;
 
-    const verifier = field.decode(encodedVerifier);
-
-    let jointRandPart: null | Buffer = null;
-    if (flp.jointRandLen > 0) {
-      [jointRandPart, encoded] = split(encoded, prg.seedSize);
+    const expectedLength =
+      encodedSize * verifierLen + (this.useJointRand() ? seedSize : 0);
+    if (input.length !== expectedLength) {
+      throw new Error(
+        `expected prepare share to be ${expectedLength} bytes, but was ${input.length}`
+      );
     }
 
-    if (encoded.length > 0) {
-      throw new Error("unused bytes at end of prepare message");
-    }
-
+    const verifier = field.decode(input.subarray(0, encodedSize * verifierLen));
+    const jointRandPart = input.subarray(encodedSize * verifierLen);
     return { verifier, jointRandPart };
   }
 
@@ -319,91 +296,155 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     }
   }
 
-  private decodePrepareMessage(encoded: Buffer): Buffer | null {
-    const { flp, prg } = this;
-
-    let jointRandCheck = null;
-    if (flp.jointRandLen > 0) {
-      [jointRandCheck, encoded] = split(encoded, prg.seedSize);
+  private decodePrepareMessage(encoded: Buffer): Buffer {
+    const { prg } = this;
+    if (encoded.length !== (this.useJointRand() ? prg.seedSize : 0)) {
+      throw new Error(
+        `expected prepare message to be ${prg.seedSize} bytes, but was ${encoded.length}`
+      );
     }
+    return encoded;
+  }
 
-    if (encoded.length > 0) {
-      throw new Error("unused bytes at end of prepare message share");
-    }
-
-    return jointRandCheck;
+  private async deriveSeed(
+    seed: Buffer,
+    usage: Usage,
+    parts: Uint8Array[]
+  ): Promise<Buffer> {
+    return Buffer.from(
+      await this.prg.deriveSeed(
+        seed,
+        this.domainSeparationTag(usage),
+        concat(parts)
+      )
+    );
   }
 
   private async buildLeaderShare(
     input: bigint[],
-    helperShares: Share[]
-  ): Promise<{
-    inputShare: bigint[];
-    blind: Buffer;
-    jointRandPart: Buffer;
-  }> {
+    helperShares: Share[],
+    nonce: Buffer,
+    rand: Buffer
+  ): Promise<Omit<Share, "proofShare" | "wireProofShare">> {
     const { prg, field } = this;
-    const inputShare = helperShares.reduce(
-      (inputShare, helper) => field.vecSub(inputShare, helper.inputShare),
+    const measurementShare = helperShares.reduce(
+      (measurementShare, helper) =>
+        field.vecSub(measurementShare, helper.measurementShare),
       input
     );
-    const blind = Buffer.from(prg.randomSeed());
-    const encoded = field.encode(inputShare);
-    const jointRandPart = Buffer.from(
-      await prg.deriveSeed(
-        blind,
-        Buffer.from([...this.domainSeparationTag(), 0, ...encoded])
-      )
+    const wireMeasurementShare = Buffer.from(
+      this.field.encode(measurementShare)
     );
-    return { inputShare, blind, jointRandPart };
+
+    if (this.useJointRand()) {
+      const blind = rand.subarray(
+        helperShares.length * 3 * prg.seedSize,
+        (helperShares.length * 3 + 1) * prg.seedSize
+      );
+
+      const jointRandSeed = await this.deriveSeed(blind, Usage.JointRandPart, [
+        Uint8Array.of(0),
+        nonce,
+        field.encode(measurementShare),
+      ]);
+
+      return {
+        blind,
+        measurementShare,
+        wireMeasurementShare,
+        jointRandSeed,
+      };
+    } else {
+      return {
+        blind: Buffer.alloc(0),
+        measurementShare,
+        wireMeasurementShare,
+        jointRandSeed: Buffer.alloc(0),
+      };
+    }
   }
 
-  private buildHelperShares(): Promise<Share[]> {
+  private addProof(
+    proof: bigint[],
+    leader: Omit<Share, "proofShare" | "wireProofShare">,
+    helpers: Share[]
+  ): Share[] {
+    const { field } = this;
+    const proofShare = helpers.reduce(
+      (proofShare, helper) => field.vecSub(proofShare, helper.proofShare),
+      proof
+    );
+
+    const wireProofShare = Buffer.from(field.encode(proofShare));
+
+    return [{ ...leader, wireProofShare, proofShare }, ...helpers];
+  }
+
+  private useJointRand(): boolean {
+    return this.flp.jointRandLen !== 0;
+  }
+
+  private buildHelperShares(nonce: Buffer, rand: Buffer): Promise<Share[]> {
     const { flp, prg, field } = this;
+    const { proofLen, inputLen } = flp;
     return Promise.all(
-      arr(this.shares - 1, async (j) => {
-        const blind = Buffer.from(prg.randomSeed());
-        const inputShareSeed = Buffer.from(prg.randomSeed());
-        const inputShare = await this.pseudorandom(
-          flp.inputLen,
-          inputShareSeed,
-          j + 1
-        );
-        const encoded = field.encode(inputShare);
-        const jointRandPart = Buffer.from(
-          await prg.deriveSeed(
-            blind,
-            Buffer.from([...this.domainSeparationTag(), j + 1, ...encoded])
-          )
-        );
-        const proofShareSeed = Buffer.from(prg.randomSeed());
-        const proofShare = await this.pseudorandom(
-          flp.proofLen,
-          proofShareSeed,
-          j + 1
+      arr(this.shares - 1, async (share) => {
+        let wireMeasurementShare: Buffer;
+        let wireProofShare: Buffer;
+        let blind: Buffer;
+        const { seedSize } = prg;
+
+        if (this.useJointRand()) {
+          [wireMeasurementShare, wireProofShare, blind] = arr(3, (offset) =>
+            rand.subarray(
+              seedSize * (share * 3 + offset),
+              seedSize * (share * 3 + offset + 1)
+            )
+          );
+        } else {
+          [wireMeasurementShare, wireProofShare] = arr(2, (offset) =>
+            rand.subarray(
+              seedSize * (share * 2 + offset),
+              seedSize * (share * 2 + offset + 1)
+            )
+          );
+          blind = Buffer.alloc(0);
+        }
+
+        const shareId = Buffer.of(share + 1);
+
+        const measurementShare = await this.pseudorandom(
+          inputLen,
+          Usage.MeasurementShare,
+          wireMeasurementShare,
+          shareId
         );
 
+        const proofShare = await this.pseudorandom(
+          proofLen,
+          Usage.ProofShare,
+          wireProofShare,
+          shareId
+        );
+
+        const jointRandSeed = this.useJointRand()
+          ? await this.deriveSeed(blind, Usage.JointRandPart, [
+              shareId,
+              nonce,
+              field.encode(measurementShare),
+            ])
+          : Buffer.alloc(0);
+
         return {
-          inputShare,
+          measurementShare,
           blind,
-          jointRandPart,
+          wireMeasurementShare,
+          wireProofShare,
           proofShare,
-          inputShareSeed,
-          proofShareSeed,
+          jointRandSeed,
         };
       })
     );
-  }
-
-  private async deriveJointRandomness(parts: Buffer[]): Promise<Buffer> {
-    const prg = this.prg;
-
-    const info = Buffer.concat([
-      this.domainSeparationTag(),
-      new Uint8Array([255]),
-      ...parts,
-    ]);
-    return Buffer.from(await prg.deriveSeed(Buffer.alloc(prg.seedSize), info));
   }
 
   private encodeShares(shares: Share[]): Buffer[] {
@@ -411,54 +452,37 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
   }
 
   private encodeShare(share: Share): Buffer {
-    const { flp } = this;
-    const inputShareSeed =
-      "inputShareSeed" in share ? share.inputShareSeed : null;
-    const proofShareSeed =
-      "proofShareSeed" in share ? share.proofShareSeed : null;
-
-    return Buffer.concat([
-      inputShareSeed || flp.field.encode(share.inputShare),
-      proofShareSeed || flp.field.encode(share.proofShare),
-      ...(flp.jointRandLen > 0 && share.blind && share.jointRandPartsHint
-        ? [share.blind, ...share.jointRandPartsHint]
-        : []),
-    ]);
+    const { blind, wireMeasurementShare, wireProofShare } = share;
+    return Buffer.concat([wireMeasurementShare, wireProofShare, blind]);
   }
 
   private decodeLeaderShare(encoded: Buffer): DecodedShare {
     const { flp, prg, field } = this;
-    let encodedInputShare: Buffer, encodedProofShare: Buffer;
-    [encodedInputShare, encoded] = split(
-      encoded,
-      field.encodedSize * flp.inputLen
-    );
-    [encodedProofShare, encoded] = split(
-      encoded,
-      field.encodedSize * flp.proofLen
-    );
+    const { encodedSize } = field;
+    const { inputLen, proofLen } = flp;
+    const { seedSize } = prg;
 
-    const inputShare = field.decode(encodedInputShare);
-    const proofShare = field.decode(encodedProofShare);
-
-    let blind: Buffer | null = null;
-    let jointRandPartsHint: Buffer[] | null = null;
-    let jointRandPart = null;
-
-    if (flp.jointRandLen > 0) {
-      jointRandPartsHint = [];
-      [blind, encoded] = split(encoded, prg.seedSize);
-      for (let i = 0; i < this.shares - 1; i++) {
-        [jointRandPart, encoded] = split(encoded, prg.seedSize);
-        jointRandPartsHint.push(jointRandPart);
-      }
+    const expectedLength =
+      encodedSize * (inputLen + proofLen) +
+      (this.useJointRand() ? seedSize : 0);
+    if (encoded.length != expectedLength) {
+      throw new Error(
+        `expected leader share to be ${expectedLength} bytes but it was ${encoded.length}`
+      );
     }
 
-    if (encoded.length > 0) {
-      throw new Error("unexpected extra leader share bytes");
-    }
+    const measurementShare = field.decode(
+      encoded.subarray(0, encodedSize * inputLen)
+    );
+    const proofShare = field.decode(
+      encoded.subarray(
+        encodedSize * inputLen,
+        encodedSize * (inputLen + proofLen)
+      )
+    );
+    const blind = encoded.subarray(encodedSize * (inputLen + proofLen));
 
-    return { inputShare, proofShare, blind, jointRandPartsHint };
+    return { measurementShare, proofShare, blind };
   }
 
   private async decodeHelperShare(
@@ -466,37 +490,116 @@ export class Prio3<Measurement> implements Prio3Vdaf<Measurement> {
     encoded: Buffer
   ): Promise<DecodedShare> {
     const { prg, flp } = this;
-    let inputShareSeed, proofShareSeed;
-    [inputShareSeed, encoded] = split(encoded, prg.seedSize);
-    [proofShareSeed, encoded] = split(encoded, prg.seedSize);
+    const { seedSize } = prg;
+    const { inputLen, proofLen } = flp;
 
-    const inputShare = await this.pseudorandom(
-      flp.inputLen,
-      inputShareSeed,
+    const expectedLength = seedSize * (this.useJointRand() ? 3 : 2);
+    if (encoded.length != expectedLength) {
+      throw new Error(
+        `expected helper share to be ${expectedLength} bytes but it was ${encoded.length}`
+      );
+    }
+
+    const measurementShare = await this.pseudorandom(
+      inputLen,
+      Usage.MeasurementShare,
+      encoded.subarray(0, seedSize),
       aggregatorId
     );
+
     const proofShare = await this.pseudorandom(
-      flp.proofLen,
-      proofShareSeed,
+      proofLen,
+      Usage.ProofShare,
+      encoded.subarray(seedSize, seedSize * 2),
       aggregatorId
     );
 
-    let blind = null;
-    let jointRandPartsHint = null;
-    let jointRandPart = null;
-    if (flp.jointRandLen > 0) {
-      jointRandPartsHint = [];
-      [blind, encoded] = split(encoded, prg.seedSize);
-      for (let i = 0; i < this.shares - 1; i++) {
-        [jointRandPart, encoded] = split(encoded, prg.seedSize);
-        jointRandPartsHint.push(jointRandPart);
-      }
+    const blind = encoded.subarray(2 * seedSize);
+
+    return { measurementShare, proofShare, blind };
+  }
+
+  private pseudorandom(
+    len: number,
+    usage: Usage,
+    seed: Buffer,
+    binder?: number | Buffer
+  ): Promise<bigint[]> {
+    const { prg, field } = this;
+    return prg.expandIntoVec(
+      field,
+      seed,
+      this.domainSeparationTag(usage),
+      typeof binder === "number"
+        ? Buffer.of(binder)
+        : binder || Buffer.alloc(0),
+      len
+    );
+  }
+
+  private get field(): Field {
+    return this.flp.field;
+  }
+
+  private proveRand(rand: Buffer): Promise<bigint[]> {
+    const { shares, flp, prg } = this;
+    const { seedSize } = prg;
+    const proveIndex = this.useJointRand()
+      ? (shares - 1) * 3 + 1
+      : (shares - 1) * 2;
+
+    return this.pseudorandom(
+      flp.proveRandLen,
+      Usage.ProveRandomness,
+      rand.subarray(proveIndex * seedSize, (proveIndex + 1) * seedSize)
+    );
+  }
+
+  private async jointRand(
+    shares: { jointRandSeed: Buffer }[]
+  ): Promise<{ jointRand: bigint[]; publicShare: Buffer }> {
+    if (!this.useJointRand()) {
+      return { jointRand: [], publicShare: Buffer.alloc(0) };
+    }
+    const { flp, prg } = this;
+    const seeds = shares.map((h) => h.jointRandSeed);
+    const jointRandSeed = await this.deriveSeed(
+      Buffer.alloc(prg.seedSize),
+      Usage.JointRandSeed,
+      seeds
+    );
+    const publicShare = Buffer.concat(seeds);
+
+    const jointRand = await this.pseudorandom(
+      flp.jointRandLen,
+      Usage.JointRandomness,
+      jointRandSeed
+    );
+
+    return { jointRand, publicShare };
+  }
+
+  private decodePublicShare(encoded: Buffer): { jointRandParts: Buffer[] } {
+    if (!this.useJointRand()) {
+      if (encoded.length > 0)
+        throw new Error("unexpected public share for flp with no joint rand");
+      return { jointRandParts: [] };
     }
 
-    if (encoded.length > 0) {
-      throw new Error("unused bytes in decoding helper share");
-    }
+    const { shares, prg } = this;
+    const { seedSize } = prg;
 
-    return { inputShare, proofShare, blind, jointRandPartsHint };
+    if (encoded.length !== seedSize * shares)
+      throw new Error(
+        `unexpected public share length ${encoded.length}, expected ${
+          seedSize * shares
+        }`
+      );
+
+    return {
+      jointRandParts: arr(shares, (share) =>
+        encoded.subarray(share * seedSize, (share + 1) * seedSize)
+      ),
+    };
   }
 }

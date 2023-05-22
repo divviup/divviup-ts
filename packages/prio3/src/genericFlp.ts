@@ -5,8 +5,8 @@ import { Circuit } from "./circuit";
 import { Query } from "./circuits/query";
 import { Proof } from "./circuits/proof";
 
-export class FlpGeneric<M> implements Flp<M> {
-  constructor(public circuit: Circuit<M>) {}
+export class FlpGeneric<M, AR> implements Flp<M, AR> {
+  constructor(public circuit: Circuit<M, AR>) {}
 
   get jointRandLen(): number {
     return this.circuit.jointRandLen;
@@ -143,5 +143,9 @@ export class FlpGeneric<M> implements Flp<M> {
     }
 
     return true;
+  }
+
+  decode(output: bigint[], measurementCount: number): AR {
+    return this.circuit.decode(output, measurementCount);
   }
 }

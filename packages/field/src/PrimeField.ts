@@ -1,7 +1,7 @@
 /// source: https://github.com/GuildOfWeavers/galois
 import { webcrypto } from "one-webcrypto";
 import { Vector } from "./Vector";
-import { octetStringToInteger } from "@divviup/common";
+import { octetStringToIntegerBE } from "@divviup/common";
 
 // IMPORTS
 // ================================================================================================
@@ -119,7 +119,7 @@ export class PrimeField {
     while (n >= this.modulus) {
       //rejection sampling
       webcrypto.getRandomValues(buffer);
-      n = octetStringToInteger(buffer);
+      n = octetStringToIntegerBE(buffer);
     }
 
     return n;

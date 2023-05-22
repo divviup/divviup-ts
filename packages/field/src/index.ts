@@ -1,8 +1,8 @@
 import { PrimeField } from "./PrimeField";
 export { Vector } from "./Vector";
 import {
-  integerToOctetString,
-  octetStringToInteger,
+  integerToOctetStringLE,
+  octetStringToIntegerLE,
   arr,
   concat,
 } from "@divviup/common";
@@ -69,7 +69,7 @@ export class Field {
   }
 
   encode(data: bigint[]): Uint8Array {
-    return concat(data.map((x) => integerToOctetString(x, this.encodedSize)));
+    return concat(data.map((x) => integerToOctetStringLE(x, this.encodedSize)));
   }
 
   vecSub(a: bigint[], b: bigint[]): bigint[] {
@@ -94,7 +94,7 @@ export class Field {
     }
 
     return arr(encoded.length / encodedSize, (index) => {
-      const n = octetStringToInteger(
+      const n = octetStringToIntegerLE(
         encoded.slice(index * encodedSize, (index + 1) * encodedSize)
       );
       if (n >= this.modulus) {

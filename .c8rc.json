@@ -1,0 +1,18 @@
+{
+  "cache": false,
+  "check-coverage": true,
+  "include": [
+    "packages/**/src/**/*.ts"
+  ],
+  "exclude": [
+    "packages/**/src/**/*.spec.ts"
+  ],
+  "extends": "@istanbuljs/nyc-config-typescript",
+  "all": true,
+  "reporter": [
+    "lcov",
+    "text",
+    "json"
+  ],
+  "lines": 80
+}
