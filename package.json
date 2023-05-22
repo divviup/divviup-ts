@@ -21,11 +21,11 @@
   "devDependencies": {
     "@parcel/packager-ts": "^2.8.3",
     "@parcel/transformer-typescript-types": "^2.8.3",
-    "lerna": "^6.6.1",
+    "lerna": "^6.6.2",
     "npm-upgrade": "^3.1.0",
-    "nx": "16.1.4",
+    "nx": "16.2.1",
     "parcel": "^2.8.3",
     "typedoc-plugin-missing-exports": "^2.0.0",
-    "typescript": "^5.0.3"
+    "typescript": "^5.0.4"
   }
 }
