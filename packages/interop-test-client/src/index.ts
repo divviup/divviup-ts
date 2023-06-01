@@ -11,16 +11,16 @@ try {
 } catch (_) {}
 
 interface CountVdafObject {
-  type: "Prio3Aes128Count";
+  type: "Prio3Count";
 }
 
 interface SumVdafObject {
-  type: "Prio3Aes128Sum";
+  type: "Prio3Sum";
   bits: number;
 }
 
 interface HistogramVdafObject {
-  type: "Prio3Aes128Histogram";
+  type: "Prio3Histogram";
   buckets: string[];
 }
 
@@ -124,7 +124,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
   let measurement: Measurement;
 
   switch (vdaf.type) {
-    case "Prio3Aes128Count":
+    case "Prio3Count":
       measurement = Number(body.measurement);
       if (measurement !== 0 && measurement !== 1) {
         throw new Error("Measurement is not 0 or 1");
@@ -135,7 +135,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
       };
       break;
 
-    case "Prio3Aes128Sum":
+    case "Prio3Sum":
       {
         let bits;
         if (!("bits" in vdaf)) {
@@ -167,7 +167,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
       }
       break;
 
-    case "Prio3Aes128Histogram":
+    case "Prio3Histogram":
       if (!("buckets" in vdaf)) {
         throw new Error("VDAF definition is missing buckets");
       }
@@ -230,7 +230,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
 
   try {
     switch (body.vdaf.type) {
-      case "Prio3Aes128Count":
+      case "Prio3Count":
         await new DAPClient({
           taskId: body.task_id,
           leader: body.leader,
@@ -240,7 +240,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
         }).sendMeasurement(body.measurement !== 0, options);
         break;
 
-      case "Prio3Aes128Sum":
+      case "Prio3Sum":
         await new DAPClient({
           taskId: body.task_id,
           leader: body.leader,
@@ -251,7 +251,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
         }).sendMeasurement(BigInt(body.measurement as string), options);
         break;
 
-      case "Prio3Aes128Histogram":
+      case "Prio3Histogram":
         await new DAPClient({
           taskId: body.task_id,
           leader: body.leader,
