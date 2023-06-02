@@ -1,4 +1,4 @@
-import { arr, randomBytes, zip } from "@divviup/common";
+import { arr, randomBytes } from "@divviup/common";
 import { Buffer } from "buffer";
 
 /** @internal */
@@ -72,11 +72,13 @@ export abstract class Vdaf<
     verifyKey,
     nonces,
     measurements,
+    rands,
   }: {
     aggregationParameter: AggregationParameter;
     measurements: Measurement[];
     verifyKey?: Buffer;
     nonces?: Buffer[];
+    rands?: Buffer[];
   }): Promise<
     TestVector<
       AggregationParameter,
@@ -92,6 +94,7 @@ export abstract class Vdaf<
       aggregationParameter,
       nonces,
       measurements,
+      rands,
     });
   }
 
@@ -126,17 +129,16 @@ interface RunVdafArguments<M, AP, P, AS, AR, OS> {
   measurements: M[];
   verifyKey?: Buffer;
   nonces?: Buffer[];
+  rands?: Buffer[];
 }
 
 export async function runVdaf<M, AP, P, AS, AR, OS>(
   args: RunVdafArguments<M, AP, P, AS, AR, OS>
 ): Promise<TestVector<AP, M, OS, AS, AR>> {
   const { vdaf, aggregationParameter, measurements } = args;
-  const nonces =
-    args.nonces ||
-    measurements.map((_) => Buffer.from(randomBytes(vdaf.nonceSize)));
-  const verifyKey =
-    args.verifyKey || Buffer.from(randomBytes(vdaf.verifyKeySize));
+  const { verifyKeySize, randSize, nonceSize, rounds, shares } = vdaf;
+
+  const verifyKey = args.verifyKey ?? Buffer.from(randomBytes(verifyKeySize));
 
   const testVector: Omit<TestVector<AP, M, OS, AS, AR>, "agg_result"> = {
     agg_param: aggregationParameter,
@@ -146,8 +148,9 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
   };
 
   const outShares = await Promise.all(
-    zip(measurements, nonces).map(async ([measurement, nonce]) => {
-      const rand = Buffer.from(randomBytes(vdaf.randSize));
+    measurements.map(async (measurement, i) => {
+      const nonce = args.nonces?.[i] ?? Buffer.from(randomBytes(nonceSize));
+      const rand = args.rands?.[i] ?? Buffer.from(randomBytes(randSize));
       const { publicShare, inputShares } = await vdaf.measurementToInputShares(
         measurement,
         nonce,
@@ -160,12 +163,12 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
         nonce: hex(nonce),
         out_shares: [],
         prep_messages: [],
-        prep_shares: arr(vdaf.rounds, () => []),
+        prep_shares: arr(rounds, () => []),
         public_share: hex(publicShare),
       };
 
       const prepStates: P[] = await Promise.all(
-        arr(vdaf.shares, (aggregatorId) =>
+        arr(shares, (aggregatorId) =>
           vdaf.initialPrepareState(
             Buffer.from(verifyKey),
             aggregatorId,
@@ -178,7 +181,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
       );
 
       let inbound: Buffer | null = null;
-      for (let round = 0; round < vdaf.rounds; round++) {
+      for (let round = 0; round < rounds; round++) {
         const outbound: Buffer[] = prepStates.map(
           (state, aggregatorId, states) => {
             const out = vdaf.prepareNext(state, inbound);
@@ -212,7 +215,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
     })
   );
 
-  const aggregatorShares = arr(vdaf.shares, (aggregatorId) => {
+  const aggregatorShares = arr(shares, (aggregatorId) => {
     const aggregatorOutShares = outShares.reduce(
       (aggregatorOutShares, out) => [...aggregatorOutShares, out[aggregatorId]],
       [] as OS[]

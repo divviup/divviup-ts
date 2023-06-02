@@ -1,7 +1,6 @@
 import { assert } from "chai";
 import { PrgSha3 } from ".";
 import { Field128, Field64 } from "@divviup/field";
-import { randomBytes } from "@divviup/common";
 import PrgSha3TestVector from "./testVectors/PrgSha3.json" assert { type: "json" };
 
 function assertBuffersEqual(x: Uint8Array, y: Uint8Array) {
@@ -15,7 +14,7 @@ describe("PrgSha3", () => {
 
     const dst = Buffer.from("dst", "ascii");
     const binder = Buffer.from("binder", "ascii");
-    const seed = randomBytes(PrgSha3.seedSize);
+    const seed = Buffer.alloc(PrgSha3.seedSize);
     const expanded = await new PrgSha3(seed, dst, binder).next(expandedLen);
     assert.equal(expanded.length, expandedLen);
 
@@ -45,8 +44,8 @@ describe("PrgSha3", () => {
     const dst = Buffer.from("dst", "ascii");
     const binder = Buffer.from("binder", "ascii");
     const { seedSize } = PrgSha3;
-    assert.throws(() => new PrgSha3(randomBytes(seedSize - 1), dst, binder));
-    assert.throws(() => new PrgSha3(randomBytes(seedSize + 1), dst, binder));
+    assert.throws(() => new PrgSha3(Buffer.alloc(seedSize - 1), dst, binder));
+    assert.throws(() => new PrgSha3(Buffer.alloc(seedSize + 1), dst, binder));
   });
 
   describe("PrgSha3 test vector", () => {

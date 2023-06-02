@@ -4,7 +4,7 @@ import { Prio3Count, Prio3Histogram, Prio3Sum } from "./instantiations";
 import { TestFlp128 } from "./flp.spec";
 import { PrgSha3 } from "@divviup/prg";
 import { TestVector } from "@divviup/vdaf";
-import { randomBytes } from "@divviup/common";
+import { arr } from "@divviup/common";
 import countTestVector0 from "./testVectors/Prio3Count_0.json" assert { type: "json" };
 import histogramTestVector0 from "./testVectors/Prio3Histogram_0.json" assert { type: "json" };
 import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type: "json" };
@@ -72,16 +72,24 @@ type JsonTestVector<Measurement, AggregationResult> = TestVector<
   AggregationResult
 >;
 
+function deterministicRandom(length: number): Uint8Array {
+  return Uint8Array.from(arr(length, (i) => i % 256));
+}
+
 async function runPrio3<M, AR>(
   instantiation: Prio3<M, AR>,
   measurements: M[],
-  nonces: Buffer[]
+  nonces: Buffer[],
+  verifyKey: Buffer,
+  rands: Buffer[]
 ): Promise<JsonTestVector<M, AR>> {
   const aggregationParameter = null;
   const testVector = await instantiation.run({
     aggregationParameter,
     nonces,
     measurements,
+    verifyKey,
+    rands,
   });
   const { field } = instantiation.flp;
 
@@ -115,10 +123,19 @@ async function assertPrio3TestVector<
   const nonces = expectedTestVector.prep.map((prep) =>
     Buffer.from(prep.nonce, "hex")
   );
+  const verifyKey = Buffer.from(expectedTestVector.verify_key, "hex");
   const measurements = expectedTestVector.prep.map((prep) => prep.measurement);
-  randomBytes.deterministicMode = true;
-  const actualTestVector = await runPrio3(instantiation, measurements, nonces);
-  randomBytes.deterministicMode = false;
+  const rands = measurements.map((_) =>
+    Buffer.from(deterministicRandom(instantiation.randSize))
+  );
+
+  const actualTestVector = await runPrio3(
+    instantiation,
+    measurements,
+    nonces,
+    verifyKey,
+    rands
+  );
 
   assert.deepEqual({ ...actualTestVector, ...additional }, expectedTestVector);
 }

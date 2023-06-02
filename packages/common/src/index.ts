@@ -83,16 +83,10 @@ export function nextPowerOf2Big(n: bigint): bigint {
 
 /** @internal */
 export function randomBytes(n: number): Uint8Array {
-  if (randomBytes.deterministicMode) {
-    return Uint8Array.from(arr(n, (i) => i % 256));
-  } else {
-    const buffer = new Uint8Array(n);
-    webcrypto.getRandomValues(buffer);
-    return buffer;
-  }
+  const buffer = new Uint8Array(n);
+  webcrypto.getRandomValues(buffer);
+  return buffer;
 }
-
-randomBytes.deterministicMode = false;
 
 /** @internal */
 export function zip<A, B>(a: A[], b: B[]): [A, B][] {

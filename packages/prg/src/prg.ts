@@ -1,9 +1,5 @@
 import { Field } from "@divviup/field";
-import {
-  nextPowerOf2Big,
-  octetStringToIntegerLE,
-  randomBytes,
-} from "@divviup/common";
+import { nextPowerOf2Big, octetStringToIntegerLE } from "@divviup/common";
 
 export abstract class Prg {
   abstract next(_length: number): Promise<Uint8Array>;
@@ -14,10 +10,6 @@ export abstract class Prg {
     binder: Uint8Array
   ): Promise<Uint8Array> {
     return new this(seed, dst, binder).next(this.seedSize);
-  }
-
-  static randomSeed(this: PrgConstructor): Uint8Array {
-    return randomBytes(this.seedSize);
   }
 
   async nextVec(field: Field, length: number): Promise<bigint[]> {
@@ -53,7 +45,6 @@ export interface PrgConstructor {
     dst: Uint8Array,
     binder: Uint8Array
   ): Promise<Uint8Array>;
-  randomSeed(): Uint8Array;
   expandIntoVec(
     field: Field,
     seed: Uint8Array,

@@ -180,14 +180,10 @@ describe("common", () => {
 
   describe("randomBytes", () => {
     it("generates different data", () => {
-      if (process.env.TEST_VECTOR) {
-        assert.equal(randomBytes(8), Buffer.from([1, 1, 1, 1, 1, 1, 1, 1]));
-      } else {
-        // this is a weak test but it's probably fine because the code is simple
-        const first = randomBytes(16);
-        const second = randomBytes(16);
-        assert.notEqual(Buffer.from(first).compare(Buffer.from(second)), 0);
-      }
+      // this is a weak test but it's probably fine because the code is simple
+      const first = randomBytes(300);
+      const second = randomBytes(300);
+      assert(!Buffer.from(first).equals(Buffer.from(second)));
     });
   });
 
