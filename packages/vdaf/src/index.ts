@@ -1,16 +1,16 @@
-import { arr, randomBytes, zip } from "@divviup/common";
-import assert from "assert";
+import { arr, randomBytes } from "@divviup/common";
 import { Buffer } from "buffer";
 
 /** @internal */
-export const VDAF_VERSION = "vdaf-03";
+export const VDAF_VERSION_NUMBER = 5;
+export const VDAF_VERSION = "vdaf-05";
 
 export type Shares = {
   publicShare: Buffer;
   inputShares: Buffer[];
 };
 
-export interface Vdaf<
+export abstract class Vdaf<
   Measurement,
   AggregationParameter,
   PrepareState,
@@ -18,13 +18,20 @@ export interface Vdaf<
   AggregationResult,
   OutputShare
 > {
-  shares: number;
-  rounds: number;
-  verifyKeySize: number;
+  abstract id: number;
+  abstract shares: number;
+  abstract rounds: number;
+  abstract verifyKeySize: number;
+  abstract nonceSize: number;
+  abstract randSize: number;
 
-  measurementToInputShares(measurement: Measurement): Promise<Shares>;
+  abstract measurementToInputShares(
+    measurement: Measurement,
+    nonce: Buffer,
+    rand: Buffer
+  ): Promise<Shares>;
 
-  initialPrepareState(
+  abstract initialPrepareState(
     verifyKey: Buffer,
     aggId: number,
     aggParam: AggregationParameter,
@@ -33,71 +40,121 @@ export interface Vdaf<
     inputShare: Buffer
   ): Promise<PrepareState>;
 
-  prepareNext(
+  abstract prepareNext(
     prepareState: PrepareState,
     inbound: Buffer | null
   ):
     | { prepareState: PrepareState; prepareShare: Buffer }
     | { outputShare: OutputShare };
 
-  prepSharesToPrepareMessage(
+  abstract prepSharesToPrepareMessage(
     aggParam: AggregationParameter,
     prepShares: Buffer[]
   ): Promise<Buffer>;
 
-  outputSharesToAggregatorShare(
+  abstract outputSharesToAggregatorShare(
     aggParam: AggregationParameter,
     outShares: OutputShare[]
   ): AggregatorShare;
 
-  aggregatorSharesToResult(
+  abstract aggregatorSharesToResult(
     aggParam: AggregationParameter,
-    aggShares: AggregatorShare[]
+    aggShares: AggregatorShare[],
+    measurementCount: number
   ): AggregationResult;
+
+  domainSeparationTag(usage: number): Buffer {
+    return formatDomainSeparationTag(0, this.id, usage);
+  }
+
+  run({
+    aggregationParameter,
+    verifyKey,
+    nonces,
+    measurements,
+    rands,
+  }: {
+    aggregationParameter: AggregationParameter;
+    measurements: Measurement[];
+    verifyKey?: Buffer;
+    nonces?: Buffer[];
+    rands?: Buffer[];
+  }): Promise<
+    TestVector<
+      AggregationParameter,
+      Measurement,
+      OutputShare,
+      AggregatorShare,
+      AggregationResult
+    >
+  > {
+    return runVdaf({
+      vdaf: this,
+      verifyKey,
+      aggregationParameter,
+      nonces,
+      measurements,
+      rands,
+    });
+  }
+
+  async test(
+    aggregationParameter: AggregationParameter,
+    measurements: Measurement[]
+  ): Promise<AggregationResult> {
+    return (await this.run({ aggregationParameter, measurements })).agg_result;
+  }
 }
 
 export interface ClientVdaf<Measurement> {
   shares: number;
   rounds: number;
+  randSize: number;
+  nonceSize: number;
 
-  measurementToInputShares(measurement: Measurement): Promise<Shares>;
-}
-
-export async function testVdaf<M, AP, P, AS, AR, OS>(
-  vdaf: Vdaf<M, AP, P, AS, AR, OS>,
-  aggParam: AP,
-  measurements: M[],
-  expectedAggResult: AR
-) {
-  const nonces = measurements.map((_) => Buffer.from(randomBytes(16)));
-  const { agg_result } = await runVdaf(vdaf, aggParam, nonces, measurements);
-  assert.deepEqual(agg_result, expectedAggResult);
+  measurementToInputShares(
+    measurement: Measurement,
+    nonce: Buffer,
+    rand: Buffer
+  ): Promise<Shares>;
 }
 
 function hex(b: Buffer): string {
   return b.toString("hex");
 }
 
-export async function runVdaf<M, AP, P, AS, AR, OS>(
-  vdaf: Vdaf<M, AP, P, AS, AR, OS>,
-  aggregationParameter: AP,
-  nonces: Buffer[],
-  measurements: M[]
-): Promise<TestVector<AP, M, OS, AS, AR>> {
-  const verifyKey = randomBytes(vdaf.verifyKeySize);
+interface RunVdafArguments<M, AP, P, AS, AR, OS> {
+  vdaf: Vdaf<M, AP, P, AS, AR, OS>;
+  aggregationParameter: AP;
+  measurements: M[];
+  verifyKey?: Buffer;
+  nonces?: Buffer[];
+  rands?: Buffer[];
+}
 
-  const testVector: TestVector<AP, M, OS, AS, AR> = {
+export async function runVdaf<M, AP, P, AS, AR, OS>(
+  args: RunVdafArguments<M, AP, P, AS, AR, OS>
+): Promise<TestVector<AP, M, OS, AS, AR>> {
+  const { vdaf, aggregationParameter, measurements } = args;
+  const { verifyKeySize, randSize, nonceSize, rounds, shares } = vdaf;
+
+  const verifyKey = args.verifyKey ?? Buffer.from(randomBytes(verifyKeySize));
+
+  const testVector: Omit<TestVector<AP, M, OS, AS, AR>, "agg_result"> = {
     agg_param: aggregationParameter,
-    agg_result: undefined,
     agg_shares: [] as AS[],
     prep: [],
     verify_key: hex(Buffer.from(verifyKey)),
   };
 
   const outShares = await Promise.all(
-    zip(measurements, nonces).map(async ([measurement, nonce]) => {
+    measurements.map(async (measurement, i) => {
+      const nonce = args.nonces?.[i] ?? Buffer.from(randomBytes(nonceSize));
+      const rand = args.rands?.[i] ?? Buffer.from(randomBytes(randSize));
       const { publicShare, inputShares } = await vdaf.measurementToInputShares(
-        measurement
+        measurement,
+        nonce,
+        rand
       );
 
       const prepTestVector: PrepTestVector<M, OS> = {
@@ -106,12 +163,12 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
         nonce: hex(nonce),
         out_shares: [],
         prep_messages: [],
-        prep_shares: arr(vdaf.rounds, () => []),
+        prep_shares: arr(rounds, () => []),
         public_share: hex(publicShare),
       };
 
       const prepStates: P[] = await Promise.all(
-        arr(vdaf.shares, (aggregatorId) =>
+        arr(shares, (aggregatorId) =>
           vdaf.initialPrepareState(
             Buffer.from(verifyKey),
             aggregatorId,
@@ -124,7 +181,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
       );
 
       let inbound: Buffer | null = null;
-      for (let round = 0; round < vdaf.rounds; round++) {
+      for (let round = 0; round < rounds; round++) {
         const outbound: Buffer[] = prepStates.map(
           (state, aggregatorId, states) => {
             const out = vdaf.prepareNext(state, inbound);
@@ -146,22 +203,19 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
         prepTestVector.prep_messages = [hex(inbound)];
       }
 
-      const outbound = prepStates.map((state) => {
+      prepTestVector.out_shares = prepStates.map((state) => {
         const out = vdaf.prepareNext(state, inbound);
         if (!("outputShare" in out)) {
           throw new Error("expected outputShare for the last share");
         }
         return out.outputShare;
       });
-
-      prepTestVector.out_shares.push(...outbound);
-
       testVector.prep.push(prepTestVector);
-      return outbound;
+      return prepTestVector.out_shares;
     })
   );
 
-  const aggregatorShares = arr(vdaf.shares, (aggregatorId) => {
+  const aggregatorShares = arr(shares, (aggregatorId) => {
     const aggregatorOutShares = outShares.reduce(
       (aggregatorOutShares, out) => [...aggregatorOutShares, out[aggregatorId]],
       [] as OS[]
@@ -176,14 +230,13 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
     return aggregatorShare;
   });
 
-  const aggregationResult = vdaf.aggregatorSharesToResult(
+  const agg_result = vdaf.aggregatorSharesToResult(
     aggregationParameter,
-    aggregatorShares
+    aggregatorShares,
+    measurements.length
   );
 
-  testVector.agg_result = aggregationResult;
-
-  return testVector;
+  return { ...testVector, agg_result };
 }
 
 export interface TestVector<AP, M, OS, AS, AR> {
@@ -191,7 +244,7 @@ export interface TestVector<AP, M, OS, AS, AR> {
   agg_param: AP;
   prep: PrepTestVector<M, OS>[];
   agg_shares: AS[];
-  agg_result?: AR;
+  agg_result: AR;
 }
 
 export interface PrepTestVector<M, OS> {
@@ -202,4 +255,17 @@ export interface PrepTestVector<M, OS> {
   prep_messages: string[];
   prep_shares: string[][];
   public_share: string;
+}
+
+export function formatDomainSeparationTag(
+  algorithmClass: number,
+  algorithm: number,
+  usage: number
+): Buffer {
+  const buffer = Buffer.alloc(8);
+  buffer.writeUInt8(VDAF_VERSION_NUMBER, 0);
+  buffer.writeUInt8(algorithmClass, 1);
+  buffer.writeUInt32BE(algorithm, 2);
+  buffer.writeUInt16BE(usage, 6);
+  return buffer;
 }

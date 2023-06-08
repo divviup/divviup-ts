@@ -3,9 +3,9 @@ import { Field } from "@divviup/field";
 import { nextPowerOf2 } from "@divviup/common";
 import { Query as QueryGadget } from "../gadgets/query";
 
-export class Query<M> extends Circuit<M> {
+export class Query<M, AR> extends Circuit<M, AR> {
   gadgets: QueryGadget[];
-  circuit: Circuit<M>;
+  circuit: Circuit<M, AR>;
 
   get gadgetCalls(): number[] {
     return this.circuit.gadgetCalls;
@@ -39,7 +39,11 @@ export class Query<M> extends Circuit<M> {
     return this.circuit.truncate.call(this, input);
   }
 
-  constructor(circuit: Circuit<M>, proof: bigint[]) {
+  decode(output: bigint[], measurementCount: number): AR {
+    return this.circuit.decode(output, measurementCount);
+  }
+
+  constructor(circuit: Circuit<M, AR>, proof: bigint[]) {
     super();
 
     this.circuit = circuit;

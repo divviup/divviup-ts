@@ -1,7 +1,7 @@
 import { webcrypto } from "one-webcrypto";
 
 /** @internal */
-export function integerToOctetString(i: bigint, len: number): Uint8Array {
+export function integerToOctetStringBE(i: bigint, len: number): Uint8Array {
   const max = 256n ** BigInt(len);
   if (i >= max) {
     throw new Error(
@@ -17,10 +17,34 @@ export function integerToOctetString(i: bigint, len: number): Uint8Array {
 }
 
 /** @internal */
-export function octetStringToInteger(octetString: Uint8Array): bigint {
+export function integerToOctetStringLE(i: bigint, len: number): Uint8Array {
+  const max = 256n ** BigInt(len);
+  if (i >= max) {
+    throw new Error(
+      `Integer ${i} too large for ${len} byte array (max ${max}).`
+    );
+  }
+  const octets = new Uint8Array(len);
+  for (let index = 0; index < len; index++) {
+    octets[index] = Number(i % 256n);
+    i /= 256n;
+  }
+  return octets;
+}
+
+/** @internal */
+export function octetStringToIntegerBE(octetString: Uint8Array): bigint {
   return octetString.reduceRight(
     (total, value, index) =>
       total + 256n ** BigInt(octetString.length - index - 1) * BigInt(value),
+    0n
+  );
+}
+
+/** @internal */
+export function octetStringToIntegerLE(octetString: Uint8Array): bigint {
+  return octetString.reduce(
+    (total, value, index) => total + 256n ** BigInt(index) * BigInt(value),
     0n
   );
 }
@@ -59,30 +83,16 @@ export function nextPowerOf2Big(n: bigint): bigint {
 
 /** @internal */
 export function randomBytes(n: number): Uint8Array {
-  if (randomBytes.deterministicMode) {
-    return Uint8Array.from(fill(n, 1));
-  } else {
-    const buffer = new Uint8Array(n);
-    webcrypto.getRandomValues(buffer);
-    return buffer;
-  }
+  const buffer = new Uint8Array(n);
+  webcrypto.getRandomValues(buffer);
+  return buffer;
 }
-
-randomBytes.deterministicMode = false;
 
 /** @internal */
 export function zip<A, B>(a: A[], b: B[]): [A, B][] {
   if (a.length !== b.length)
     throw new Error("could not zip two unequal arrays");
   return arr(a.length, (i) => [a[i], b[i]]);
-}
-
-/** @internal */
-export function split<T extends { slice(start: number, end?: number): T }>(
-  sliceable: T,
-  index: number
-): [T, T] {
-  return [sliceable.slice(0, index), sliceable.slice(index)];
 }
 
 /** @internal */

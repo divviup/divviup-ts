@@ -1,10 +1,12 @@
 {
-  "extends": "@tsconfig/node18/tsconfig.json",
+  "extends": "@tsconfig/node20/tsconfig.json",
   "compilerOptions": {
     "resolveJsonModule": true,
     "sourceMap": true,
     "target": "ES2022",
     "lib": ["dom", "es2020"],
+    "module": "esnext",
+    "moduleResolution": "node",
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "declaration": true,

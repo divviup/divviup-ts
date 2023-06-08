@@ -5,39 +5,20 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "source": "src/index.ts",
+  "type": "module",
+  "license": "MPL-2.0",
   "scripts": {
     "clean": "rm -rf dist/*",
     "build:clean": "npm run clean && npm run build",
-    "build": "parcel build",
+    "build": "tsc -p ./tsconfig.json",
     "docs": "typedoc src",
-    "test": "ts-mocha \"src/**/*.spec.ts\" -p ./tsconfig.json",
+    "test": "mocha \"src/**/*.spec.ts\"",
+    "test:coverage": "c8 npm test",
     "lint": "eslint src --ext .ts && prettier -c src",
     "format": "prettier -w src",
-    "test:coverage": "nyc --cwd=../.. --no-clean --reporter=lcov --reporter=text --reporter=json npm test"
+    "check": "tsc --noEmit -p ./tsconfig.json"
   },
-  "license": "MPL-2.0",
   "dependencies": {
     "one-webcrypto": "^1.0.3"
-  },
-  "devDependencies": {
-    "@istanbuljs/nyc-config-typescript": "^1.0.2",
-    "@tsconfig/node18": "^2.0.1",
-    "@types/expect": "^24.3.0",
-    "@types/mocha": "^10.0.1",
-    "@types/node": "^20.2.3",
-    "@typescript-eslint/eslint-plugin": "^5.59.7",
-    "@typescript-eslint/parser": "^5.59.7",
-    "eslint": "^8.41.0",
-    "eslint-config-prettier": "^8.8.0",
-    "mocha": "^10.2.0",
-    "nyc": "^15.1.0",
-    "parcel": "^2.8.3",
-    "prettier": "^2.8.8",
-    "source-map-support": "^0.5.21",
-    "ts-mocha": "^10.0.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.4",
-    "typedoc": "^0.24.7",
-    "typescript-eslint-language-service": "^5.0.5"
   }
 }

@@ -2,18 +2,26 @@
 import express, { Request, Response } from "express";
 import DAPClient, { ReportOptions } from "@divviup/dap";
 
+import * as url from "node:url";
+import * as fs from "node:fs";
+try {
+  if (fs.realpathSync(process.argv[1]) === url.fileURLToPath(import.meta.url)) {
+    interopTestClient();
+  }
+} catch (_) {}
+
 interface CountVdafObject {
-  type: "Prio3Aes128Count",
+  type: "Prio3Count";
 }
 
 interface SumVdafObject {
-  type: "Prio3Aes128Sum",
-  bits: number,
+  type: "Prio3Sum";
+  bits: number;
 }
 
 interface HistogramVdafObject {
-  type: "Prio3Aes128Histogram",
-  buckets: string[],
+  type: "Prio3Histogram";
+  buckets: string[];
 }
 
 type VdafObject = CountVdafObject | SumVdafObject | HistogramVdafObject;
@@ -21,17 +29,21 @@ type VdafObject = CountVdafObject | SumVdafObject | HistogramVdafObject;
 type Measurement = number | string | string[];
 
 interface UploadRequest {
-  task_id: string,
-  leader: string,
-  helper: string,
-  vdaf: VdafObject,
-  measurement: Measurement,
-  time?: number,
-  time_precision: number,
+  task_id: string;
+  leader: string;
+  helper: string;
+  vdaf: VdafObject;
+  measurement: Measurement;
+  time?: number;
+  time_precision: number;
 }
 
 function sanitizeRequest(rawBody: unknown): UploadRequest {
-  if (typeof rawBody !== "object" || Array.isArray(rawBody) || rawBody === null) {
+  if (
+    typeof rawBody !== "object" ||
+    Array.isArray(rawBody) ||
+    rawBody === null
+  ) {
     throw new Error("JSON body is not an object");
   }
 
@@ -55,13 +67,13 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
   }
 
   const body = rawBody as {
-    task_id: unknown,
-    leader: unknown,
-    helper: unknown,
-    vdaf: unknown,
-    measurement: unknown,
-    time?: unknown,
-    time_precision: unknown,
+    task_id: unknown;
+    leader: unknown;
+    helper: unknown;
+    vdaf: unknown;
+    measurement: unknown;
+    time?: unknown;
+    time_precision: unknown;
   };
 
   if (typeof body.task_id !== "string") {
@@ -73,10 +85,18 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
   if (typeof body.helper !== "string") {
     throw new Error("Helper endpoint URL is not a string");
   }
-  if (typeof body.vdaf !== "object" || Array.isArray(body.vdaf) || body.vdaf === null) {
+  if (
+    typeof body.vdaf !== "object" ||
+    Array.isArray(body.vdaf) ||
+    body.vdaf === null
+  ) {
     throw new Error("VDAF definition is not an object");
   }
-  if (typeof body.measurement !== "number" && typeof body.measurement !== "string" && !Array.isArray(body.measurement)) {
+  if (
+    typeof body.measurement !== "number" &&
+    typeof body.measurement !== "string" &&
+    !Array.isArray(body.measurement)
+  ) {
     throw new Error("Measurement is not a number, string, or array");
   }
   if (body.time !== undefined && typeof body.time !== "number") {
@@ -91,9 +111,9 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
   }
 
   const vdaf = body.vdaf as {
-    type: unknown,
-    bits?: unknown,
-    buckets?: unknown,
+    type: unknown;
+    bits?: unknown;
+    buckets?: unknown;
   };
 
   if (typeof vdaf.type !== "string") {
@@ -104,7 +124,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
   let measurement: Measurement;
 
   switch (vdaf.type) {
-    case "Prio3Aes128Count":
+    case "Prio3Count":
       measurement = Number(body.measurement);
       if (measurement !== 0 && measurement !== 1) {
         throw new Error("Measurement is not 0 or 1");
@@ -115,7 +135,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
       };
       break;
 
-    case "Prio3Aes128Sum":
+    case "Prio3Sum":
       {
         let bits;
         if (!("bits" in vdaf)) {
@@ -126,10 +146,14 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
         } else if (typeof vdaf.bits == "string") {
           bits = parseInt(vdaf.bits, 10);
           if (isNaN(bits)) {
-            throw new Error("VDAF definition's `bits` parameter is not a valid base 10 integer");
+            throw new Error(
+              "VDAF definition's `bits` parameter is not a valid base 10 integer"
+            );
           }
         } else {
-          throw new Error("VDAF definition's `bits` parameter is not a number or string");
+          throw new Error(
+            "VDAF definition's `bits` parameter is not a number or string"
+          );
         }
         if (typeof body.measurement !== "string") {
           throw new Error("Measurement is not a string");
@@ -143,16 +167,20 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
       }
       break;
 
-    case "Prio3Aes128Histogram":
+    case "Prio3Histogram":
       if (!("buckets" in vdaf)) {
         throw new Error("VDAF definition is missing buckets");
       }
       if (!Array.isArray(vdaf.buckets)) {
-        throw new Error("VDAF definition's `buckets` parameter is not an array");
+        throw new Error(
+          "VDAF definition's `buckets` parameter is not an array"
+        );
       }
       for (const bucketBoundary of vdaf.buckets) {
         if (typeof bucketBoundary !== "string") {
-          throw new Error("VDAF defeinition's `buckets` parameter is not an array of strings");
+          throw new Error(
+            "VDAF defeinition's `buckets` parameter is not an array of strings"
+          );
         }
       }
       if (typeof body.measurement !== "string") {
@@ -162,7 +190,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
       vdafObject = {
         type: vdaf.type,
         buckets: vdaf.buckets as string[],
-      }
+      };
       measurement = body.measurement;
       break;
 
@@ -178,7 +206,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
     measurement: measurement,
     time: body.time,
     time_precision: body.time_precision,
-  }
+  };
 }
 
 function assertUnreachable(_: never): never {
@@ -191,7 +219,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
     body = sanitizeRequest(req.body);
   } catch (error) {
     console.error(error);
-    res.status(400).send({"status": "error", "error": String(error)});
+    res.status(400).send({ status: "error", error: String(error) });
     return;
   }
 
@@ -202,7 +230,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
 
   try {
     switch (body.vdaf.type) {
-      case "Prio3Aes128Count":
+      case "Prio3Count":
         await new DAPClient({
           taskId: body.task_id,
           leader: body.leader,
@@ -212,7 +240,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
         }).sendMeasurement(body.measurement !== 0, options);
         break;
 
-      case "Prio3Aes128Sum":
+      case "Prio3Sum":
         await new DAPClient({
           taskId: body.task_id,
           leader: body.leader,
@@ -223,7 +251,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
         }).sendMeasurement(BigInt(body.measurement as string), options);
         break;
 
-      case "Prio3Aes128Histogram":
+      case "Prio3Histogram":
         await new DAPClient({
           taskId: body.task_id,
           leader: body.leader,
@@ -238,12 +266,12 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
         assertUnreachable(body.vdaf);
     }
     console.log("Successful upload");
-    res.send({"status": "success"});
+    res.send({ status: "success" });
   } catch (error) {
     console.log("Failed upload", error);
     // Send this with status 200 OK, as the error came from the DAP level,
     // not the test API level.
-    res.send({"status": "error", "error": String(error)});
+    res.send({ status: "error", error: String(error) });
   }
 }
 
@@ -259,6 +287,6 @@ export function interopTestClient() {
     uploadHandler(req, res).catch(next);
   });
 
-  console.debug("Starting server on port 8080")
+  console.debug("Starting server on port 8080");
   app.listen(8080);
 }

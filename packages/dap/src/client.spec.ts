@@ -6,11 +6,7 @@ import { TaskId } from "./taskId";
 import { DAPError } from "./errors";
 import { zip } from "@divviup/common";
 import { encodeOpaque32 } from "./encoding";
-import {
-  Prio3Aes128Count,
-  Prio3Aes128Histogram,
-  Prio3Aes128Sum,
-} from "@divviup/prio3";
+import { Prio3Count, Prio3Histogram, Prio3Sum } from "@divviup/prio3";
 import { inspect } from "node:util";
 
 interface Fetch {
@@ -131,7 +127,7 @@ describe("DAPClient", () => {
         timePrecisionSeconds: 3600,
       });
 
-      assert(client.vdaf instanceof Prio3Aes128Histogram);
+      assert(client.vdaf instanceof Prio3Histogram);
     });
 
     it("can build a sum vdaf", () => {
@@ -144,7 +140,7 @@ describe("DAPClient", () => {
         timePrecisionSeconds: 3600,
       });
 
-      assert(client.vdaf instanceof Prio3Aes128Sum);
+      assert(client.vdaf instanceof Prio3Sum);
     });
 
     it("can build a count vdaf", () => {
@@ -157,7 +153,7 @@ describe("DAPClient", () => {
         timePrecisionSeconds: 3600,
       });
 
-      assert(client.vdaf instanceof Prio3Aes128Count);
+      assert(client.vdaf instanceof Prio3Count);
     });
 
     it("throws if the timePrecisionSeconds is not a number", () => {

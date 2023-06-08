@@ -29,8 +29,8 @@ function testCircuitGadgets(circuit: GenericCircuit) {
   });
 }
 
-function testCircuit<M>(
-  circuit: Circuit<M>,
+function testCircuit<M, AR>(
+  circuit: Circuit<M, AR>,
   input: bigint[],
   expected: boolean
 ) {
@@ -43,7 +43,7 @@ function testCircuit<M>(
   assert.equal(runFlp(new FlpGeneric(circuit), input, 1), expected);
 }
 
-class TestMultiGadget extends Circuit<number> {
+class TestMultiGadget extends Circuit<number, number> {
   field = new Field64();
   gadgets = [new Mul(), new Mul()];
   gadgetCalls = [1, 2];
@@ -73,6 +73,10 @@ class TestMultiGadget extends Circuit<number> {
       throw new Error("expected input length to be 1");
     }
     return input;
+  }
+
+  decode(output: bigint[], _measurementCount: number): number {
+    return Number(output[0]);
   }
 }
 

@@ -1,7 +1,9 @@
 import assert from "assert";
 import {
-  integerToOctetString,
-  octetStringToInteger,
+  integerToOctetStringBE,
+  octetStringToIntegerBE,
+  integerToOctetStringLE,
+  octetStringToIntegerLE,
   nextPowerOf2,
   nextPowerOf2Big,
   randomBytes,
@@ -9,31 +11,98 @@ import {
   concat,
   arr,
   fill,
-  split,
-} from ".";
+} from "./index";
 
 describe("common", () => {
-  describe("integerToOctetString", () => {
+  describe("integerToOctetStringLE", () => {
     it("does not like when the number would require more than the second argument", () => {
-      assert.throws(() => integerToOctetString(256n ** 10n, 10));
-      assert.throws(() => integerToOctetString(256n ** 10n + 1n, 10));
-      assert.doesNotThrow(() => integerToOctetString(256n ** 10n - 1n, 10));
+      assert.throws(() => integerToOctetStringLE(256n ** 10n, 10));
+      assert.throws(() => integerToOctetStringLE(256n ** 10n + 1n, 10));
+      assert.doesNotThrow(() => integerToOctetStringLE(256n ** 10n - 1n, 10));
     });
 
     it("has some expected values", () => {
       assert.deepEqual(
-        [...integerToOctetString(BigInt(256), 5)],
+        [...integerToOctetStringLE(BigInt(256), 5)],
+        [0, 1, 0, 0, 0]
+      );
+
+      assert.deepEqual(
+        [...integerToOctetStringLE(BigInt(255), 5)],
+        [255, 0, 0, 0, 0]
+      );
+
+      assert.deepEqual(
+        [
+          ...integerToOctetStringLE(
+            BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1),
+            10
+          ),
+        ],
+        [0, 0, 0, 0, 0, 0, 32, 0, 0, 0]
+      );
+    });
+
+    it("round trips some large numbers", () => {
+      const bytes = 15;
+      const numbers = 10;
+
+      for (const octetString of arr(
+        numbers,
+        () => new Uint8Array(arr(bytes, () => Math.floor(Math.random() * 255)))
+      )) {
+        assert.deepEqual(
+          octetString,
+          integerToOctetStringLE(octetStringToIntegerLE(octetString), bytes)
+        );
+      }
+    });
+  });
+
+  describe("octetStringToIntegerLE", () => {
+    it("has some expected values", () => {
+      assert.equal(
+        BigInt(256),
+        octetStringToIntegerLE(new Uint8Array([0, 1, 0]))
+      );
+      assert.equal(
+        BigInt(255),
+        octetStringToIntegerLE(new Uint8Array([255, 0, 0, 0]))
+      );
+
+      assert.equal(
+        BigInt(256) ** BigInt(3),
+        octetStringToIntegerLE(new Uint8Array([0, 0, 0, 1, 0]))
+      );
+
+      assert.equal(
+        BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1),
+        octetStringToIntegerLE(new Uint8Array([0, 0, 0, 0, 0, 0, 32, 0, 0, 0]))
+      );
+    });
+  });
+
+  describe("integerToOctetStringBE", () => {
+    it("does not like when the number would require more than the second argument", () => {
+      assert.throws(() => integerToOctetStringBE(256n ** 10n, 10));
+      assert.throws(() => integerToOctetStringBE(256n ** 10n + 1n, 10));
+      assert.doesNotThrow(() => integerToOctetStringBE(256n ** 10n - 1n, 10));
+    });
+
+    it("has some expected values", () => {
+      assert.deepEqual(
+        [...integerToOctetStringBE(BigInt(256), 5)],
         [0, 0, 0, 1, 0]
       );
 
       assert.deepEqual(
-        [...integerToOctetString(BigInt(255), 5)],
+        [...integerToOctetStringBE(BigInt(255), 5)],
         [0, 0, 0, 0, 255]
       );
 
       assert.deepEqual(
         [
-          ...integerToOctetString(
+          ...integerToOctetStringBE(
             BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1),
             10
           ),
@@ -52,31 +121,31 @@ describe("common", () => {
       )) {
         assert.deepEqual(
           octetString,
-          integerToOctetString(octetStringToInteger(octetString), bytes)
+          integerToOctetStringBE(octetStringToIntegerBE(octetString), bytes)
         );
       }
     });
   });
 
-  describe("octetStringToInteger", () => {
+  describe("octetStringToIntegerBE", () => {
     it("has some expected values", () => {
       assert.equal(
         BigInt(256),
-        octetStringToInteger(new Uint8Array([0, 1, 0]))
+        octetStringToIntegerBE(new Uint8Array([0, 1, 0]))
       );
       assert.equal(
         BigInt(255),
-        octetStringToInteger(new Uint8Array([0, 0, 0, 255]))
+        octetStringToIntegerBE(new Uint8Array([0, 0, 0, 255]))
       );
 
       assert.equal(
         BigInt(256) ** BigInt(3),
-        octetStringToInteger(new Uint8Array([0, 1, 0, 0, 0]))
+        octetStringToIntegerBE(new Uint8Array([0, 1, 0, 0, 0]))
       );
 
       assert.equal(
         BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1),
-        octetStringToInteger(new Uint8Array([0, 0, 0, 32, 0, 0, 0, 0, 0, 0]))
+        octetStringToIntegerBE(new Uint8Array([0, 0, 0, 32, 0, 0, 0, 0, 0, 0]))
       );
     });
   });
@@ -111,14 +180,10 @@ describe("common", () => {
 
   describe("randomBytes", () => {
     it("generates different data", () => {
-      if (process.env.TEST_VECTOR) {
-        assert.equal(randomBytes(8), Buffer.from([1, 1, 1, 1, 1, 1, 1, 1]));
-      } else {
-        // this is a weak test but it's probably fine because the code is simple
-        const first = randomBytes(16);
-        const second = randomBytes(16);
-        assert.notEqual(Buffer.from(first).compare(Buffer.from(second)), 0);
-      }
+      // this is a weak test but it's probably fine because the code is simple
+      const first = randomBytes(300);
+      const second = randomBytes(300);
+      assert(!Buffer.from(first).equals(Buffer.from(second)));
     });
   });
 
@@ -152,22 +217,6 @@ describe("common", () => {
     it("fills an array of |length| with a constant |value|", () => {
       assert.deepEqual(fill(5, 10n), [10n, 10n, 10n, 10n, 10n]);
       assert.deepEqual(fill(2, true), [true, true]);
-    });
-  });
-
-  describe("split", () => {
-    it("slices an array into two parts", () => {
-      const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-      const [left, right] = split(arr, 5);
-      assert.deepEqual([1, 2, 3, 4, 5], left);
-      assert.deepEqual([6, 7, 8, 9, 10], right);
-    });
-
-    it("also works with other sliceables", () => {
-      const arr = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-      const [left, right] = split(arr, 5);
-      assert.deepEqual(new Uint8Array([1, 2, 3, 4, 5]), left);
-      assert.deepEqual(new Uint8Array([6, 7, 8, 9, 10]), right);
     });
   });
 });

@@ -2,9 +2,9 @@ import { Circuit } from "../circuit";
 import { Field } from "@divviup/field";
 import { Proof as ProofGadget } from "../gadgets/proof";
 
-export class Proof<M> extends Circuit<M> {
+export class Proof<M, AR> extends Circuit<M, AR> {
   gadgets: ProofGadget[];
-  circuit: Circuit<M>;
+  circuit: Circuit<M, AR>;
 
   get gadgetCalls(): number[] {
     return this.circuit.gadgetCalls;
@@ -38,7 +38,11 @@ export class Proof<M> extends Circuit<M> {
     return this.circuit.truncate.call(this, input);
   }
 
-  constructor(circuit: Circuit<M>, proveRand: bigint[]) {
+  decode(output: bigint[], measurementCount: number): AR {
+    return this.circuit.decode(output, measurementCount);
+  }
+
+  constructor(circuit: Circuit<M, AR>, proveRand: bigint[]) {
     super();
 
     this.circuit = circuit;

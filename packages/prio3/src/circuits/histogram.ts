@@ -2,7 +2,7 @@ import { Circuit } from "../circuit";
 import { Field128 } from "@divviup/field";
 import { PolyEval } from "../gadgets/polyEval";
 
-export class Histogram extends Circuit<number> {
+export class Histogram extends Circuit<number, number[]> {
   gadgets = [new PolyEval([0n, -1n, 1n])];
   jointRandLen = 2;
   field = new Field128();
@@ -51,5 +51,9 @@ export class Histogram extends Circuit<number> {
 
   truncate(input: bigint[]): bigint[] {
     return input;
+  }
+
+  decode(input: bigint[], _measurementCount: number): number[] {
+    return input.map(Number);
   }
 }

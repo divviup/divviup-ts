@@ -1,0 +1,7 @@
+coverage/
+**/tsconfig.json
+**/.*
+**/docs/
+.github
+typedoc.base.json
+**/typedoc.json

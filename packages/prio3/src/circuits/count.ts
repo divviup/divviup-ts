@@ -2,7 +2,7 @@ import { Circuit } from "../circuit";
 import { Field64 } from "@divviup/field";
 import { Mul } from "../gadgets/mul";
 
-export class Count extends Circuit<boolean> {
+export class Count extends Circuit<boolean, number> {
   gadgets = [new Mul()];
   gadgetCalls = [1];
   inputLen = 1;
@@ -32,5 +32,9 @@ export class Count extends Circuit<boolean> {
     }
 
     return input;
+  }
+
+  decode(output: bigint[], _measurementCount: number): number {
+    return Number(output[0]);
   }
 }
