@@ -6,7 +6,7 @@ import * as url from "node:url";
 import * as fs from "node:fs";
 try {
   if (fs.realpathSync(process.argv[1]) === url.fileURLToPath(import.meta.url)) {
-    interopTestClient();
+    run();
   }
 } catch (_) {}
 
@@ -99,11 +99,17 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
   ) {
     throw new Error("Measurement is not a number, string, or array");
   }
-  if (body.time !== undefined && typeof body.time !== "number") {
-    throw new Error("Timestamp is not a number");
-  }
   if (typeof body.time_precision !== "number") {
     throw new Error("Time precision is not a number");
+  }
+
+  let time: number | undefined;
+  if (body.time === undefined) {
+    time = undefined;
+  } else if (typeof body.time === "number") {
+    time = body.time;
+  } else {
+    throw new Error("Timestamp is not a number");
   }
 
   if (!("type" in body.vdaf)) {
@@ -204,7 +210,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
     helper: body.helper,
     vdaf: vdafObject,
     measurement: measurement,
-    time: body.time,
+    time: time,
     time_precision: body.time_precision,
   };
 }
@@ -214,7 +220,7 @@ function assertUnreachable(_: never): never {
 }
 
 async function uploadHandler(req: Request, res: Response): Promise<void> {
-  let body;
+  let body: UploadRequest;
   try {
     body = sanitizeRequest(req.body);
   } catch (error) {
@@ -275,7 +281,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
   }
 }
 
-export function interopTestClient() {
+export function app(): express.Express {
   const app = express();
   app.use(express.json());
 
@@ -287,6 +293,10 @@ export function interopTestClient() {
     uploadHandler(req, res).catch(next);
   });
 
+  return app;
+}
+
+function run() {
   console.debug("Starting server on port 8080");
-  app.listen(8080);
+  app().listen(8080);
 }
