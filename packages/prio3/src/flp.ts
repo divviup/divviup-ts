@@ -19,7 +19,7 @@ export interface Flp<Measurement, AggResult> {
     proof: bigint[],
     queryRand: bigint[],
     jointRand: bigint[],
-    shares: number
+    shares: number,
   ): bigint[];
 
   decide(input: bigint[]): boolean;

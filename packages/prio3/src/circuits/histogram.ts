@@ -28,17 +28,17 @@ export class Histogram extends Circuit<number, number[]> {
     const f = this.field;
 
     const rangeCheck = f.sum(input, (value, index) =>
-      f.mul(f.exp(firstRand, BigInt(index + 1)), gadget.eval(f, [value]))
+      f.mul(f.exp(firstRand, BigInt(index + 1)), gadget.eval(f, [value])),
     );
 
     const sumCheck = f.sum(
       [...input, f.mul(-1n, f.exp(BigInt(shares), -1n))],
-      (n) => n
+      (n) => n,
     );
 
     return f.add(
       f.mul(secondRand, rangeCheck),
-      f.mul(f.exp(secondRand, 2n), sumCheck)
+      f.mul(f.exp(secondRand, 2n), sumCheck),
     );
   }
 

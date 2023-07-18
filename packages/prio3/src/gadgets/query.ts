@@ -14,7 +14,7 @@ export class Query extends Gadget {
     wireSeeds: bigint[],
     gadgetPoly: bigint[],
     gadget: Gadget,
-    calls: number
+    calls: number,
   ) {
     super();
     this.gadget = gadget;
@@ -28,7 +28,7 @@ export class Query extends Gadget {
 
     this.alpha = field.exp(
       field.generator,
-      field.genOrder / BigInt(wirePolyLength)
+      field.genOrder / BigInt(wirePolyLength),
     );
   }
 
@@ -41,7 +41,7 @@ export class Query extends Gadget {
 
     return field.evalPoly(
       this.gadgetPoly,
-      field.exp(this.alpha, BigInt(this.callCount))
+      field.exp(this.alpha, BigInt(this.callCount)),
     );
   }
 

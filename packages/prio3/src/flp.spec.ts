@@ -5,7 +5,7 @@ import { Flp } from "./flp";
 export function runFlp<M, AR>(
   flp: Flp<M, AR>,
   input: bigint[],
-  shares: number
+  shares: number,
 ): boolean {
   const jointRand = flp.field.fillRandom(flp.jointRandLen);
   const proveRand = flp.field.fillRandom(flp.proveRandLen);
@@ -60,7 +60,7 @@ class TestFlp implements Flp<number, number> {
     _proof: bigint[],
     _queryRand: bigint[],
     _jointRand: bigint[],
-    _shares: number
+    _shares: number,
   ): bigint[] {
     return input;
   }

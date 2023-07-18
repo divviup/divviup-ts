@@ -8,7 +8,7 @@ export class Aggregator {
   constructor(
     url: URL | string,
     public role: Role,
-    public hpkeConfigList?: HpkeConfigList
+    public hpkeConfigList?: HpkeConfigList,
   ) {
     this.url = new URL(url);
     if (!this.url.pathname.endsWith("/")) {
@@ -27,7 +27,7 @@ export class Aggregator {
   seal(inputShare: PlaintextInputShare, aad: InputShareAad): HpkeCiphertext {
     if (!this.hpkeConfigList) {
       throw new Error(
-        "Attempted to call Aggregator#seal before fetching a hpkeConfigList."
+        "Attempted to call Aggregator#seal before fetching a hpkeConfigList.",
       );
     }
     return this.hpkeConfigList
@@ -35,7 +35,7 @@ export class Aggregator {
       .seal(
         new InputShareInfo(this.role).encode(),
         inputShare.encode(),
-        aad.encode()
+        aad.encode(),
       );
   }
 }

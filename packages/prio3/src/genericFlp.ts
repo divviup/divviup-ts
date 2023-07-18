@@ -50,13 +50,13 @@ export class FlpGeneric<M, AR> implements Flp<M, AR> {
 
       const alpha = field.exp(
         this.field.generator,
-        this.field.genOrder / BigInt(p)
+        this.field.genOrder / BigInt(p),
       );
 
       const wireInputs = arr(p, (k) => field.exp(alpha, BigInt(k)));
 
       const wirePolys = arr(gadget.arity, (j) =>
-        this.field.interpolate(wireInputs, gadget.wire[j])
+        this.field.interpolate(wireInputs, gadget.wire[j]),
       );
 
       const gadgetPoly = gadget.evalPoly(field, wirePolys);
@@ -78,7 +78,7 @@ export class FlpGeneric<M, AR> implements Flp<M, AR> {
     proof: bigint[],
     queryRand: bigint[],
     jointRand: bigint[],
-    shares: number
+    shares: number,
   ): bigint[] {
     const circuit = new Query(this.circuit, proof);
     const v = circuit.eval(input, jointRand, shares);
@@ -86,7 +86,7 @@ export class FlpGeneric<M, AR> implements Flp<M, AR> {
 
     if (queryRand.length !== this.circuit.queryRandLen) {
       throw new Error(
-        `mismatched query rand length. expected ${this.circuit.queryRandLen} but got ${queryRand.length}`
+        `mismatched query rand length. expected ${this.circuit.queryRandLen} but got ${queryRand.length}`,
       );
     }
 
@@ -97,7 +97,7 @@ export class FlpGeneric<M, AR> implements Flp<M, AR> {
 
         if (field.exp(t, BigInt(p)) == 1n) {
           throw new Error(
-            "Degenerate point would leak gadget output to the verifier"
+            "Degenerate point would leak gadget output to the verifier",
           );
         }
 
@@ -105,19 +105,19 @@ export class FlpGeneric<M, AR> implements Flp<M, AR> {
         return [
           ...verifier,
           ...gadget.wire.map((wire) =>
-            field.evalPoly(field.interpolate(wireInput, wire), t)
+            field.evalPoly(field.interpolate(wireInput, wire), t),
           ),
           field.evalPoly(gadget.gadgetPoly, t),
         ];
       },
-      [v]
+      [v],
     );
   }
 
   decide(verifier: bigint[]): boolean {
     if (verifier.length !== this.circuit.verifierLen) {
       throw new Error(
-        `expected verifier of length ${this.circuit.verifierLen} but got ${verifier.length}`
+        `expected verifier of length ${this.circuit.verifierLen} but got ${verifier.length}`,
       );
     }
 
@@ -138,7 +138,7 @@ export class FlpGeneric<M, AR> implements Flp<M, AR> {
 
     if (verifierIndex != this.circuit.verifierLen) {
       throw new Error(
-        `unused verifier (${verifierIndex} / ${this.circuit.verifierLen})`
+        `unused verifier (${verifierIndex} / ${this.circuit.verifierLen})`,
       );
     }
 

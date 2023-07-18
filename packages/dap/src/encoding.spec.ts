@@ -23,7 +23,10 @@ class Uint16 implements Encodable {
 }
 
 class TestEncodable implements Encodable {
-  constructor(public array16: Uint16[], public opaque16: Buffer) {}
+  constructor(
+    public array16: Uint16[],
+    public opaque16: Buffer,
+  ) {}
   encode(): Buffer {
     return Buffer.concat([
       encodeArray16(this.array16),
@@ -42,7 +45,7 @@ context("encoding", () => {
     it("correctly encodes a two byte length description and then the full array", () => {
       assert.deepEqual(
         encodeArray16([new Uint16(65535), new Uint16(255)]),
-        Buffer.from([0, 4, 255, 255, 0, 255])
+        Buffer.from([0, 4, 255, 255, 0, 255]),
       );
     });
 
@@ -68,7 +71,7 @@ context("decoding", () => {
     it("correctly decodes", () => {
       assert.deepEqual(
         Parser.from(Buffer.from([0, 4, 255, 255, 0, 255])).array16(Uint16),
-        [new Uint16(65535), new Uint16(255)]
+        [new Uint16(65535), new Uint16(255)],
       );
     });
 
@@ -81,7 +84,8 @@ context("decoding", () => {
       const parser = Parser.from(Buffer.from([0, 3, 255, 255, 0, 0]));
       assert.throws(
         () => parser.array16(Uint16),
-        (e: Error) => e.message === "expected to read exactly 3 but read 1 over"
+        (e: Error) =>
+          e.message === "expected to read exactly 3 but read 1 over",
       );
     });
   });
@@ -91,7 +95,7 @@ context("TestEncodable", () => {
   it("can round trip a single parseable encodable", () => {
     const testEncodable = new TestEncodable(
       [5, 10, 15, 20].map((n) => new Uint16(n)),
-      Buffer.from("opaque")
+      Buffer.from("opaque"),
     );
     const encoded = testEncodable.encode();
     assert.deepEqual(TestEncodable.parse(encoded), testEncodable);
@@ -101,17 +105,17 @@ context("TestEncodable", () => {
     const testEncodables = [
       new TestEncodable(
         [5, 10, 15, 20].map((n) => new Uint16(n)),
-        Buffer.from("opaque")
+        Buffer.from("opaque"),
       ),
       new TestEncodable(
         [1, 2, 3].map((n) => new Uint16(n)),
-        Buffer.from("also opaque")
+        Buffer.from("also opaque"),
       ),
     ];
     const encoded = encodeArray16(testEncodables);
     assert.deepEqual(
       Parser.from(encoded).array16(TestEncodable),
-      testEncodables
+      testEncodables,
     );
   });
 });

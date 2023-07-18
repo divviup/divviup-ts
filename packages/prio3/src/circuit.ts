@@ -56,13 +56,13 @@ export abstract class Circuit<M, AR> implements GenericCircuit {
   ensureValidEval(input: bigint[], jointRand: bigint[]) {
     if (input.length != this.inputLen) {
       throw new Error(
-        `expected input length to be ${this.inputLen} but it was ${input.length}`
+        `expected input length to be ${this.inputLen} but it was ${input.length}`,
       );
     }
 
     if (jointRand.length != this.jointRandLen) {
       throw new Error(
-        `expected joint rand length to be ${this.jointRandLen} but it was ${jointRand.length}`
+        `expected joint rand length to be ${this.jointRandLen} but it was ${jointRand.length}`,
       );
     }
   }

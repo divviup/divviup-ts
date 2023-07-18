@@ -9,19 +9,19 @@ describe("DAP HpkeConfigList", () => {
       Kem.DhP256HkdfSha256,
       Kdf.Sha256,
       Aead.AesGcm128,
-      Buffer.from("public key")
+      Buffer.from("public key"),
     );
     const config2 = new HpkeConfig(
       255,
       Kem.X25519HkdfSha256,
       Kdf.Sha384,
       Aead.ChaCha20Poly1305,
-      Buffer.from("public key")
+      Buffer.from("public key"),
     );
     const list = new HpkeConfigList([config1, config2]);
     assert.deepEqual(
       [...list.encode()],
-      [0, 38, ...config1.encode(), ...config2.encode()]
+      [0, 38, ...config1.encode(), ...config2.encode()],
     );
   });
 
@@ -31,18 +31,18 @@ describe("DAP HpkeConfigList", () => {
       Kem.DhP256HkdfSha256,
       Kdf.Sha256,
       Aead.AesGcm128,
-      Buffer.from("public key")
+      Buffer.from("public key"),
     );
     const config2 = new HpkeConfig(
       255,
       Kem.X25519HkdfSha256,
       Kdf.Sha384,
       Aead.ChaCha20Poly1305,
-      Buffer.from("public key")
+      Buffer.from("public key"),
     );
 
     const list = HpkeConfigList.parse(
-      Buffer.from([0, 38, ...config1.encode(), ...config2.encode()])
+      Buffer.from([0, 38, ...config1.encode(), ...config2.encode()]),
     );
 
     assert.deepEqual(list.configs, [config1, config2]);
@@ -54,7 +54,7 @@ describe("DAP HpkeConfigList", () => {
       Kem.DhP256HkdfSha256,
       Kdf.Sha256,
       Aead.AesGcm128,
-      Buffer.from("public key")
+      Buffer.from("public key"),
     );
 
     const invalidConfig = new HpkeConfig(
@@ -62,7 +62,7 @@ describe("DAP HpkeConfigList", () => {
       Kem.X25519HkdfSha256,
       Kdf.Sha512,
       Aead.ChaCha20Poly1305,
-      Buffer.from("public key")
+      Buffer.from("public key"),
     );
 
     // none of these are known ids, so we skip the invalid config
@@ -83,7 +83,7 @@ describe("DAP HpkeConfig", () => {
       Kem.DhP256HkdfSha256,
       Kdf.Sha256,
       Aead.AesGcm128,
-      Buffer.from("public key")
+      Buffer.from("public key"),
     );
 
     assert.deepEqual(
@@ -95,7 +95,7 @@ describe("DAP HpkeConfig", () => {
         ...[0, 1],
         ...[0, 10], //length of "public key"
         ...Buffer.from("public key", "ascii"),
-      ]
+      ],
     );
   });
 
@@ -108,7 +108,7 @@ describe("DAP HpkeConfig", () => {
         ...[0, 3],
         ...[0, 10], //length of "public key"
         ...Buffer.from("public key", "ascii"),
-      ])
+      ]),
     );
 
     assert.equal(config.publicKey.toString("ascii"), "public key");
@@ -155,7 +155,7 @@ describe("DAP HpkeConfig", () => {
         Kem.DhP256HkdfSha256,
         50,
         Aead.ChaCha20Poly1305,
-        Buffer.alloc(10)
+        Buffer.alloc(10),
       );
     }, /kdfId was 50 but must be one of the following:/);
   });
@@ -167,7 +167,7 @@ describe("DAP HpkeConfig", () => {
         Kem.DhP256HkdfSha256,
         Kdf.Sha512,
         5,
-        Buffer.alloc(10)
+        Buffer.alloc(10),
       );
     }, /aeadId was 5 but must be one of the following:/);
   });
@@ -180,14 +180,14 @@ describe("DAP HpkeConfig", () => {
         Kem.X25519HkdfSha256,
         Kdf.Sha256,
         Aead.AesGcm128,
-        Buffer.from(wrongKeyType)
+        Buffer.from(wrongKeyType),
       );
 
       assert.throws(() => {
         config.seal(
           Buffer.from("info"),
           Buffer.from("plaintext"),
-          Buffer.from("aad")
+          Buffer.from("aad"),
         );
       });
     });
@@ -198,14 +198,14 @@ describe("DAP HpkeConfig", () => {
         Kem.X25519HkdfSha256,
         Kdf.Sha256,
         Aead.AesGcm128,
-        Buffer.from("not a valid key")
+        Buffer.from("not a valid key"),
       );
 
       assert.throws(() => {
         config.seal(
           Buffer.from("info"),
           Buffer.from("plaintext"),
-          Buffer.from("aad")
+          Buffer.from("aad"),
         );
       });
     });
@@ -219,7 +219,7 @@ describe("DAP HpkeConfig", () => {
         kem,
         Kdf.Sha256,
         Aead.AesGcm128,
-        Buffer.from(public_key)
+        Buffer.from(public_key),
       );
 
       const info = Buffer.from("info");
@@ -234,7 +234,7 @@ describe("DAP HpkeConfig", () => {
           hpkeCipherText.encapsulatedContext,
           info,
           hpkeCipherText.payload,
-          aad
+          aad,
         );
 
       assert.deepEqual(decrypted, plaintext);
@@ -250,7 +250,7 @@ describe("DAP HpkeConfig", () => {
         kem,
         Kdf.Sha256,
         Aead.AesGcm128,
-        Buffer.from(public_key)
+        Buffer.from(public_key),
       );
 
       const info = Buffer.from("info");
@@ -265,7 +265,7 @@ describe("DAP HpkeConfig", () => {
           hpkeCipherText.encapsulatedContext,
           info,
           hpkeCipherText.payload,
-          aad
+          aad,
         );
 
       assert.deepEqual(decrypted, plaintext);

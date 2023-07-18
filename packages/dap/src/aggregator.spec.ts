@@ -16,7 +16,7 @@ describe("DAP Aggregator", () => {
   it("should append a trailing slash on construction from a string", () => {
     const aggregator = new Aggregator(
       "http://example.com/aggregator",
-      Role.Leader
+      Role.Leader,
     );
 
     assert.equal(aggregator.url.toString(), "http://example.com/aggregator/");
@@ -25,7 +25,7 @@ describe("DAP Aggregator", () => {
   it("should append a trailing slash on construction from a URL", () => {
     const aggregator = new Aggregator(
       new URL("http://example.com/aggregator"),
-      Role.Leader
+      Role.Leader,
     );
 
     assert.equal(aggregator.url.toString(), "http://example.com/aggregator/");
@@ -34,14 +34,14 @@ describe("DAP Aggregator", () => {
   it("has a convenience method to build helper aggregator", () => {
     assert.deepEqual(
       Aggregator.helper("http://example.com"),
-      new Aggregator("http://example.com", Role.Helper)
+      new Aggregator("http://example.com", Role.Helper),
     );
   });
 
   it("has a convenience method to build leader aggregator", () => {
     assert.deepEqual(
       Aggregator.leader("http://example.com"),
-      new Aggregator("http://example.com", Role.Leader)
+      new Aggregator("http://example.com", Role.Leader),
     );
   });
 
@@ -54,7 +54,7 @@ describe("DAP Aggregator", () => {
       kem,
       Kdf.Sha256,
       Aead.AesGcm128,
-      Buffer.from(public_key)
+      Buffer.from(public_key),
     );
 
     aggregator.hpkeConfigList = new HpkeConfigList([hpkeConfig]);
@@ -62,7 +62,7 @@ describe("DAP Aggregator", () => {
     const aad = new InputShareAad(
       TaskId.random(),
       new ReportMetadata(ReportId.random(), Date.now() / 1000),
-      Buffer.alloc(0)
+      Buffer.alloc(0),
     );
     const cipherText = aggregator.seal(inputShare, aad);
 
@@ -73,7 +73,7 @@ describe("DAP Aggregator", () => {
         cipherText.encapsulatedContext,
         new InputShareInfo(Role.Leader).encode(),
         cipherText.payload,
-        aad.encode()
+        aad.encode(),
       );
 
     assert.deepEqual(Buffer.from(open), inputShare.encode());
@@ -85,7 +85,7 @@ describe("DAP Aggregator", () => {
     const aad = new InputShareAad(
       TaskId.random(),
       new ReportMetadata(ReportId.random(), Date.now() / 1000),
-      Buffer.alloc(0)
+      Buffer.alloc(0),
     );
 
     assert.throws(() => aggregator.seal(inputShare, aad));

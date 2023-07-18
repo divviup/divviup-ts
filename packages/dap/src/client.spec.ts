@@ -23,7 +23,7 @@ interface ResponseSpec {
 function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
   function fakeFetch(
     input: RequestInfo,
-    init?: RequestInit | undefined
+    init?: RequestInit | undefined,
   ): Promise<Response> {
     fakeFetch.calls.push([input, init]);
     const responseSpec = mocks[input.toString()];
@@ -32,8 +32,8 @@ function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
     if (!response) {
       throw new Error(
         `received unhandled request.\n\nurl: ${input.toString()}.\n\nmocks: ${inspect(
-          mocks
-        ).slice(1, -1)}`
+          mocks,
+        ).slice(1, -1)}`,
       );
     }
 
@@ -41,7 +41,7 @@ function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
       new Response(Buffer.from(response.body || ""), {
         status: response.status || 200,
         headers: { "Content-Type": response.contentType || "text/plain" },
-      })
+      }),
     );
   }
 
@@ -56,7 +56,7 @@ function buildHpkeConfigList(): HpkeConfigList {
       hpke.Kem.DhP256HkdfSha256,
       hpke.Kdf.Sha256,
       hpke.Aead.AesGcm128,
-      Buffer.from(new hpke.Keypair(hpke.Kem.DhP256HkdfSha256).public_key)
+      Buffer.from(new hpke.Keypair(hpke.Kem.DhP256HkdfSha256).public_key),
     ),
   ]);
 }
@@ -81,7 +81,7 @@ function buildParams(): {
 
 function withHpkeConfigs<
   Spec extends KnownVdafSpec,
-  Measurement extends VdafMeasurement<Spec>
+  Measurement extends VdafMeasurement<Spec>,
 >(dapClient: DAPClient<Spec, Measurement>): DAPClient<Spec, Measurement> {
   for (const aggregator of dapClient.aggregators) {
     aggregator.hpkeConfigList = buildHpkeConfigList();
@@ -98,7 +98,7 @@ describe("DAPClient", () => {
       });
       assert.equal(
         client.taskId.toString(),
-        "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY"
+        "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
       );
     });
 
@@ -107,13 +107,13 @@ describe("DAPClient", () => {
         ...buildParams(),
         taskId: Buffer.from(
           "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
-          "base64url"
+          "base64url",
         ),
       });
 
       assert.equal(
         client.taskId.toString(),
-        "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY"
+        "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
       );
     });
 
@@ -163,7 +163,7 @@ describe("DAPClient", () => {
             ...buildParams(),
             timePrecisionSeconds: "ten" as unknown as number,
           }),
-        (e: Error) => e.message == "timePrecisionSeconds must be a number"
+        (e: Error) => e.message == "timePrecisionSeconds must be a number",
       );
     });
   });
@@ -273,7 +273,7 @@ describe("DAPClient", () => {
             kem,
             kdf,
             aead,
-            Buffer.from(public_key)
+            Buffer.from(public_key),
           ),
         ]);
       }
@@ -282,7 +282,7 @@ describe("DAPClient", () => {
       assert.equal(report.encryptedInputShares.length, 2);
       assert(
         Math.floor(Date.now() / 1000) - Number(report.metadata.time) <
-          2 /*2 second delta, double the minimum batch duration*/
+          2 /*2 second delta, double the minimum batch duration*/,
       );
 
       const aad = Buffer.concat([
@@ -293,7 +293,7 @@ describe("DAPClient", () => {
 
       for (const [[privateKey, role], share] of zip(
         privateKeys,
-        report.encryptedInputShares
+        report.encryptedInputShares,
       )) {
         const info = Buffer.from([
           ...Buffer.from("dap-04 input share"),
@@ -311,8 +311,8 @@ describe("DAPClient", () => {
             share.encapsulatedContext,
             info,
             share.payload,
-            aad
-          )
+            aad,
+          ),
         );
       }
     });
@@ -332,7 +332,7 @@ describe("DAPClient", () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       await assert.rejects(
         client.generateReport(-25.25),
-        /measurement -25.25 was not an integer/ // this is specific to the Sum circuit as configured
+        /measurement -25.25 was not an integer/, // this is specific to the Sum circuit as configured
       );
     });
 
@@ -340,7 +340,7 @@ describe("DAPClient", () => {
       const client = withHpkeConfigs(new DAPClient(buildParams()));
       assert(client.aggregators[0].hpkeConfigList);
       client.aggregators[0].hpkeConfigList.configs[0].publicKey = Buffer.from(
-        "not a valid public key"
+        "not a valid public key",
       );
       await assert.rejects(client.generateReport(21));
     });
@@ -386,14 +386,14 @@ describe("DAPClient", () => {
       const request = new Request(url, args);
       assert.equal(
         request.url,
-        `https://a.example.com/v1/tasks/${taskId}/reports`
+        `https://a.example.com/v1/tasks/${taskId}/reports`,
       );
       assert(!!args);
       assert.deepEqual(args.body, report.encode());
       assert.equal(request.method, "PUT");
       assert.equal(
         request.headers.get("Content-Type"),
-        "application/dap-report"
+        "application/dap-report",
       );
     });
 
@@ -486,7 +486,7 @@ describe("DAPClient", () => {
       client.fetch = fetch;
       await assert.rejects(
         client.sendMeasurement(10),
-        (e) => e instanceof DAPError && e.shortType == "outdatedConfig"
+        (e) => e instanceof DAPError && e.shortType == "outdatedConfig",
       );
       assert.equal(fetch.calls.length, 6); // we do not try again
     });

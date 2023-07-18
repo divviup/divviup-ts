@@ -62,19 +62,19 @@ export class Query<M, AR> extends Circuit<M, AR> {
         wireSeeds,
         gadgetPoly,
         gadget,
-        calls
+        calls,
       );
     });
 
     if (proof.length !== this.proofLen) {
       throw new Error(
-        `expected proof length to be ${this.proofLen} but it was ${proof.length}`
+        `expected proof length to be ${this.proofLen} but it was ${proof.length}`,
       );
     }
 
     if (proofIndex !== proof.length) {
       throw new Error(
-        `did not use all of proof (used ${proofIndex}/${proof.length})`
+        `did not use all of proof (used ${proofIndex}/${proof.length})`,
       );
     }
   }

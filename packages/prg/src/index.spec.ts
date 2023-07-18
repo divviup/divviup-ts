@@ -35,7 +35,7 @@ describe("PrgSha3", () => {
       seed,
       dst,
       binder,
-      expandedLen
+      expandedLen,
     );
     assert.equal(expandedVec.length, expandedLen);
   });
@@ -58,7 +58,7 @@ describe("PrgSha3", () => {
       derived_seed: Buffer.from(PrgSha3TestVector.derived_seed, "hex"),
       expanded_vec_field128: Buffer.from(
         PrgSha3TestVector.expanded_vec_field128,
-        "hex"
+        "hex",
       ),
     };
 
@@ -101,7 +101,7 @@ describe("PrgSha3", () => {
       seed,
       dst,
       binder,
-      expandedLen
+      expandedLen,
     );
     assert.equal(expandedVec[expandedVec.length - 1], expectedLastElem);
   });

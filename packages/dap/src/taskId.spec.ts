@@ -20,8 +20,8 @@ describe("DAP TaskId", () => {
     const taskId = new TaskId(
       Buffer.from(
         "dd74c11f14ed500b48e75e8679766c5482a304f61534862617de2f1016f88dc6",
-        "hex"
-      )
+        "hex",
+      ),
     );
     assert.equal(taskId, "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY");
   });

@@ -16,7 +16,7 @@ export abstract class Vdaf<
   PrepareState,
   AggregatorShare,
   AggregationResult,
-  OutputShare
+  OutputShare,
 > {
   abstract id: number;
   abstract shares: number;
@@ -28,7 +28,7 @@ export abstract class Vdaf<
   abstract measurementToInputShares(
     measurement: Measurement,
     nonce: Buffer,
-    rand: Buffer
+    rand: Buffer,
   ): Promise<Shares>;
 
   abstract initialPrepareState(
@@ -37,30 +37,30 @@ export abstract class Vdaf<
     aggParam: AggregationParameter,
     nonce: Buffer,
     publicShare: Buffer,
-    inputShare: Buffer
+    inputShare: Buffer,
   ): Promise<PrepareState>;
 
   abstract prepareNext(
     prepareState: PrepareState,
-    inbound: Buffer | null
+    inbound: Buffer | null,
   ):
     | { prepareState: PrepareState; prepareShare: Buffer }
     | { outputShare: OutputShare };
 
   abstract prepSharesToPrepareMessage(
     aggParam: AggregationParameter,
-    prepShares: Buffer[]
+    prepShares: Buffer[],
   ): Promise<Buffer>;
 
   abstract outputSharesToAggregatorShare(
     aggParam: AggregationParameter,
-    outShares: OutputShare[]
+    outShares: OutputShare[],
   ): AggregatorShare;
 
   abstract aggregatorSharesToResult(
     aggParam: AggregationParameter,
     aggShares: AggregatorShare[],
-    measurementCount: number
+    measurementCount: number,
   ): AggregationResult;
 
   domainSeparationTag(usage: number): Buffer {
@@ -100,7 +100,7 @@ export abstract class Vdaf<
 
   async test(
     aggregationParameter: AggregationParameter,
-    measurements: Measurement[]
+    measurements: Measurement[],
   ): Promise<AggregationResult> {
     return (await this.run({ aggregationParameter, measurements })).agg_result;
   }
@@ -115,7 +115,7 @@ export interface ClientVdaf<Measurement> {
   measurementToInputShares(
     measurement: Measurement,
     nonce: Buffer,
-    rand: Buffer
+    rand: Buffer,
   ): Promise<Shares>;
 }
 
@@ -133,7 +133,7 @@ interface RunVdafArguments<M, AP, P, AS, AR, OS> {
 }
 
 export async function runVdaf<M, AP, P, AS, AR, OS>(
-  args: RunVdafArguments<M, AP, P, AS, AR, OS>
+  args: RunVdafArguments<M, AP, P, AS, AR, OS>,
 ): Promise<TestVector<AP, M, OS, AS, AR>> {
   const { vdaf, aggregationParameter, measurements } = args;
   const { verifyKeySize, randSize, nonceSize, rounds, shares } = vdaf;
@@ -154,7 +154,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
       const { publicShare, inputShares } = await vdaf.measurementToInputShares(
         measurement,
         nonce,
-        rand
+        rand,
       );
 
       const prepTestVector: PrepTestVector<M, OS> = {
@@ -175,9 +175,9 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
             aggregationParameter,
             nonce,
             publicShare,
-            inputShares[aggregatorId]
-          )
-        )
+            inputShares[aggregatorId],
+          ),
+        ),
       );
 
       let inbound: Buffer | null = null;
@@ -190,14 +190,14 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
             }
             states[aggregatorId] = out.prepareState;
             return out.prepareShare;
-          }
+          },
         );
 
         prepTestVector.prep_shares[round] = outbound.map(hex);
 
         inbound = await vdaf.prepSharesToPrepareMessage(
           aggregationParameter,
-          outbound
+          outbound,
         );
 
         prepTestVector.prep_messages = [hex(inbound)];
@@ -212,18 +212,18 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
       });
       testVector.prep.push(prepTestVector);
       return prepTestVector.out_shares;
-    })
+    }),
   );
 
   const aggregatorShares = arr(shares, (aggregatorId) => {
     const aggregatorOutShares = outShares.reduce(
       (aggregatorOutShares, out) => [...aggregatorOutShares, out[aggregatorId]],
-      [] as OS[]
+      [] as OS[],
     );
 
     const aggregatorShare = vdaf.outputSharesToAggregatorShare(
       aggregationParameter,
-      aggregatorOutShares
+      aggregatorOutShares,
     );
 
     testVector.agg_shares.push(aggregatorShare);
@@ -233,7 +233,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
   const agg_result = vdaf.aggregatorSharesToResult(
     aggregationParameter,
     aggregatorShares,
-    measurements.length
+    measurements.length,
   );
 
   return { ...testVector, agg_result };
@@ -260,7 +260,7 @@ export interface PrepTestVector<M, OS> {
 export function formatDomainSeparationTag(
   algorithmClass: number,
   algorithm: number,
-  usage: number
+  usage: number,
 ): Buffer {
   const buffer = Buffer.alloc(8);
   buffer.writeUInt8(VDAF_VERSION_NUMBER, 0);

@@ -18,7 +18,7 @@ describe("DAPError", () => {
         new Response(JSON.stringify(sampleProblem), {
           headers: { "Content-Type": "application/problem+json" },
         }),
-        "client context"
+        "client context",
       );
 
       assert(error instanceof DAPError);
@@ -29,7 +29,7 @@ describe("DAPError", () => {
       assert.equal(error.detail, sampleProblem.detail);
       assert.equal(
         error.message,
-        "unrecognizedTask: An endpoint received a message with an unknown task ID."
+        "unrecognizedTask: An endpoint received a message with an unknown task ID.",
       );
       assert.equal(error.status, 400);
       assert.equal(error.instance, "..");
@@ -39,7 +39,7 @@ describe("DAPError", () => {
     it("returns a normal Error with the client context when the response isn't problem json", async () => {
       const error = await DAPError.fromResponse(
         new Response("doesn't matter"),
-        "client context"
+        "client context",
       );
 
       assert(!(error instanceof DAPError));

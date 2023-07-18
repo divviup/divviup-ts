@@ -9,7 +9,7 @@ export class TaskId implements Encodable {
     if (typeof input === "string") {
       this.buffer = Buffer.from(
         input.replace(/-/g, "+").replace(/_/g, "/"),
-        "base64"
+        "base64",
       );
     } else {
       this.buffer = input;
@@ -17,7 +17,7 @@ export class TaskId implements Encodable {
 
     if (this.buffer.length !== 32) {
       throw new Error(
-        `expected TaskId to be 32 bytes long (${this.toString()})`
+        `expected TaskId to be 32 bytes long (${this.toString()})`,
       );
     }
   }

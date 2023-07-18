@@ -37,7 +37,7 @@ export class HpkeConfig implements Encodable {
     public kemId: hpke.Kem,
     public kdfId: hpke.Kdf,
     public aeadId: hpke.Aead,
-    public publicKey: Buffer
+    public publicKey: Buffer,
   ) {
     if (id !== Math.floor(id) || id < 0 || id > 255) {
       throw new Error("id must be an integer in [0, 255]");
@@ -50,7 +50,7 @@ export class HpkeConfig implements Encodable {
 
   private validate(
     e: { [key: string]: unknown },
-    id: "kemId" | "kdfId" | "aeadId"
+    id: "kemId" | "kdfId" | "aeadId",
   ) {
     const actual = this[id];
 
@@ -62,7 +62,7 @@ export class HpkeConfig implements Encodable {
         .join("\n");
 
       throw new Error(
-        `${id} was ${actual} but must be one of the following:\n${errorText}`
+        `${id} was ${actual} but must be one of the following:\n${errorText}`,
       );
     }
   }
@@ -74,7 +74,7 @@ export class HpkeConfig implements Encodable {
       parser.uint16(),
       parser.uint16(),
       parser.uint16(),
-      parser.opaque16()
+      parser.opaque16(),
     );
   }
 
@@ -101,13 +101,13 @@ export class HpkeConfig implements Encodable {
       this.publicKey,
       info,
       plaintext,
-      aad
+      aad,
     );
 
     return new HpkeCiphertext(
       this.id,
       Buffer.from(text.encapped_key),
-      Buffer.from(text.ciphertext)
+      Buffer.from(text.ciphertext),
     );
   }
 }

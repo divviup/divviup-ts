@@ -9,7 +9,7 @@ export abstract class Gadget {
   ensureArity(input: bigint[]) {
     if (input.length !== this.arity) {
       throw new Error(
-        `expected gadget input length (${input.length}) to equal arity (${this.arity}), but it did not`
+        `expected gadget input length (${input.length}) to equal arity (${this.arity}), but it did not`,
       );
     }
   }

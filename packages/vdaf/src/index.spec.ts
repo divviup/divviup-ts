@@ -33,7 +33,7 @@ export class VdafTest extends Vdaf<
   async measurementToInputShares(
     measurement: Measurement,
     _nonce: Buffer,
-    rand: Buffer
+    rand: Buffer,
   ): Promise<Shares> {
     const { field, shares } = this;
     const helperShares = await PrgSha3.expandIntoVec(
@@ -41,11 +41,11 @@ export class VdafTest extends Vdaf<
       rand,
       Buffer.alloc(0),
       Buffer.alloc(0),
-      shares - 1
+      shares - 1,
     );
     const leaderShare = helperShares.reduce(
       (ls, hs) => field.sub(ls, hs),
-      BigInt(measurement)
+      BigInt(measurement),
     );
 
     return Promise.resolve({
@@ -62,7 +62,7 @@ export class VdafTest extends Vdaf<
     _aggParam: AggregationParameter,
     _nonce: Buffer,
     _publicShare: Buffer,
-    inputShare: Buffer
+    inputShare: Buffer,
   ): Promise<PrepareState> {
     return Promise.resolve({
       inputRange: this.inputRange,
@@ -72,7 +72,7 @@ export class VdafTest extends Vdaf<
 
   prepareNext(
     prepareState: PrepareState,
-    inbound: Buffer | null
+    inbound: Buffer | null,
   ):
     | { prepareState: PrepareState; prepareShare: Buffer }
     | { outputShare: bigint[] } {
@@ -91,33 +91,33 @@ export class VdafTest extends Vdaf<
 
   prepSharesToPrepareMessage(
     _aggParam: AggregationParameter,
-    prepShares: Buffer[]
+    prepShares: Buffer[],
   ): Promise<Buffer> {
     const { field } = this;
     return Promise.resolve(
       Buffer.from(
         field.encode([
           field.sum(prepShares, (encoded) => field.decode(encoded)[0]),
-        ])
-      )
+        ]),
+      ),
     );
   }
 
   outputSharesToAggregatorShare(
     _aggParam: null,
-    outShares: bigint[][]
+    outShares: bigint[][],
   ): Buffer {
     return Buffer.from(
-      this.field.encode([this.field.sum(outShares, (share) => share[0])])
+      this.field.encode([this.field.sum(outShares, (share) => share[0])]),
     );
   }
 
   aggregatorSharesToResult(
     _aggParam: AggregationParameter,
-    aggShares: Buffer[]
+    aggShares: Buffer[],
   ): AggregationResult {
     return Number(
-      this.field.sum(aggShares, (aggShare) => this.field.decode(aggShare)[0])
+      this.field.sum(aggShares, (aggShare) => this.field.decode(aggShare)[0]),
     );
   }
 }
