@@ -17,20 +17,20 @@ function randomSuffix(): string {
     (_) =>
       IDENTIFIER_ALPHABET[
         Math.floor(Math.random() * IDENTIFIER_ALPHABET.length)
-      ]
+      ],
   ).join("");
 }
 
 function spawnSyncAndThrow(
   command: string,
-  args: Array<string>
+  args: Array<string>,
 ): SpawnSyncReturns<string> {
   const result = spawnSync(command, args, { encoding: "utf-8" });
   if (result.error) {
     throw result.error;
   } else if (result.status !== null && result.status !== 0) {
     throw new Error(
-      `${command} failed with status code ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+      `${command} failed with status code ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
     );
   } else if (result.signal !== null) {
     throw new Error(`${command} was killed with signal ${result.signal}`);
@@ -75,7 +75,7 @@ class Container {
     const match = /^0.0.0.0:([0-9]+)$/m.exec(result.stdout);
     if (!match) {
       throw new Error(
-        `docker port output coudl not be parsed, was ${result.stdout}`
+        `docker port output could not be parsed, was ${result.stdout}`,
       );
     }
     this.port = parseInt(match[1], 10);
@@ -92,7 +92,7 @@ class Container {
   /** Send an interoperation test API request, and return the response. */
   async sendRequest(
     apiEndpoint: string,
-    requestBody: object
+    requestBody: object,
   ): Promise<object & Record<"status", unknown>> {
     const response = await fetch(
       `http://127.0.0.1:${this.port}/internal/test/${apiEndpoint}`,
@@ -102,7 +102,7 @@ class Container {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
-      }
+      },
     );
     return await checkResponseError(response);
   }
@@ -111,12 +111,12 @@ class Container {
 /** Check the status field in a response, throw an error if it wasn't successful, and return the
  * response body otherwise. */
 async function checkResponseError(
-  response: Response
+  response: Response,
 ): Promise<object & Record<"status", unknown>> {
   if (response.status !== 200) {
     const body = await response.text();
     throw new Error(
-      `Test API returned status code ${response.status}, body: ${body}`
+      `Test API returned status code ${response.status}, body: ${body}`,
     );
   }
   const rawBody: unknown = await response.json();
@@ -179,7 +179,7 @@ class Aggregator extends Container {
     minBatchSize: number,
     timePrecisionSeconds: number,
     collectorHpkeConfig: string,
-    taskExpiration: number
+    taskExpiration: number,
   ): Promise<void> {
     const requestBody: Record<string, string | number | object> = {
       task_id: taskId.toString(),
@@ -209,7 +209,7 @@ class Collector extends Container {
     taskId: EncodedBlob,
     leaderEndpoint: URL,
     vdaf: object,
-    collectorAuthToken: string
+    collectorAuthToken: string,
   ): Promise<string> {
     const rawBody = await this.sendRequest("add_task", {
       task_id: taskId.toString(),
@@ -234,7 +234,7 @@ class Collector extends Container {
   async collectionStart(
     taskId: EncodedBlob,
     batchIntervalStart: number,
-    batchIntervalDuration: number
+    batchIntervalDuration: number,
   ): Promise<string> {
     const rawBody = await this.sendRequest("collection_start", {
       task_id: taskId.toString(),
@@ -303,7 +303,7 @@ async function upload(
   helperEndpoint: URL,
   vdaf: object,
   measurement: unknown,
-  timePrecision: number
+  timePrecision: number,
 ): Promise<void> {
   const response = await fetch(
     `http://127.0.0.1:${clientPort}/internal/test/upload`,
@@ -320,7 +320,7 @@ async function upload(
         measurement: measurement,
         time_precision: timePrecision,
       }),
-    }
+    },
   );
   await checkResponseError(response);
 }
@@ -361,7 +361,7 @@ async function waitForReady(port: number) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({}),
-        }
+        },
       );
       if (response.status === 200) {
         return;
@@ -382,7 +382,7 @@ async function runIntegrationTest(
   collector: Collector,
   vdaf: object,
   measurements: Array<unknown>,
-  expectedResult: unknown
+  expectedResult: unknown,
 ) {
   const maxBatchQueryCount = 1;
   const minBatchSize = measurements.length;
@@ -406,7 +406,7 @@ async function runIntegrationTest(
     taskId,
     leaderEndpoint,
     vdaf,
-    collectorAuthToken
+    collectorAuthToken,
   );
   await leader.addTask(
     taskId,
@@ -421,7 +421,7 @@ async function runIntegrationTest(
     minBatchSize,
     timePrecision,
     collectorHpkeConfig,
-    taskExpiration
+    taskExpiration,
   );
   await helper.addTask(
     taskId,
@@ -436,7 +436,7 @@ async function runIntegrationTest(
     minBatchSize,
     timePrecision,
     collectorHpkeConfig,
-    taskExpiration
+    taskExpiration,
   );
 
   let leaderEndpointForClient: URL;
@@ -445,12 +445,12 @@ async function runIntegrationTest(
     leaderEndpointForClient = new URL(
       leaderEndpoint
         .toString()
-        .replace(`${leader.name}:8080`, `127.0.0.1:${leader.port}`)
+        .replace(`${leader.name}:8080`, `127.0.0.1:${leader.port}`),
     );
     helperEndpointForClient = new URL(
       helperEndpoint
         .toString()
-        .replace(`${helper.name}:8080`, `127.0.0.1:${helper.port}`)
+        .replace(`${helper.name}:8080`, `127.0.0.1:${helper.port}`),
     );
   } else {
     leaderEndpointForClient = leaderEndpoint;
@@ -466,14 +466,14 @@ async function runIntegrationTest(
       helperEndpointForClient,
       vdaf,
       measurement,
-      timePrecision
+      timePrecision,
     );
   }
 
   const collectHandle = await collector.collectionStart(
     taskId,
     Math.floor(start.getTime() / 1000 / timePrecision) * timePrecision,
-    timePrecision * 2
+    timePrecision * 2,
   );
   for (let i = 0; i < 30; i++) {
     const collection = await collector.collectionPoll(collectHandle);
@@ -494,8 +494,8 @@ async function runIntegrationTest(
         if (parseInt(collection.result[i], 10) !== expectedResult[i]) {
           throw new Error(
             `Aggregate result did not match, got ${JSON.stringify(
-              collection.result
-            )}, expected ${JSON.stringify(expectedResult)}`
+              collection.result,
+            )}, expected ${JSON.stringify(expectedResult)}`,
           );
         }
       }
@@ -505,7 +505,7 @@ async function runIntegrationTest(
     ) {
       if (parseInt(collection.result, 10) !== expectedResult) {
         throw new Error(
-          `Aggregate result did not match, got ${collection.result}, expected ${expectedResult}`
+          `Aggregate result did not match, got ${collection.result}, expected ${expectedResult}`,
         );
       }
     } else {
@@ -521,7 +521,7 @@ async function runIntegrationTestWithHostClient(
   clientPort: number,
   vdaf: object,
   measurement: Array<unknown>,
-  expectedResult: unknown
+  expectedResult: unknown,
 ) {
   const suffix = randomSuffix();
   const network = new Network(`divviup-ts-interop-${suffix}`);
@@ -529,19 +529,19 @@ async function runIntegrationTestWithHostClient(
     const leader = new Aggregator(
       JANUS_INTEROP_AGGREGATOR_IMAGE,
       `leader-${suffix}`,
-      network
+      network,
     );
     try {
       const helper = new Aggregator(
         JANUS_INTEROP_AGGREGATOR_IMAGE,
         `helper-${suffix}`,
-        network
+        network,
       );
       try {
         const collector = new Collector(
           JANUS_INTEROP_COLLECTOR_IMAGE,
           `collector-${suffix}`,
-          network
+          network,
         );
         try {
           await runIntegrationTest(
@@ -552,7 +552,7 @@ async function runIntegrationTestWithHostClient(
             collector,
             vdaf,
             measurement,
-            expectedResult
+            expectedResult,
           );
         } finally {
           collector.delete();
@@ -574,7 +574,7 @@ async function runIntegrationTestWithHostClient(
 function startServer(): Promise<Server> {
   return new Promise((resolve) => {
     const server: Server = app().listen(0, "127.0.0.1", 511, () =>
-      resolve(server)
+      resolve(server),
     );
   });
 }
@@ -590,7 +590,7 @@ describe("interoperation test", function () {
         clientPort,
         { type: "Prio3Count" },
         arr(10, () => 1),
-        10
+        10,
       );
     } finally {
       server.close();
@@ -608,7 +608,7 @@ describe("interoperation test", function () {
           bits: "16",
         },
         arr(10, (i) => `${i}`),
-        (9 * 10) / 2
+        (9 * 10) / 2,
       );
     } finally {
       server.close();
@@ -623,7 +623,7 @@ describe("interoperation test", function () {
         clientPort,
         { type: "Prio3Histogram", buckets: ["10", "100", "1000"] },
         ["67", "216", "2012", "52", "10"],
-        [1, 2, 1, 1]
+        [1, 2, 1, 1],
       );
     } finally {
       server.close();

@@ -29,7 +29,7 @@ describe("prio3 vdaf", () => {
           measurement: prep.measurement !== 0,
         })),
       },
-      count
+      count,
     );
   });
 
@@ -54,7 +54,7 @@ describe("prio3 vdaf", () => {
     assert.deepEqual(await histogram.test(null, [101]), [0, 0, 0, 1]);
     assert.deepEqual(
       await histogram.test(null, [0, 1, 5, 10, 15, 100, 101, 101]),
-      [2, 2, 2, 2]
+      [2, 2, 2, 2],
     );
     assert.deepEqual(await histogram.test(null, [50]), [0, 0, 1, 0]);
 
@@ -81,7 +81,7 @@ async function runPrio3<M, AR>(
   measurements: M[],
   nonces: Buffer[],
   verifyKey: Buffer,
-  rands: Buffer[]
+  rands: Buffer[],
 ): Promise<JsonTestVector<M, AR>> {
   const aggregationParameter = null;
   const testVector = await instantiation.run({
@@ -96,15 +96,15 @@ async function runPrio3<M, AR>(
   return {
     ...testVector,
     agg_shares: testVector.agg_shares.map((x) =>
-      Buffer.from(field.encode(x)).toString("hex")
+      Buffer.from(field.encode(x)).toString("hex"),
     ),
 
     prep: testVector.prep.map((prep) => ({
       ...prep,
       out_shares: prep.out_shares.map((outShare) =>
         outShare.map((bigNumber) =>
-          Buffer.from(field.encode([bigNumber])).toString("hex")
-        )
+          Buffer.from(field.encode([bigNumber])).toString("hex"),
+        ),
       ),
     })),
   };
@@ -114,19 +114,19 @@ async function assertPrio3TestVector<
   Measurement,
   AggregationResult,
   TestVectorJson extends JsonTestVector<Measurement, AggregationResult>,
-  Prio3Instantiation extends Prio3<Measurement, AggregationResult>
+  Prio3Instantiation extends Prio3<Measurement, AggregationResult>,
 >(
   expectedTestVector: TestVectorJson,
   instantiation: Prio3Instantiation,
-  additional: { [key: string]: unknown } = {}
+  additional: { [key: string]: unknown } = {},
 ) {
   const nonces = expectedTestVector.prep.map((prep) =>
-    Buffer.from(prep.nonce, "hex")
+    Buffer.from(prep.nonce, "hex"),
   );
   const verifyKey = Buffer.from(expectedTestVector.verify_key, "hex");
   const measurements = expectedTestVector.prep.map((prep) => prep.measurement);
   const rands = measurements.map((_) =>
-    Buffer.from(deterministicRandom(instantiation.randSize))
+    Buffer.from(deterministicRandom(instantiation.randSize)),
   );
 
   const actualTestVector = await runPrio3(
@@ -134,7 +134,7 @@ async function assertPrio3TestVector<
     measurements,
     nonces,
     verifyKey,
-    rands
+    rands,
   );
 
   assert.deepEqual({ ...actualTestVector, ...additional }, expectedTestVector);

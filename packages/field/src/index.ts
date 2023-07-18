@@ -26,7 +26,7 @@ export class Field {
     this.encodedSize = encodedSize;
     this.generator = this.#primeField.exp(
       generatorParts.base,
-      generatorParts.exponent
+      generatorParts.exponent,
     );
   }
 
@@ -89,13 +89,13 @@ export class Field {
     const encodedSize = this.encodedSize;
     if (encoded.length % encodedSize !== 0) {
       throw new Error(
-        `could not decode, expected ${encoded.length} to be a multiple of ${encodedSize}`
+        `could not decode, expected ${encoded.length} to be a multiple of ${encodedSize}`,
       );
     }
 
     return arr(encoded.length / encodedSize, (index) => {
       const n = octetStringToIntegerLE(
-        encoded.slice(index * encodedSize, (index + 1) * encodedSize)
+        encoded.slice(index * encodedSize, (index + 1) * encodedSize),
       );
       if (n >= this.modulus) {
         throw new Error("decoded an element that is not in the field");
@@ -111,7 +111,7 @@ export class Field {
   sum<T>(arr: T[], mapper: (value: T, index: number) => bigint): bigint {
     return arr.reduce(
       (sum, value, index) => this.add(sum, mapper(value, index)),
-      0n
+      0n,
     );
   }
 }

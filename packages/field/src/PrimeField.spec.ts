@@ -412,23 +412,23 @@ describe("PrimeField;", () => {
 
           vTests.forEach(({ v1, v2, vr }) => {
             it(`should correctly add vectors ${strVector(v1)} and ${strVector(
-              v2
+              v2,
             )}`, () => {
               const fv1 = F.newVectorFrom(v1);
               const fv2 = F.newVectorFrom(v2);
               expect(F.addVectorElements(fv1, fv2).values).to.deep.equal(
-                vr.map((n) => F.mod(n))
+                vr.map((n) => F.mod(n)),
               );
             });
           });
 
           nTests.forEach(({ v1, n, vr }) => {
             it(`should correctly add vector ${strVector(
-              v1
+              v1,
             )} and number ${n}`, () => {
               const fv1 = F.newVectorFrom(v1);
               expect(F.addVectorElements(fv1, n).values).to.deep.equal(
-                vr.map((n) => F.mod(n))
+                vr.map((n) => F.mod(n)),
               );
             });
           });
@@ -463,23 +463,23 @@ describe("PrimeField;", () => {
 
           vTests.forEach(({ v1, v2, vr }) => {
             it(`should correctly subtract vectors ${strVector(
-              v1
+              v1,
             )} and ${strVector(v2)}`, () => {
               const fv1 = F.newVectorFrom(v1);
               const fv2 = F.newVectorFrom(v2);
               expect(F.subVectorElements(fv1, fv2).values).to.deep.equal(
-                vr.map((n) => F.mod(n))
+                vr.map((n) => F.mod(n)),
               );
             });
           });
 
           nTests.forEach(({ v1, n, vr }) => {
             it(`should correctly subtract number ${n} from vector ${strVector(
-              v1
+              v1,
             )}`, () => {
               const fv1 = F.newVectorFrom(v1);
               expect(F.subVectorElements(fv1, n).values).to.deep.equal(
-                vr.map((n) => F.mod(n))
+                vr.map((n) => F.mod(n)),
               );
             });
           });
@@ -514,23 +514,23 @@ describe("PrimeField;", () => {
 
           vTests.forEach(({ v1, v2, vr }) => {
             it(`should correctly multiply vectors ${strVector(
-              v1
+              v1,
             )} and ${strVector(v2)}`, () => {
               const fv1 = F.newVectorFrom(v1);
               const fv2 = F.newVectorFrom(v2);
               expect(F.mulVectorElements(fv1, fv2).values).to.deep.equal(
-                vr.map((n) => F.mod(n))
+                vr.map((n) => F.mod(n)),
               );
             });
           });
 
           nTests.forEach(({ v1, n, vr }) => {
             it(`should correctly multiply vector ${strVector(
-              v1
+              v1,
             )} and number ${n}`, () => {
               const fv1 = F.newVectorFrom(v1);
               expect(F.mulVectorElements(fv1, n).values).to.deep.equal(
-                vr.map((n) => F.mod(n))
+                vr.map((n) => F.mod(n)),
               );
             });
           });
@@ -632,23 +632,23 @@ describe("PrimeField;", () => {
 
           vTests.forEach(({ v1, v2, vr }) => {
             it(`should correctly divide vectors ${strVector(
-              v1
+              v1,
             )} and ${strVector(v2)}`, () => {
               const fv1 = F.newVectorFrom(v1);
               const fv2 = F.newVectorFrom(v2);
               expect(F.divVectorElements(fv1, fv2).values).to.deep.equal(
-                vr[Number(modulus)].map((n) => F.mod(n))
+                vr[Number(modulus)].map((n) => F.mod(n)),
               );
             });
           });
 
           nTests.forEach(({ v1, n, vr }) => {
             it(`should correctly divide vector ${strVector(
-              v1
+              v1,
             )} by number ${n}`, () => {
               const fv1 = F.newVectorFrom(v1);
               expect(F.divVectorElements(fv1, n).values).to.deep.equal(
-                vr[Number(modulus)].map((n) => F.mod(n))
+                vr[Number(modulus)].map((n) => F.mod(n)),
               );
             });
           });
@@ -682,23 +682,23 @@ describe("PrimeField;", () => {
 
           vTests.forEach(({ v1, v2, vr }) => {
             it(`should correctly raise vector ${strVector(
-              v1
+              v1,
             )} to a power ${strVector(v2)}`, () => {
               const fv1 = F.newVectorFrom(v1);
               const fv2 = F.newVectorFrom(v2);
               expect(F.expVectorElements(fv1, fv2).values).to.deep.equal(
-                vr.map((n) => F.mod(n))
+                vr.map((n) => F.mod(n)),
               );
             });
           });
 
           nTests.forEach(({ v1, n, vr }) => {
             it(`should correctly raise vector ${strVector(
-              v1
+              v1,
             )} to a power ${n}`, () => {
               const fv1 = F.newVectorFrom(v1);
               expect(F.expVectorElements(fv1, n).values).to.deep.equal(
-                vr.map((n) => F.mod(n))
+                vr.map((n) => F.mod(n)),
               );
             });
           });
@@ -722,7 +722,7 @@ describe("PrimeField;", () => {
 
           tests.forEach(({ v1, v2, r }) => {
             it(`should correctly combine vectors ${strVector(
-              v1
+              v1,
             )} and ${strVector(v2)}`, () => {
               const fv1 = F.newVectorFrom(v1);
               const fv2 = F.newVectorFrom(v2);
@@ -1482,7 +1482,7 @@ describe("PrimeField;", () => {
               const fp1 = F.newVectorFrom(p1);
               const fp2 = F.newVectorFrom(p2);
               expect(F.addPolys(fp1, fp2).values).to.deep.equal(
-                pr.map((n) => F.mod(n))
+                pr.map((n) => F.mod(n)),
               );
             });
           });
@@ -1515,7 +1515,7 @@ describe("PrimeField;", () => {
               const fp1 = F.newVectorFrom(p1);
               const fp2 = F.newVectorFrom(p2);
               expect(F.subPolys(fp1, fp2).values).to.deep.equal(
-                pr.map((n) => F.mod(n))
+                pr.map((n) => F.mod(n)),
               );
             });
           });
@@ -1558,7 +1558,7 @@ describe("PrimeField;", () => {
               const fp1 = F.newVectorFrom(p1);
               const fp2 = F.newVectorFrom(p2);
               expect(F.mulPolys(fp1, fp2).values).to.deep.equal(
-                pr.map((n) => F.mod(n))
+                pr.map((n) => F.mod(n)),
               );
             });
           });
@@ -1596,7 +1596,7 @@ describe("PrimeField;", () => {
               const fp1 = F.newVectorFrom(p1);
               const fp2 = F.newVectorFrom(p2);
               expect(F.divPolys(fp1, fp2).values).to.deep.equal(
-                pr.map((n) => F.mod(n))
+                pr.map((n) => F.mod(n)),
               );
             });
           });
@@ -1645,7 +1645,7 @@ describe("PrimeField;", () => {
             const fxs = F.newVectorFrom(xs);
             const fys = F.newVectorFrom(ys);
             expect(F.interpolate(fxs, fys).values).to.deep.equal(
-              poly.map((n) => F.mod(n))
+              poly.map((n) => F.mod(n)),
             );
           });
         });
@@ -1670,7 +1670,7 @@ describe("PrimeField;", () => {
       ].forEach((poly) => {
         describe(`for polynom ${JSON.stringify(poly).replace(
           /"/g,
-          ""
+          "",
         )};`, () => {
           beforeEach(() => {
             F = new PrimeField(modulus);
@@ -1684,13 +1684,13 @@ describe("PrimeField;", () => {
 
           it(`should return correctly polynom by interpolateRoots()`, () => {
             expect(F.interpolateRoots(xs, ys).values).to.deep.equal(
-              poly.map((n) => F.mod(n))
+              poly.map((n) => F.mod(n)),
             );
           });
 
           it(`should return correctly polynom by interpolate()`, () => {
             expect(F.interpolate(xs, ys).values).to.deep.equal(
-              poly.map((n) => F.mod(n))
+              poly.map((n) => F.mod(n)),
             );
           });
 

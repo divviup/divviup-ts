@@ -23,7 +23,7 @@ describe("DAP HpkeCiphertext", () => {
     const ciphertext = new HpkeCiphertext(
       100,
       Buffer.alloc(5, 1),
-      Buffer.alloc(10, 255)
+      Buffer.alloc(10, 255),
     );
     assert.deepEqual(
       ciphertext.encode(),
@@ -33,7 +33,7 @@ describe("DAP HpkeCiphertext", () => {
         ...[1, 1, 1, 1, 1], // encapcapsulated context
         ...[0, 0, 0, 10], // payload length
         ...[255, 255, 255, 255, 255, 255, 255, 255, 255, 255], //payload
-      ])
+      ]),
     );
   });
 });

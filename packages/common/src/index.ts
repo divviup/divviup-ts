@@ -5,7 +5,7 @@ export function integerToOctetStringBE(i: bigint, len: number): Uint8Array {
   const max = 256n ** BigInt(len);
   if (i >= max) {
     throw new Error(
-      `Integer ${i} too large for ${len} byte array (max ${max}).`
+      `Integer ${i} too large for ${len} byte array (max ${max}).`,
     );
   }
   const octets = new Uint8Array(len);
@@ -21,7 +21,7 @@ export function integerToOctetStringLE(i: bigint, len: number): Uint8Array {
   const max = 256n ** BigInt(len);
   if (i >= max) {
     throw new Error(
-      `Integer ${i} too large for ${len} byte array (max ${max}).`
+      `Integer ${i} too large for ${len} byte array (max ${max}).`,
     );
   }
   const octets = new Uint8Array(len);
@@ -37,7 +37,7 @@ export function octetStringToIntegerBE(octetString: Uint8Array): bigint {
   return octetString.reduceRight(
     (total, value, index) =>
       total + 256n ** BigInt(octetString.length - index - 1) * BigInt(value),
-    0n
+    0n,
   );
 }
 
@@ -45,7 +45,7 @@ export function octetStringToIntegerBE(octetString: Uint8Array): bigint {
 export function octetStringToIntegerLE(octetString: Uint8Array): bigint {
   return octetString.reduce(
     (total, value, index) => total + 256n ** BigInt(index) * BigInt(value),
-    0n
+    0n,
   );
 }
 

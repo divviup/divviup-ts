@@ -18,13 +18,13 @@ describe("DAP Report", () => {
     const ciphertext1 = new HpkeCiphertext(
       1,
       Buffer.alloc(5, 1),
-      Buffer.alloc(5, 1)
+      Buffer.alloc(5, 1),
     );
 
     const ciphertext2 = new HpkeCiphertext(
       2,
       Buffer.alloc(2, 2),
-      Buffer.alloc(2, 2)
+      Buffer.alloc(2, 2),
     );
 
     const reportMetadata = new ReportMetadata(reportId, 0);
@@ -41,7 +41,7 @@ describe("DAP Report", () => {
         ...[0, 0, 0, 17 + 11], // length of the combined ciphertext encodings
         ...ciphertext1.encode(), // tested in ciphertext.spec
         ...ciphertext2.encode(),
-      ])
+      ]),
     );
   });
 });
@@ -57,7 +57,7 @@ describe("DAP ReportMetadata", () => {
       Buffer.from([
         ...reportId.encode(), // tested in reportId.spec
         ...[0, 0, 0, 0, 0x3b, 0x9a, 0xca, 0x00],
-      ])
+      ]),
     );
   });
 });
@@ -72,7 +72,7 @@ describe("DAP PlaintextInputShare", () => {
         ...[0, 0], //array16 extensions
         ...[0, 0, 0, payload.length], // opaque32 payload length
         ...payload,
-      ])
+      ]),
     );
   });
 });
@@ -91,7 +91,7 @@ describe("DAP InputShareAad", () => {
         ...metadata.encode(),
         ...[0, 0, 0, publicShare.length], ///opaque32 public share
         ...publicShare,
-      ])
+      ]),
     );
   });
 });
@@ -100,11 +100,11 @@ describe("DAP InputShareInfo", () => {
   it("encodes as expected", () => {
     assert.deepEqual(
       new InputShareInfo(Role.Helper).encode(),
-      Buffer.from([...Buffer.from("dap-04 input share"), 1, 3])
+      Buffer.from([...Buffer.from("dap-04 input share"), 1, 3]),
     );
     assert.deepEqual(
       new InputShareInfo(Role.Leader).encode(),
-      Buffer.from([...Buffer.from("dap-04 input share"), 1, 2])
+      Buffer.from([...Buffer.from("dap-04 input share"), 1, 2]),
     );
   });
 });

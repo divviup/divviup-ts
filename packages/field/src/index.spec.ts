@@ -35,7 +35,7 @@ function testField(field: Field, name: string) {
       it("has a sum reducer", () => {
         assert.equal(
           field.sum([field.modulus, 1n, 2n, 3n], (n) => n),
-          6n
+          6n,
         );
       });
 
@@ -51,7 +51,7 @@ function testField(field: Field, name: string) {
       it("can do vector subtraction", () => {
         assert.deepEqual(
           field.vecSub([10n, 10n, 10n, 10n], [11n, 12n, 5n, 0n]),
-          [field.modulus - 1n, field.modulus - 2n, 5n, 10n]
+          [field.modulus - 1n, field.modulus - 2n, 5n, 10n],
         );
       });
     });
@@ -83,8 +83,8 @@ function testField(field: Field, name: string) {
         const roots = arr(count, (n) =>
           field.exp(
             field.exp(field.generator, field.genOrder / BigInt(count)),
-            BigInt(n)
-          )
+            BigInt(n),
+          ),
         );
 
         const poly = field.fillRandom(count);

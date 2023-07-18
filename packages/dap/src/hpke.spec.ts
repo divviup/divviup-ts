@@ -62,7 +62,7 @@ describe("HPKE", () => {
               keypair.public_key,
               info,
               plaintext,
-              aad
+              aad,
             );
 
             const roundTrip = config.base_mode_open(
@@ -70,7 +70,7 @@ describe("HPKE", () => {
               keyAndCiphertext.encapped_key,
               info,
               keyAndCiphertext.ciphertext,
-              aad
+              aad,
             );
 
             assert.equal(startMessage, decoder.decode(roundTrip));

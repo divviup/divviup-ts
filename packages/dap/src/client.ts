@@ -52,7 +52,7 @@ export interface ClientParameters {
 
 type Fetch = (
   input: RequestInfo,
-  init?: RequestInit | undefined
+  init?: RequestInit | undefined,
 ) => Promise<Response>;
 
 interface KnownVdafs {
@@ -75,7 +75,7 @@ export type VdafMeasurement<Spec extends KnownVdafSpec> = Parameters<
 >[0];
 function vdafFromSpec<Spec extends KnownVdafSpec>(
   spec: Spec,
-  shares = 2
+  shares = 2,
 ): VdafInstance<Spec> {
   switch (spec.type) {
     case "count":
@@ -100,7 +100,7 @@ function vdafFromSpec<Spec extends KnownVdafSpec>(
 */
 export class DAPClient<
   Spec extends KnownVdafSpec,
-  Measurement extends VdafMeasurement<Spec>
+  Measurement extends VdafMeasurement<Spec>,
 > {
   #vdaf: ClientVdaf<Measurement>;
   #taskId: TaskId;
@@ -163,7 +163,7 @@ export class DAPClient<
    */
   async generateReport(
     measurement: Measurement,
-    options?: ReportOptions
+    options?: ReportOptions,
   ): Promise<Report> {
     await this.fetchKeyConfiguration();
     const reportId = ReportId.random();
@@ -172,7 +172,7 @@ export class DAPClient<
       await this.#vdaf.measurementToInputShares(
         measurement,
         reportId.encode(),
-        rand
+        rand,
       );
 
     const time = roundedTime(this.#timePrecisionSeconds, options?.timestamp);
@@ -181,8 +181,8 @@ export class DAPClient<
     const ciphertexts = this.#aggregators.map((aggregator, i) =>
       aggregator.seal(
         new PlaintextInputShare(this.#extensions, inputShares[i]),
-        aad
-      )
+        aad,
+      ),
     );
 
     return new Report(metadata, publicShare, ciphertexts);
@@ -205,7 +205,7 @@ export class DAPClient<
         method: "PUT",
         headers: { "Content-Type": CONTENT_TYPES.REPORT },
         body,
-      }
+      },
     );
 
     if (!response.ok) {
@@ -233,7 +233,7 @@ export class DAPClient<
    */
   async sendMeasurement(
     measurement: Measurement,
-    options?: ReportOptions
+    options?: ReportOptions,
   ): Promise<void> {
     const report = await this.generateReport(measurement, options);
 
@@ -283,7 +283,7 @@ export class DAPClient<
         if (!response.ok) {
           throw await DAPError.fromResponse(
             response,
-            `fetchKeyConfiguration received a ${response.status} response, aborting`
+            `fetchKeyConfiguration received a ${response.status} response, aborting`,
           );
         }
 
@@ -291,16 +291,16 @@ export class DAPClient<
 
         if (blob.type !== CONTENT_TYPES.HPKE_CONFIG_LIST) {
           throw new Error(
-            `expected ${CONTENT_TYPES.HPKE_CONFIG_LIST} content-type header, aborting`
+            `expected ${CONTENT_TYPES.HPKE_CONFIG_LIST} content-type header, aborting`,
           );
         }
 
         aggregator.hpkeConfigList = HpkeConfigList.parse(
-          await blob.arrayBuffer()
+          await blob.arrayBuffer(),
         );
 
         aggregator.hpkeConfigList.selectConfig();
-      })
+      }),
     );
   }
 }
@@ -313,7 +313,7 @@ function aggregatorsFromParameters({
 }
 
 function taskIdFromDefinition(
-  taskIdDefinition: Buffer | TaskId | string
+  taskIdDefinition: Buffer | TaskId | string,
 ): TaskId {
   if (taskIdDefinition instanceof TaskId) return taskIdDefinition;
   else return new TaskId(taskIdDefinition);

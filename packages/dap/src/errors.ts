@@ -34,7 +34,7 @@ export class DAPError extends Error {
 
   static async fromResponse(
     response: Response,
-    description: string
+    description: string,
   ): Promise<DAPError | Error> {
     const contentType = response.headers.get("Content-Type");
     if (contentType && contentType.match(/^application\/problem\+json/)) {

@@ -12,7 +12,10 @@ import { DAP_VERSION, Role } from "./constants";
 import { Extension } from "./extension";
 
 export class ReportMetadata implements Encodable {
-  constructor(public reportID: ReportId, public time: number) {}
+  constructor(
+    public reportID: ReportId,
+    public time: number,
+  ) {}
 
   encode(): Buffer {
     const buffer = Buffer.alloc(24);
@@ -26,7 +29,7 @@ export class Report implements Encodable {
   constructor(
     public metadata: ReportMetadata,
     public publicShare: Buffer,
-    public encryptedInputShares: HpkeCiphertext[]
+    public encryptedInputShares: HpkeCiphertext[],
   ) {}
 
   encode(): Buffer {
@@ -39,7 +42,10 @@ export class Report implements Encodable {
 }
 
 export class PlaintextInputShare implements Encodable {
-  constructor(public extensions: Extension[], public payload: Buffer) {}
+  constructor(
+    public extensions: Extension[],
+    public payload: Buffer,
+  ) {}
 
   encode(): Buffer {
     return Buffer.concat([
@@ -53,7 +59,7 @@ export class InputShareAad implements Encodable {
   constructor(
     public taskId: TaskId,
     public metadata: ReportMetadata,
-    public publicShare: Buffer
+    public publicShare: Buffer,
   ) {}
 
   encode(): Buffer {

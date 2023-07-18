@@ -72,7 +72,7 @@ export class Parser {
       throw new Error(
         `expected to read exactly ${length} but read ${
           this.index - endIndex
-        } over`
+        } over`,
       );
     }
 
@@ -81,7 +81,7 @@ export class Parser {
 
   slice(bytes: number): Buffer {
     return this.increment(bytes, () =>
-      Buffer.from(this.buffer.subarray(this.index, this.index + bytes))
+      Buffer.from(this.buffer.subarray(this.index, this.index + bytes)),
     );
   }
 

@@ -153,12 +153,12 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
           bits = parseInt(vdaf.bits, 10);
           if (isNaN(bits)) {
             throw new Error(
-              "VDAF definition's `bits` parameter is not a valid base 10 integer"
+              "VDAF definition's `bits` parameter is not a valid base 10 integer",
             );
           }
         } else {
           throw new Error(
-            "VDAF definition's `bits` parameter is not a number or string"
+            "VDAF definition's `bits` parameter is not a number or string",
           );
         }
         if (typeof body.measurement !== "string") {
@@ -179,13 +179,13 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
       }
       if (!Array.isArray(vdaf.buckets)) {
         throw new Error(
-          "VDAF definition's `buckets` parameter is not an array"
+          "VDAF definition's `buckets` parameter is not an array",
         );
       }
       for (const bucketBoundary of vdaf.buckets) {
         if (typeof bucketBoundary !== "string") {
           throw new Error(
-            "VDAF defeinition's `buckets` parameter is not an array of strings"
+            "VDAF defeinition's `buckets` parameter is not an array of strings",
           );
         }
       }

@@ -7,7 +7,7 @@ export abstract class Prg {
     this: PrgConstructor,
     seed: Uint8Array,
     dst: Uint8Array,
-    binder: Uint8Array
+    binder: Uint8Array,
   ): Promise<Uint8Array> {
     return new this(seed, dst, binder).next(this.seedSize);
   }
@@ -31,7 +31,7 @@ export abstract class Prg {
     seed: Uint8Array,
     dst: Uint8Array,
     binder: Uint8Array,
-    length: number
+    length: number,
   ): Promise<bigint[]> {
     return new this(seed, dst, binder).nextVec(field, length);
   }
@@ -43,13 +43,13 @@ export interface PrgConstructor {
   deriveSeed(
     seed: Uint8Array,
     dst: Uint8Array,
-    binder: Uint8Array
+    binder: Uint8Array,
   ): Promise<Uint8Array>;
   expandIntoVec(
     field: Field,
     seed: Uint8Array,
     dst: Uint8Array,
     binder: Uint8Array,
-    length: number
+    length: number,
   ): Promise<bigint[]>;
 }

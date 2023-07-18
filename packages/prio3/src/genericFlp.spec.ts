@@ -32,7 +32,7 @@ function testCircuitGadgets(circuit: GenericCircuit) {
 function testCircuit<M, AR>(
   circuit: Circuit<M, AR>,
   input: bigint[],
-  expected: boolean
+  expected: boolean,
 ) {
   assert.equal(input.length, circuit.inputLen);
   assert.equal(circuit.truncate(input).length, circuit.outputLen);

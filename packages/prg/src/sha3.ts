@@ -11,7 +11,7 @@ export const PrgSha3: PrgConstructor = class PrgSha3 extends Prg {
     super();
     if (seed.length !== PrgSha3.seedSize) {
       throw new Error(
-        `PrgSha3 seed length must be exactly ${PrgSha3.seedSize}`
+        `PrgSha3 seed length must be exactly ${PrgSha3.seedSize}`,
       );
     }
     this.#sha = new jsSHA("CSHAKE128", "UINT8ARRAY", {

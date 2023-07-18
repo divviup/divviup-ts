@@ -57,8 +57,8 @@ export class Proof<M, AR> extends Circuit<M, AR> {
         new ProofGadget(
           proveRand.slice(proveRandIndex, (proveRandIndex += gadget.arity)),
           gadget,
-          this.gadgetCalls[index]
-        )
+          this.gadgetCalls[index],
+        ),
     );
 
     if (proveRand.length !== proveRandIndex) {

@@ -156,7 +156,7 @@ export class PrimeField {
       : this.vectorElementsOp(
           this.mul.bind(this),
           a,
-          this.invVectorElements(b)
+          this.invVectorElements(b),
         );
   }
 
@@ -197,7 +197,7 @@ export class PrimeField {
   private vectorElementsOp(
     op: ArithmeticOperation,
     a: Vector,
-    b: Vector
+    b: Vector,
   ): Vector {
     const aValues = a.toValues(),
       bValues = b.toValues();
@@ -211,7 +211,7 @@ export class PrimeField {
   private vectorScalarOp(
     op: ArithmeticOperation,
     a: Vector,
-    b: bigint
+    b: bigint,
   ): Vector {
     const aValues = a.toValues();
     const rValues = new Array<bigint>(a.length);
@@ -330,7 +330,7 @@ export class PrimeField {
         const x2 = x * x;
         const x3 = x2 * x;
         return this.mod(
-          pValues[0] + pValues[1] * x + pValues[2] * x2 + pValues[3] * x3
+          pValues[0] + pValues[1] * x + pValues[2] * x2 + pValues[3] * x3,
         );
       }
       case 5: {
@@ -341,7 +341,7 @@ export class PrimeField {
             pValues[1] * x +
             pValues[2] * x2 +
             pValues[3] * x3 +
-            pValues[4] * x3 * x
+            pValues[4] * x3 * x,
         );
       }
       default: {
@@ -364,7 +364,7 @@ export class PrimeField {
     }
     if (p.length > rootsOfUnity.length) {
       throw new Error(
-        "Vectorial degree must be smaller than or equal to the number of roots of unity"
+        "Vectorial degree must be smaller than or equal to the number of roots of unity",
       );
     }
 
@@ -389,7 +389,7 @@ export class PrimeField {
   interpolate(xs: Vector, ys: Vector): Vector {
     if (xs.length !== ys.length) {
       throw new Error(
-        "Number of x coordinates must be the same as number of y coordinates"
+        "Number of x coordinates must be the same as number of y coordinates",
       );
     }
 
@@ -407,7 +407,7 @@ export class PrimeField {
       denominators[i] = this.evalPolyAt(numerators[i], xsValues[i]);
     }
     const invDenValues = this.invVectorElements(
-      this.newVectorFrom(denominators)
+      this.newVectorFrom(denominators),
     ).values;
 
     const yValues = ys.toValues();
@@ -441,7 +441,7 @@ export class PrimeField {
     if (ys instanceof Vector) {
       if (rootsOfUnity.length !== ys.length) {
         throw new Error(
-          "Number of roots of unity must be the same as number of y coordinates"
+          "Number of roots of unity must be the same as number of y coordinates",
         );
       }
       const yValues = ys.toValues();
@@ -463,7 +463,7 @@ function fastFT(
   roots: readonly bigint[],
   depth: number,
   offset: number,
-  F: PrimeField
+  F: PrimeField,
 ): bigint[] {
   const step = 1 << depth;
   const resultLength = roots.length / step;

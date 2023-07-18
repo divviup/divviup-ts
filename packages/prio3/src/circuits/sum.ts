@@ -30,8 +30,8 @@ export class Sum extends Circuit<number | bigint, bigint> {
     return field.sum(input, (value, index) =>
       field.mul(
         field.exp(jointRandZero, BigInt(index + 1)),
-        poly.eval(field, [value])
-      )
+        poly.eval(field, [value]),
+      ),
     );
   }
 
@@ -43,7 +43,7 @@ export class Sum extends Circuit<number | bigint, bigint> {
       throw new Error(
         `measurement ${measurement} was not an integer in [0, ${
           2 ** this.inputLen
-        })`
+        })`,
       );
     }
 
@@ -56,13 +56,13 @@ export class Sum extends Circuit<number | bigint, bigint> {
       throw new Error(
         `measurement ${bigintMeasurement} was not an integer in [0, ${
           2 ** this.inputLen
-        })`
+        })`,
       );
     }
 
     return arr(
       this.inputLen,
-      (index) => (bigintMeasurement >> BigInt(index)) & 1n
+      (index) => (bigintMeasurement >> BigInt(index)) & 1n,
     );
   }
 
@@ -70,7 +70,7 @@ export class Sum extends Circuit<number | bigint, bigint> {
     const field = this.field;
     return [
       field.sum(input, (value, index) =>
-        field.mul(field.exp(2n, BigInt(index)), value)
+        field.mul(field.exp(2n, BigInt(index)), value),
       ),
     ];
   }

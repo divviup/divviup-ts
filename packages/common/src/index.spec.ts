@@ -24,22 +24,22 @@ describe("common", () => {
     it("has some expected values", () => {
       assert.deepEqual(
         [...integerToOctetStringLE(BigInt(256), 5)],
-        [0, 1, 0, 0, 0]
+        [0, 1, 0, 0, 0],
       );
 
       assert.deepEqual(
         [...integerToOctetStringLE(BigInt(255), 5)],
-        [255, 0, 0, 0, 0]
+        [255, 0, 0, 0, 0],
       );
 
       assert.deepEqual(
         [
           ...integerToOctetStringLE(
             BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1),
-            10
+            10,
           ),
         ],
-        [0, 0, 0, 0, 0, 0, 32, 0, 0, 0]
+        [0, 0, 0, 0, 0, 0, 32, 0, 0, 0],
       );
     });
 
@@ -49,11 +49,11 @@ describe("common", () => {
 
       for (const octetString of arr(
         numbers,
-        () => new Uint8Array(arr(bytes, () => Math.floor(Math.random() * 255)))
+        () => new Uint8Array(arr(bytes, () => Math.floor(Math.random() * 255))),
       )) {
         assert.deepEqual(
           octetString,
-          integerToOctetStringLE(octetStringToIntegerLE(octetString), bytes)
+          integerToOctetStringLE(octetStringToIntegerLE(octetString), bytes),
         );
       }
     });
@@ -63,21 +63,21 @@ describe("common", () => {
     it("has some expected values", () => {
       assert.equal(
         BigInt(256),
-        octetStringToIntegerLE(new Uint8Array([0, 1, 0]))
+        octetStringToIntegerLE(new Uint8Array([0, 1, 0])),
       );
       assert.equal(
         BigInt(255),
-        octetStringToIntegerLE(new Uint8Array([255, 0, 0, 0]))
+        octetStringToIntegerLE(new Uint8Array([255, 0, 0, 0])),
       );
 
       assert.equal(
         BigInt(256) ** BigInt(3),
-        octetStringToIntegerLE(new Uint8Array([0, 0, 0, 1, 0]))
+        octetStringToIntegerLE(new Uint8Array([0, 0, 0, 1, 0])),
       );
 
       assert.equal(
         BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1),
-        octetStringToIntegerLE(new Uint8Array([0, 0, 0, 0, 0, 0, 32, 0, 0, 0]))
+        octetStringToIntegerLE(new Uint8Array([0, 0, 0, 0, 0, 0, 32, 0, 0, 0])),
       );
     });
   });
@@ -92,22 +92,22 @@ describe("common", () => {
     it("has some expected values", () => {
       assert.deepEqual(
         [...integerToOctetStringBE(BigInt(256), 5)],
-        [0, 0, 0, 1, 0]
+        [0, 0, 0, 1, 0],
       );
 
       assert.deepEqual(
         [...integerToOctetStringBE(BigInt(255), 5)],
-        [0, 0, 0, 0, 255]
+        [0, 0, 0, 0, 255],
       );
 
       assert.deepEqual(
         [
           ...integerToOctetStringBE(
             BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1),
-            10
+            10,
           ),
         ],
-        [0, 0, 0, 32, 0, 0, 0, 0, 0, 0]
+        [0, 0, 0, 32, 0, 0, 0, 0, 0, 0],
       );
     });
 
@@ -117,11 +117,11 @@ describe("common", () => {
 
       for (const octetString of arr(
         numbers,
-        () => new Uint8Array(arr(bytes, () => Math.floor(Math.random() * 255)))
+        () => new Uint8Array(arr(bytes, () => Math.floor(Math.random() * 255))),
       )) {
         assert.deepEqual(
           octetString,
-          integerToOctetStringBE(octetStringToIntegerBE(octetString), bytes)
+          integerToOctetStringBE(octetStringToIntegerBE(octetString), bytes),
         );
       }
     });
@@ -131,21 +131,21 @@ describe("common", () => {
     it("has some expected values", () => {
       assert.equal(
         BigInt(256),
-        octetStringToIntegerBE(new Uint8Array([0, 1, 0]))
+        octetStringToIntegerBE(new Uint8Array([0, 1, 0])),
       );
       assert.equal(
         BigInt(255),
-        octetStringToIntegerBE(new Uint8Array([0, 0, 0, 255]))
+        octetStringToIntegerBE(new Uint8Array([0, 0, 0, 255])),
       );
 
       assert.equal(
         BigInt(256) ** BigInt(3),
-        octetStringToIntegerBE(new Uint8Array([0, 1, 0, 0, 0]))
+        octetStringToIntegerBE(new Uint8Array([0, 1, 0, 0, 0])),
       );
 
       assert.equal(
         BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1),
-        octetStringToIntegerBE(new Uint8Array([0, 0, 0, 32, 0, 0, 0, 0, 0, 0]))
+        octetStringToIntegerBE(new Uint8Array([0, 0, 0, 32, 0, 0, 0, 0, 0, 0])),
       );
     });
   });
