@@ -187,7 +187,7 @@ for pooling. This value may be modified.</p>
 <h4>Since</h4><p>v0.11.3</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:617</li></ul></aside></section></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:620</li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="alloc" class="tsd-anchor"></a>
@@ -220,7 +220,7 @@ data that might not have been allocated for <code>Buffer</code>s.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div></li>
 <li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-parameter">fill</span>: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><a href="../variables/_divviup_vdaf.unknown.Buffer-1.html" class="tsd-signature-type tsd-kind-variable">Buffer</a></h5>
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-parameter">fill</span>: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type ">Uint8Array</span></h5>
 <div class="tsd-comment tsd-typography"><p>A value to pre-fill the new <code>Buffer</code> with.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div></li>
@@ -234,7 +234,7 @@ data that might not have been allocated for <code>Buffer</code>s.</p>
 <h4>Since</h4><p>v5.10.0</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:529</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:533</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="allocUnsafe" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>alloc<wbr/>Unsafe</span><a href="#allocUnsafe" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -247,9 +247,8 @@ data that might not have been allocated for <code>Buffer</code>s.</p>
 </code><button>Copy</button></pre>
 <p>A <code>TypeError</code> will be thrown if <code>size</code> is not a number.</p>
 <p>The <code>Buffer</code> module pre-allocates an internal <code>Buffer</code> instance of
-size <code>Buffer.poolSize</code> that is used as a pool for the fast allocation of new<code>Buffer</code> instances created using <code>Buffer.allocUnsafe()</code>,<code>Buffer.from(array)</code>, <code>Buffer.concat()</code>, and the
-deprecated<code>new Buffer(size)</code> constructor only when <code>size</code> is less than or equal
-to <code>Buffer.poolSize &gt;&gt; 1</code> (floor of <code>Buffer.poolSize</code> divided by two).</p>
+size <code>Buffer.poolSize</code> that is used as a pool for the fast allocation of new<code>Buffer</code> instances created using <code>Buffer.allocUnsafe()</code>, <code>Buffer.from(array)</code>,
+and <code>Buffer.concat()</code> only when <code>size</code> is less than or equal to<code>Buffer.poolSize &gt;&gt; 1</code> (floor of <code>Buffer.poolSize</code> divided by two).</p>
 <p>Use of this pre-allocated internal memory pool is a key difference between
 calling <code>Buffer.alloc(size, fill)</code> vs. <code>Buffer.allocUnsafe(size).fill(fill)</code>.
 Specifically, <code>Buffer.alloc(size, fill)</code> will <em>never</em> use the internal <code>Buffer</code>pool, while <code>Buffer.allocUnsafe(size).fill(fill)</code><em>will</em> use the internal<code>Buffer</code> pool if <code>size</code> is less
@@ -270,7 +269,7 @@ additional performance that <code>Buffer.allocUnsafe()</code> provides.</p>
 <h4>Since</h4><p>v5.10.0</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:566</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:569</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="allocUnsafeSlow" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>alloc<wbr/>Unsafe<wbr/>Slow</span><a href="#allocUnsafeSlow" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -308,7 +307,7 @@ then copying out the relevant bits.</p>
 <h4>Since</h4><p>v5.12.0</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:611</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:614</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="byteLength" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>byte<wbr/>Length</span><a href="#byteLength" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -347,7 +346,7 @@ er.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuf
 <h4>Since</h4><p>v0.1.90</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:404</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:408</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="compare" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>compare</span><a href="#compare" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -370,7 +369,7 @@ er.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuf
 <h4>Since</h4><p>v0.11.13</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:481</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:485</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="concat" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>concat</span><a href="#concat" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -405,7 +404,7 @@ truncated to <code>totalLength</code>.</p>
 <h4>Since</h4><p>v0.7.11</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:446</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:450</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="copyBytesFrom" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>copy<wbr/>Bytes<wbr/>From</span><a href="#copyBytesFrom" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -432,7 +431,7 @@ truncated to <code>totalLength</code>.</p>
 <h4>Since</h4><p>v19.8.0</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:463</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:467</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="from" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>from</span><a href="#from" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -442,6 +441,9 @@ truncated to <code>totalLength</code>.</p>
 Array entries outside that range will be truncated to fit into it.</p>
 <pre><code class="language-js"><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-2">Buffer</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-3">&#39;node:buffer&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-8">// Creates a new Buffer containing the UTF-8 bytes of the string &#39;buffer&#39;.</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">buf</span><span class="hl-1"> = </span><span class="hl-2">Buffer</span><span class="hl-1">.</span><span class="hl-6">from</span><span class="hl-1">([</span><span class="hl-7">0x62</span><span class="hl-1">, </span><span class="hl-7">0x75</span><span class="hl-1">, </span><span class="hl-7">0x66</span><span class="hl-1">, </span><span class="hl-7">0x66</span><span class="hl-1">, </span><span class="hl-7">0x65</span><span class="hl-1">, </span><span class="hl-7">0x72</span><span class="hl-1">]);</span>
 </code><button>Copy</button></pre>
+<p>If <code>array</code> is an <code>Array</code>-like object (that is, one with a <code>length</code> property of
+type <code>number</code>), it is treated as if it is an array, unless it is a <code>Buffer</code> or
+a <code>Uint8Array</code>. This means all other <code>TypedArray</code> variants get treated as an<code>Array</code>. To create a <code>Buffer</code> from the bytes backing a <code>TypedArray</code>, use <code>Buffer.copyBytesFrom()</code>.</p>
 <p>A <code>TypeError</code> will be thrown if <code>array</code> is not an <code>Array</code> or another type
 appropriate for <code>Buffer.from()</code> variants.</p>
 <p><code>Buffer.from(array)</code> and <code>Buffer.from(string)</code> may also use the internal<code>Buffer</code> pool like <code>Buffer.allocUnsafe()</code> does.</p>
@@ -460,7 +462,7 @@ appropriate for <code>Buffer.from()</code> variants.</p>
 <h4>Since</h4><p>v5.10.0</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:308</li></ul></aside></li>
+<li>Defined in node_modules/@types/node/buffer.d.ts:312</li></ul></aside></li>
 <li class="tsd-signature tsd-anchor-link" id="from.from-2"><span class="tsd-kind-call-signature">from</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">data</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../variables/_divviup_vdaf.unknown.Buffer-1.html" class="tsd-signature-type tsd-kind-variable">Buffer</a><a href="#from.from-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Creates a new Buffer using the passed {data}</p>
@@ -476,7 +478,7 @@ appropriate for <code>Buffer.from()</code> variants.</p>
 <h4 class="tsd-returns-title">Returns <a href="../variables/_divviup_vdaf.unknown.Buffer-1.html" class="tsd-signature-type tsd-kind-variable">Buffer</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:317</li></ul></aside></li>
+<li>Defined in node_modules/@types/node/buffer.d.ts:321</li></ul></aside></li>
 <li class="tsd-signature tsd-anchor-link" id="from.from-3"><span class="tsd-kind-call-signature">from</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">data</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../variables/_divviup_vdaf.unknown.Buffer-1.html" class="tsd-signature-type tsd-kind-variable">Buffer</a><a href="#from.from-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-parameters">
@@ -486,7 +488,7 @@ appropriate for <code>Buffer.from()</code> variants.</p>
 <h5><span class="tsd-kind-parameter">data</span>: <a href="../types/_divviup_vdaf.unknown.WithImplicitCoercion.html" class="tsd-signature-type tsd-kind-type-alias">WithImplicitCoercion</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type ">Uint8Array</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">readonly </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="../variables/_divviup_vdaf.unknown.Buffer-1.html" class="tsd-signature-type tsd-kind-variable">Buffer</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:318</li></ul></aside></li>
+<li>Defined in node_modules/@types/node/buffer.d.ts:322</li></ul></aside></li>
 <li class="tsd-signature tsd-anchor-link" id="from.from-4"><span class="tsd-kind-call-signature">from</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">str</span>, <span class="tsd-kind-parameter">encoding</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../variables/_divviup_vdaf.unknown.Buffer-1.html" class="tsd-signature-type tsd-kind-variable">Buffer</a><a href="#from.from-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Creates a new Buffer containing the given JavaScript string {str}.
@@ -503,7 +505,7 @@ If not provided, {encoding} defaults to &#39;utf8&#39;.</p>
 <h4 class="tsd-returns-title">Returns <a href="../variables/_divviup_vdaf.unknown.Buffer-1.html" class="tsd-signature-type tsd-kind-variable">Buffer</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:324</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:328</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="isBuffer" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>is<wbr/>Buffer</span><a href="#isBuffer" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -523,7 +525,7 @@ If not provided, {encoding} defaults to &#39;utf8&#39;.</p>
 <h4>Since</h4><p>v0.1.101</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:351</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:355</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="isEncoding" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>is<wbr/>Encoding</span><a href="#isEncoding" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -547,7 +549,7 @@ or <code>false</code> otherwise.</p>
 <h4>Since</h4><p>v0.9.1</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:374</li></ul></aside></li></ul></section>
+<li>Defined in node_modules/@types/node/buffer.d.ts:378</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-external"><a id="of" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>of</span><a href="#of" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-external">
@@ -563,7 +565,7 @@ or <code>false</code> otherwise.</p>
 <h4 class="tsd-returns-title">Returns <a href="../variables/_divviup_vdaf.unknown.Buffer-1.html" class="tsd-signature-type tsd-kind-variable">Buffer</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@types/node/buffer.d.ts:336</li></ul></aside></li></ul></section></section></div>
+<li>Defined in node_modules/@types/node/buffer.d.ts:340</li></ul></aside></li></ul></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
