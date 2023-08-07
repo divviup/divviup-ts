@@ -21,7 +21,7 @@
   "dependencies": {
     "@divviup/common": "^0.1.0",
     "@divviup/field": "^0.1.0",
-    "jssha": "^3.3.0",
+    "jssha": "^3.3.1",
     "one-webcrypto": "^1.0.3"
   }
 }
