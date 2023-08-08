@@ -1,0 +1,31 @@
+{
+  "name": "divviup",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "source": "src/index.ts",
+  "module": "dist/module.js",
+  "browser": "dist/browser.js",
+  "type": "module",
+  "license": "MPL-2.0",
+  "scripts": {
+    "clean": "rm -rf dist/*",
+    "build:clean": "npm run clean && npm run build",
+    "build": "npm run build:web && npm run build:node",
+    "build:web": "esbuild browser=src/index.ts --bundle --loader:.wasm=binary --format=esm --outdir=dist --sourcemap --minify",
+    "build:node": "tsc -p ./tsconfig.json",
+    "docs": "typedoc src",
+    "test": "mocha \"src/**/*.spec.ts\"",
+    "lint": "eslint src --ext .ts && prettier -c src",
+    "format": "prettier -w src",
+    "check": "tsc --noEmit -p ./tsconfig.json",
+    "test:coverage": "c8 npm test"
+  },
+  "dependencies": {
+    "@divviup/dap": "^0.1.0"
+  },
+  "devDependencies": {
+    "hpke": "^0.5.0"
+  }
+}
