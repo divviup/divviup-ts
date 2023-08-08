@@ -34,7 +34,7 @@ export class DivviupClient {
       try {
         this.#taskUrl = new URL(urlOrTaskId);
       } catch (e) {
-        this.#taskUrl = new URL(`${this.#baseUrl}/${urlOrTaskId}`);
+        this.#taskUrl = new URL(`${this.#baseUrl.toString()}/${urlOrTaskId}`);
       }
     } else {
       this.#taskUrl = urlOrTaskId;
@@ -43,10 +43,10 @@ export class DivviupClient {
 
   private async taskClient(): Promise<GenericDAPClient> {
     if (this.#dapClient) return this.#dapClient;
-    let response = await this.#fetch(this.#taskUrl.toString());
-    let task = (await response.json()) as PublicTask;
-    let { leader, helper, vdaf, id, time_precision_seconds } = task;
-    let client = new DAPClient({
+    const response = await this.#fetch(this.#taskUrl.toString());
+    const task = (await response.json()) as PublicTask;
+    const { leader, helper, vdaf, id, time_precision_seconds } = task;
+    const client = new DAPClient({
       taskId: id,
       leader,
       helper,
@@ -72,7 +72,7 @@ export async function sendMeasurement(
   measurement: AnyMeasurement,
   fetch?: Fetch,
 ) {
-  let client = new DivviupClient(urlOrTaskId);
+  const client = new DivviupClient(urlOrTaskId);
   if (fetch) client.fetch = fetch;
   return client.sendMeasurement(measurement);
 }

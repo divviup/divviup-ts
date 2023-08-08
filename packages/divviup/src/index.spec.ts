@@ -6,9 +6,9 @@ import * as hpke from "hpke";
 
 describe("DivviupClient", () => {
   it("fetches task from an id", async () => {
-    let taskId = TaskId.random().toString();
-    let client = new DivviupClient(taskId);
-    let fetch = mockFetch({
+    const taskId = TaskId.random().toString();
+    const client = new DivviupClient(taskId);
+    const fetch = mockFetch({
       ...dapMocks(taskId),
       [`https://api.staging.divviup.org/tasks/${taskId}`]: [
         {
@@ -30,11 +30,11 @@ describe("DivviupClient", () => {
   });
 
   it("fetches task from a task url", async () => {
-    let taskId = TaskId.random().toString();
-    let client = new DivviupClient(
+    const taskId = TaskId.random().toString();
+    const client = new DivviupClient(
       `https://production.divvi.up/v3/different-url/${taskId}.json`,
     );
-    let fetch = mockFetch({
+    const fetch = mockFetch({
       ...dapMocks(taskId),
       [`https://production.divvi.up/v3/different-url/${taskId}.json`]: [
         {
@@ -58,8 +58,8 @@ describe("DivviupClient", () => {
 
 describe("sendMeasurement", () => {
   it("fetches task from an id", async () => {
-    let taskId = TaskId.random().toString();
-    let fetch = mockFetch({
+    const taskId = TaskId.random().toString();
+    const fetch = mockFetch({
       ...dapMocks(taskId),
       [`https://api.staging.divviup.org/tasks/${taskId}`]: [
         {
@@ -142,7 +142,7 @@ function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
 
   fakeFetch.calls = [] as [RequestInfo, RequestInit | undefined][];
   fakeFetch.callStrings = function () {
-    return this.calls.map((x) => `${x[1]?.method || "GET"} ${x[0]}`);
+    return this.calls.map((x) => `${x[1]?.method || "GET"} ${x[0].toString()}`);
   };
   return fakeFetch;
 }
