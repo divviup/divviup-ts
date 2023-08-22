@@ -26,12 +26,20 @@ function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
     init?: RequestInit | undefined,
   ): Promise<Response> {
     fakeFetch.calls.push([input, init]);
-    const responseSpec = mocks[input.toString()];
+
+    let requestUrl;
+    if (input instanceof Request) {
+      requestUrl = input.url;
+    } else {
+      requestUrl = input; // string
+    }
+
+    const responseSpec = mocks[requestUrl];
     const response = responseSpec?.shift();
 
     if (!response) {
       throw new Error(
-        `received unhandled request.\n\nurl: ${input.toString()}.\n\nmocks: ${inspect(
+        `received unhandled request.\n\nurl: ${requestUrl}.\n\nmocks: ${inspect(
           mocks,
         ).slice(1, -1)}`,
       );
