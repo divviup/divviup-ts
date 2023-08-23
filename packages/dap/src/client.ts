@@ -178,10 +178,12 @@ export class DAPClient<
     const time = roundedTime(this.#timePrecisionSeconds, options?.timestamp);
     const metadata = new ReportMetadata(reportId, time);
     const aad = new InputShareAad(this.taskId, metadata, publicShare);
-    const ciphertexts = this.#aggregators.map((aggregator, i) =>
-      aggregator.seal(
-        new PlaintextInputShare(this.#extensions, inputShares[i]),
-        aad,
+    const ciphertexts = await Promise.all(
+      this.#aggregators.map((aggregator, i) =>
+        aggregator.seal(
+          new PlaintextInputShare(this.#extensions, inputShares[i]),
+          aad,
+        ),
       ),
     );
 

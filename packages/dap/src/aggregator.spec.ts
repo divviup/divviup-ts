@@ -2,7 +2,6 @@ import { Aggregator } from "./aggregator";
 import assert from "assert";
 import { Role } from "./constants";
 import { HpkeConfig, HpkeConfigList } from "./hpkeConfig";
-import { Aead, Kdf, Kem, Keypair } from "hpke";
 import {
   InputShareAad,
   InputShareInfo,
@@ -11,6 +10,8 @@ import {
 } from "./report";
 import { TaskId } from "./taskId";
 import { ReportId } from "./reportId";
+import { KdfId, AeadId } from "hpke-js";
+import { DhkemP256HkdfSha256 } from "@hpke/core";
 
 describe("DAP Aggregator", () => {
   it("should append a trailing slash on construction from a string", () => {
@@ -45,16 +46,18 @@ describe("DAP Aggregator", () => {
     );
   });
 
-  it("performs a hpke seal with the first valid hpke config", () => {
+  it("performs a hpke seal with the first valid hpke config", async () => {
     const aggregator = Aggregator.leader("https://example.com");
-    const kem = Kem.DhP256HkdfSha256;
-    const { public_key, private_key } = new Keypair(kem);
+    const kem = new DhkemP256HkdfSha256();
+    const { publicKey, privateKey } = await kem.generateKeyPair();
+    const key = await kem.serializePublicKey(publicKey);
+
     const hpkeConfig = new HpkeConfig(
       1,
-      kem,
-      Kdf.Sha256,
-      Aead.AesGcm128,
-      Buffer.from(public_key),
+      kem.id,
+      KdfId.HkdfSha256,
+      AeadId.Aes128Gcm,
+      Buffer.from(key),
     );
 
     aggregator.hpkeConfigList = new HpkeConfigList([hpkeConfig]);
@@ -64,22 +67,25 @@ describe("DAP Aggregator", () => {
       new ReportMetadata(ReportId.random(), Date.now() / 1000),
       Buffer.alloc(0),
     );
-    const cipherText = aggregator.seal(inputShare, aad);
+    const cipherText = await aggregator.seal(inputShare, aad);
 
-    const open = hpkeConfig
-      .config()
-      .base_mode_open(
-        private_key,
-        cipherText.encapsulatedContext,
-        new InputShareInfo(Role.Leader).encode(),
-        cipherText.payload,
-        aad.encode(),
-      );
+    const open = await hpkeConfig.cipherSuite().open(
+      {
+        recipientKey: privateKey,
+        enc: cipherText.encapsulatedContext,
+        info: new InputShareInfo(Role.Leader).encode(),
+      },
+      cipherText.payload,
+      aad.encode(),
+    );
 
-    assert.deepEqual(Buffer.from(open), inputShare.encode());
+    assert.deepEqual(
+      Buffer.from(open).toString("hex"),
+      inputShare.encode().toString("hex"),
+    );
   });
 
-  it("throws when hpke seal is called without a hpke config list", () => {
+  it("throws when hpke seal is called without a hpke config list", async () => {
     const aggregator = Aggregator.leader("https://example.com");
     const inputShare = new PlaintextInputShare([], Buffer.from("payload"));
     const aad = new InputShareAad(
@@ -88,6 +94,6 @@ describe("DAP Aggregator", () => {
       Buffer.alloc(0),
     );
 
-    assert.throws(() => aggregator.seal(inputShare, aad));
+    await assert.rejects(aggregator.seal(inputShare, aad));
   });
 });

@@ -1,13 +1,14 @@
 import assert from "assert";
 import { DAPClient, KnownVdafSpec, VdafMeasurement } from "./client";
 import { HpkeConfig, HpkeConfigList } from "./hpkeConfig";
-import * as hpke from "hpke";
 import { TaskId } from "./taskId";
 import { DAPError } from "./errors";
 import { zip } from "@divviup/common";
 import { encodeOpaque32 } from "./encoding";
 import { Prio3Count, Prio3Histogram, Prio3Sum } from "@divviup/prio3";
 import { inspect } from "node:util";
+import { KdfId, AeadId, CipherSuite } from "hpke-js";
+import { DhkemP256HkdfSha256 } from "@hpke/core";
 
 interface Fetch {
   (input: RequestInfo, init?: RequestInit | undefined): Promise<Response>;
@@ -57,14 +58,18 @@ function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
   return fakeFetch;
 }
 
-function buildHpkeConfigList(): HpkeConfigList {
+async function buildHpkeConfigList(): Promise<HpkeConfigList> {
+  const kem = new DhkemP256HkdfSha256();
+  const { publicKey } = await kem.generateKeyPair();
+  const key = await kem.serializePublicKey(publicKey);
+
   return new HpkeConfigList([
     new HpkeConfig(
       Math.floor(Math.random() * 255),
-      hpke.Kem.DhP256HkdfSha256,
-      hpke.Kdf.Sha256,
-      hpke.Aead.AesGcm128,
-      Buffer.from(new hpke.Keypair(hpke.Kem.DhP256HkdfSha256).public_key),
+      kem.id,
+      KdfId.HkdfSha256,
+      AeadId.Aes128Gcm,
+      Buffer.from(key),
     ),
   ]);
 }
@@ -87,12 +92,14 @@ function buildParams(): {
   };
 }
 
-function withHpkeConfigs<
+async function withHpkeConfigs<
   Spec extends KnownVdafSpec,
   Measurement extends VdafMeasurement<Spec>,
->(dapClient: DAPClient<Spec, Measurement>): DAPClient<Spec, Measurement> {
+>(
+  dapClient: DAPClient<Spec, Measurement>,
+): Promise<DAPClient<Spec, Measurement>> {
   for (const aggregator of dapClient.aggregators) {
-    aggregator.hpkeConfigList = buildHpkeConfigList();
+    aggregator.hpkeConfigList = await buildHpkeConfigList();
   }
   return dapClient;
 }
@@ -180,17 +187,17 @@ describe("DAPClient", () => {
     it("can succeed", async () => {
       const params = buildParams();
       const [hpkeConfig1, hpkeConfig2] = [
-        buildHpkeConfigList(),
-        buildHpkeConfigList(),
+        await buildHpkeConfigList(),
+        await buildHpkeConfigList(),
       ];
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
         [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(hpkeConfig1),
+          await hpkeConfigResponse(hpkeConfig1),
         ],
 
         [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(hpkeConfig2),
+          await hpkeConfigResponse(hpkeConfig2),
         ],
       });
 
@@ -230,7 +237,7 @@ describe("DAPClient", () => {
     });
 
     it("does not fetch key configuration if all of the aggregators already have key configs", async () => {
-      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const client = await withHpkeConfigs(new DAPClient(buildParams()));
       const fetch = mockFetch({});
       client.fetch = fetch;
       await client.fetchKeyConfiguration();
@@ -244,13 +251,13 @@ describe("DAPClient", () => {
         [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
           {
             contentType: "application/text",
-            body: buildHpkeConfigList().encode(),
+            body: (await buildHpkeConfigList()).encode(),
           },
         ],
         [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
           {
             contentType: "application/text",
-            body: buildHpkeConfigList().encode(),
+            body: (await buildHpkeConfigList()).encode(),
           },
         ],
       });
@@ -263,25 +270,26 @@ describe("DAPClient", () => {
 
   describe("generating reports", () => {
     it("can succeed", async () => {
-      const privateKeys = [] as [Buffer, number][];
+      const privateKeys = [] as [CryptoKey, number][];
       const client = new DAPClient({
         ...buildParams(),
         taskId: new TaskId(Buffer.alloc(32, 1)),
       });
-      const kem = hpke.Kem.DhP256HkdfSha256;
-      const kdf = hpke.Kdf.Sha256;
-      const aead = hpke.Aead.AesGcm128;
+      const kem = new DhkemP256HkdfSha256();
+      const kdf = KdfId.HkdfSha256;
+      const aead = AeadId.Aes128Gcm;
 
       for (const aggregator of client.aggregators) {
-        const { private_key, public_key } = new hpke.Keypair(kem);
-        privateKeys.push([Buffer.from(private_key), aggregator.role]);
+        const { publicKey, privateKey } = await kem.generateKeyPair();
+        const key = await kem.serializePublicKey(publicKey);
+        privateKeys.push([privateKey, aggregator.role]);
         aggregator.hpkeConfigList = new HpkeConfigList([
           new HpkeConfig(
             Math.floor(Math.random() * 255),
-            kem,
+            kem.id,
             kdf,
             aead,
-            Buffer.from(public_key),
+            Buffer.from(key),
           ),
         ]);
       }
@@ -313,11 +321,9 @@ describe("DAPClient", () => {
         // with these decrypted shares in order to assert that the
         // client does in fact generate valid input shares, but for
         // now we just assert that the hpke layer is as expected
-        assert.doesNotThrow(() =>
-          hpke.Config.try_from_ids(aead, kdf, kem).base_mode_open(
-            privateKey,
-            share.encapsulatedContext,
-            info,
+        await assert.doesNotReject(
+          new CipherSuite({ aead, kdf, kem }).open(
+            { recipientKey: privateKey, enc: share.encapsulatedContext, info },
             share.payload,
             aad,
           ),
@@ -326,7 +332,7 @@ describe("DAPClient", () => {
     });
 
     it("accepts an optional timestamp", async () => {
-      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const client = await withHpkeConfigs(new DAPClient(buildParams()));
       const fetch = mockFetch({});
       client.fetch = fetch;
       const timestamp = new Date(0);
@@ -337,7 +343,7 @@ describe("DAPClient", () => {
     });
 
     it("fails if the measurement is not valid", async () => {
-      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const client = await withHpkeConfigs(new DAPClient(buildParams()));
       await assert.rejects(
         client.generateReport(-25.25),
         /measurement -25.25 was not an integer/, // this is specific to the Sum circuit as configured
@@ -345,7 +351,7 @@ describe("DAPClient", () => {
     });
 
     it("fails if there is an hpke error", async () => {
-      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const client = await withHpkeConfigs(new DAPClient(buildParams()));
       assert(client.aggregators[0].hpkeConfigList);
       client.aggregators[0].hpkeConfigList.configs[0].publicKey = Buffer.from(
         "not a valid public key",
@@ -354,7 +360,7 @@ describe("DAPClient", () => {
     });
 
     it("fails if the HpkeConfig cannot be converted to a hpke.Config", async () => {
-      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const client = await withHpkeConfigs(new DAPClient(buildParams()));
       assert(client.aggregators[0].hpkeConfigList);
       client.aggregators[0].hpkeConfigList.configs[0].aeadId = 500.25;
       await assert.rejects(client.generateReport(21));
@@ -365,10 +371,10 @@ describe("DAPClient", () => {
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
         [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(),
+          await hpkeConfigResponse(),
         ],
         [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(),
+          await hpkeConfigResponse(),
         ],
       });
       const client = new DAPClient(params);
@@ -385,7 +391,7 @@ describe("DAPClient", () => {
       const fetch = mockFetch({
         [`https://a.example.com/v1/tasks/${taskId}/reports`]: [{ status: 201 }],
       });
-      const client = withHpkeConfigs(new DAPClient(params));
+      const client = await withHpkeConfigs(new DAPClient(params));
       client.fetch = fetch;
       const report = await client.generateReport(100);
       await client.sendReport(report);
@@ -407,7 +413,7 @@ describe("DAPClient", () => {
 
     it("throws an error on failure", async () => {
       const fetch = mockFetch({});
-      const client = withHpkeConfigs(new DAPClient(buildParams()));
+      const client = await withHpkeConfigs(new DAPClient(buildParams()));
       client.fetch = fetch;
       const report = await client.generateReport(100);
       await assert.rejects(client.sendReport(report));
@@ -421,10 +427,10 @@ describe("DAPClient", () => {
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
         [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(),
+          await hpkeConfigResponse(),
         ],
         [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(),
+          await hpkeConfigResponse(),
         ],
         [`https://a.example.com/v1/tasks/${taskId}/reports`]: [{ status: 201 }],
       });
@@ -440,12 +446,12 @@ describe("DAPClient", () => {
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
         [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(),
-          hpkeConfigResponse(),
+          await hpkeConfigResponse(),
+          await hpkeConfigResponse(),
         ],
         [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(),
-          hpkeConfigResponse(),
+          await hpkeConfigResponse(),
+          await hpkeConfigResponse(),
         ],
         [`https://a.example.com/v1/tasks/${taskId}/reports`]: [
           {
@@ -477,12 +483,12 @@ describe("DAPClient", () => {
       const taskId = params.taskId.buffer.toString("base64url");
       const fetch = mockFetch({
         [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(),
-          hpkeConfigResponse(),
+          await hpkeConfigResponse(),
+          await hpkeConfigResponse(),
         ],
         [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
-          hpkeConfigResponse(),
-          hpkeConfigResponse(),
+          await hpkeConfigResponse(),
+          await hpkeConfigResponse(),
         ],
         [`https://a.example.com/v1/tasks/${taskId}/reports`]: [
           outdatedConfigResponse(params.taskId),
@@ -516,9 +522,11 @@ function outdatedConfigResponse(taskId: TaskId): ResponseSpec {
   };
 }
 
-function hpkeConfigResponse(config = buildHpkeConfigList()): ResponseSpec {
+async function hpkeConfigResponse(
+  config?: HpkeConfigList,
+): Promise<ResponseSpec> {
   return {
-    body: config.encode(),
+    body: (config || (await buildHpkeConfigList())).encode(),
     contentType: "application/dap-hpke-config-list",
   };
 }

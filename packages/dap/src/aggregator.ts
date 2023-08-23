@@ -24,13 +24,16 @@ export class Aggregator {
     return new Aggregator(url, Role.Leader);
   }
 
-  seal(inputShare: PlaintextInputShare, aad: InputShareAad): HpkeCiphertext {
+  async seal(
+    inputShare: PlaintextInputShare,
+    aad: InputShareAad,
+  ): Promise<HpkeCiphertext> {
     if (!this.hpkeConfigList) {
       throw new Error(
         "Attempted to call Aggregator#seal before fetching a hpkeConfigList.",
       );
     }
-    return this.hpkeConfigList
+    return await this.hpkeConfigList
       .selectConfig()
       .seal(
         new InputShareInfo(this.role).encode(),

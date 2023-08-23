@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import * as hpke from "hpke";
+import { CipherSuite, KemId, KdfId, AeadId } from "hpke-js";
 import { Parser, ParseSource, Encodable, encodeArray16 } from "./encoding";
 import { HpkeCiphertext } from "./ciphertext";
 
@@ -19,7 +19,7 @@ export class HpkeConfigList implements Encodable {
     if (this.#selectedConfig) return this.#selectedConfig;
     for (const config of this.configs) {
       try {
-        config.config();
+        config.cipherSuite();
         this.#selectedConfig = config;
         return config;
       } catch (_) {
@@ -34,31 +34,29 @@ export class HpkeConfigList implements Encodable {
 export class HpkeConfig implements Encodable {
   constructor(
     public id: number,
-    public kemId: hpke.Kem,
-    public kdfId: hpke.Kdf,
-    public aeadId: hpke.Aead,
+    public kemId: number,
+    public kdfId: number,
+    public aeadId: number,
     public publicKey: Buffer,
   ) {
     if (id !== Math.floor(id) || id < 0 || id > 255) {
       throw new Error("id must be an integer in [0, 255]");
     }
 
-    this.validate(hpke.Kem, "kemId");
-    this.validate(hpke.Kdf, "kdfId");
-    this.validate(hpke.Aead, "aeadId");
+    this.validate(KemId, "kemId");
+    this.validate(KdfId, "kdfId");
+    this.validate(AeadId, "aeadId");
   }
 
   private validate(
-    e: { [key: string]: unknown },
+    e: { [key: string]: number },
     id: "kemId" | "kdfId" | "aeadId",
   ) {
     const actual = this[id];
 
-    if (!(actual in e)) {
-      const errorText = Object.keys(e)
-        .map((n) => parseInt(n, 10))
-        .filter((n) => !isNaN(n))
-        .map((id) => `    ${id}: ${e[id] as string}`)
+    if (!Object.values(e).includes(actual)) {
+      const errorText = Object.entries(e)
+        .map(([name, identifier]) => `    ${identifier}: ${name}`)
         .join("\n");
 
       throw new Error(
@@ -92,22 +90,34 @@ export class HpkeConfig implements Encodable {
   }
 
   /** @internal */
-  config(): hpke.Config {
-    return hpke.Config.try_from_ids(this.aeadId, this.kdfId, this.kemId);
+  cipherSuite(): CipherSuite {
+    const aead: AeadId = this.aeadId as AeadId;
+    const kdf: KdfId = this.kdfId as KdfId;
+    const kem: KemId = this.kemId as KemId;
+    return new CipherSuite({
+      aead,
+      kdf,
+      kem,
+    });
   }
 
-  seal(info: Buffer, plaintext: Buffer, aad: Buffer): HpkeCiphertext {
-    const text = this.config().base_mode_seal(
+  async seal(
+    info: Buffer,
+    plaintext: Buffer,
+    aad: Buffer,
+  ): Promise<HpkeCiphertext> {
+    const cipherSuite = this.cipherSuite();
+    const recipientPublicKey = await cipherSuite.kem.importKey(
+      "raw",
       this.publicKey,
-      info,
+    );
+
+    const { ct, enc } = await this.cipherSuite().seal(
+      { recipientPublicKey, info },
       plaintext,
       aad,
     );
 
-    return new HpkeCiphertext(
-      this.id,
-      Buffer.from(text.encapped_key),
-      Buffer.from(text.ciphertext),
-    );
+    return new HpkeCiphertext(this.id, Buffer.from(enc), Buffer.from(ct));
   }
 }
