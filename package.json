@@ -22,7 +22,7 @@
     "interop-test-client": "npm start -w interop-test-client"
   },
   "devDependencies": {
-    "@tsconfig/node20": "^20.1.1",
+    "@tsconfig/node20": "^20.1.2",
     "@types/chai": "^4.3.5",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^10.0.1",
