@@ -12,6 +12,7 @@
   "scripts": {
     "test": "npm test -ws --if-present",
     "build": "npm run -ws --if-present build",
+    "build:clean": "npm run -ws --if-present build:clean",
     "test:coverage": "c8 npm test",
     "lint": "npm run -ws --if-present lint",
     "clean": "npm run -ws clean",
@@ -31,7 +32,6 @@
     "@typescript-eslint/parser": "^6.5.0",
     "c8": "^8.0.1",
     "chai": "^4.3.8",
-    "esbuild": "^0.19.2",
     "eslint": "^8.47.0",
     "eslint-config-prettier": "^9.0.0",
     "mocha": "^10.2.0",

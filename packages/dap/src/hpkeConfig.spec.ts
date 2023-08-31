@@ -1,21 +1,23 @@
 import { HpkeConfig, HpkeConfigList } from "./hpkeConfig";
 import assert from "assert";
-import { Kem, Kdf, Aead, Keypair } from "hpke";
+import { KemId, KdfId, AeadId } from "hpke-js";
+import { DhkemX25519HkdfSha256 } from "@hpke/dhkem-x25519";
+import { DhkemP256HkdfSha256 } from "@hpke/core";
 
 describe("DAP HpkeConfigList", () => {
   it("encodes as expected", () => {
     const config1 = new HpkeConfig(
       255,
-      Kem.DhP256HkdfSha256,
-      Kdf.Sha256,
-      Aead.AesGcm128,
+      KemId.DhkemP256HkdfSha256,
+      KdfId.HkdfSha256,
+      AeadId.Aes128Gcm,
       Buffer.from("public key"),
     );
     const config2 = new HpkeConfig(
       255,
-      Kem.X25519HkdfSha256,
-      Kdf.Sha384,
-      Aead.ChaCha20Poly1305,
+      KemId.DhkemX25519HkdfSha256,
+      KdfId.HkdfSha384,
+      AeadId.Chacha20Poly1305,
       Buffer.from("public key"),
     );
     const list = new HpkeConfigList([config1, config2]);
@@ -28,16 +30,16 @@ describe("DAP HpkeConfigList", () => {
   it("decodes as expected", () => {
     const config1 = new HpkeConfig(
       255,
-      Kem.DhP256HkdfSha256,
-      Kdf.Sha256,
-      Aead.AesGcm128,
+      KemId.DhkemP256HkdfSha256,
+      KdfId.HkdfSha256,
+      AeadId.Aes128Gcm,
       Buffer.from("public key"),
     );
     const config2 = new HpkeConfig(
       255,
-      Kem.X25519HkdfSha256,
-      Kdf.Sha384,
-      Aead.ChaCha20Poly1305,
+      KemId.DhkemX25519HkdfSha256,
+      KdfId.HkdfSha384,
+      AeadId.Chacha20Poly1305,
       Buffer.from("public key"),
     );
 
@@ -51,17 +53,17 @@ describe("DAP HpkeConfigList", () => {
   it("selects the first config that it recognizes", () => {
     const validConfig = new HpkeConfig(
       255,
-      Kem.DhP256HkdfSha256,
-      Kdf.Sha256,
-      Aead.AesGcm128,
+      KemId.DhkemP256HkdfSha256,
+      KdfId.HkdfSha256,
+      AeadId.Aes128Gcm,
       Buffer.from("public key"),
     );
 
     const invalidConfig = new HpkeConfig(
       100,
-      Kem.X25519HkdfSha256,
-      Kdf.Sha512,
-      Aead.ChaCha20Poly1305,
+      KemId.DhkemX25519HkdfSha256,
+      KdfId.HkdfSha512,
+      AeadId.Chacha20Poly1305,
       Buffer.from("public key"),
     );
 
@@ -80,9 +82,9 @@ describe("DAP HpkeConfig", () => {
   it("encodes as expected", () => {
     const config = new HpkeConfig(
       255,
-      Kem.DhP256HkdfSha256,
-      Kdf.Sha256,
-      Aead.AesGcm128,
+      KemId.DhkemP256HkdfSha256,
+      KdfId.HkdfSha256,
+      AeadId.Aes128Gcm,
       Buffer.from("public key"),
     );
 
@@ -152,9 +154,9 @@ describe("DAP HpkeConfig", () => {
     assert.throws(() => {
       new HpkeConfig(
         100,
-        Kem.DhP256HkdfSha256,
+        KemId.DhkemP256HkdfSha256,
         50,
-        Aead.ChaCha20Poly1305,
+        AeadId.Chacha20Poly1305,
         Buffer.alloc(10),
       );
     }, /kdfId was 50 but must be one of the following:/);
@@ -164,8 +166,8 @@ describe("DAP HpkeConfig", () => {
     assert.throws(() => {
       new HpkeConfig(
         100,
-        Kem.DhP256HkdfSha256,
-        Kdf.Sha512,
+        KemId.DhkemP256HkdfSha256,
+        KdfId.HkdfSha512,
         5,
         Buffer.alloc(10),
       );
@@ -173,102 +175,109 @@ describe("DAP HpkeConfig", () => {
   });
 
   describe("seal", () => {
-    it("throws if the public key is a valid key for the wrong kem", () => {
-      const wrongKeyType = new Keypair(Kem.DhP256HkdfSha256).public_key;
+    it("throws if the public key is a valid key for the wrong kem", async () => {
+      const kem = new DhkemP256HkdfSha256();
+      const { publicKey } = await kem.generateKeyPair();
+      const key = await kem.serializePublicKey(publicKey);
+
       const config = new HpkeConfig(
         100,
-        Kem.X25519HkdfSha256,
-        Kdf.Sha256,
-        Aead.AesGcm128,
-        Buffer.from(wrongKeyType),
+        KemId.DhkemX25519HkdfSha256,
+        KdfId.HkdfSha256,
+        AeadId.Aes128Gcm,
+        Buffer.from(key),
       );
 
-      assert.throws(() => {
+      await assert.rejects(
         config.seal(
           Buffer.from("info"),
           Buffer.from("plaintext"),
           Buffer.from("aad"),
-        );
-      });
+        ),
+      );
     });
 
-    it("throws if the public key is not a valid key at all", () => {
+    it("throws if the public key is not a valid key at all", async () => {
       const config = new HpkeConfig(
         100,
-        Kem.X25519HkdfSha256,
-        Kdf.Sha256,
-        Aead.AesGcm128,
+        KemId.DhkemX25519HkdfSha256,
+        KdfId.HkdfSha256,
+        AeadId.Aes128Gcm,
         Buffer.from("not a valid key"),
       );
 
-      assert.throws(() => {
+      await assert.rejects(
         config.seal(
           Buffer.from("info"),
           Buffer.from("plaintext"),
           Buffer.from("aad"),
-        );
-      });
+        ),
+      );
     });
 
-    it("generates a valid X25519HkdfSha256 HpkeCiphertext if the ids are valid", () => {
-      const kem = Kem.X25519HkdfSha256;
-      const { public_key, private_key } = new Keypair(kem);
+    it("generates a valid X25519HkdfSha256 HpkeCiphertext if the ids are valid", async () => {
+      const kem = new DhkemX25519HkdfSha256();
+      const { publicKey, privateKey } = await kem.generateKeyPair();
+      const key = await kem.serializePublicKey(publicKey);
 
       const config = new HpkeConfig(
         100,
-        kem,
-        Kdf.Sha256,
-        Aead.AesGcm128,
-        Buffer.from(public_key),
+        kem.id,
+        KdfId.HkdfSha256,
+        AeadId.Aes128Gcm,
+        Buffer.from(key),
+      );
+
+      const cipherSuite = config.cipherSuite();
+
+      const info = Buffer.from("info");
+      const aad = Buffer.from("aad");
+      const plaintext = Buffer.from("plaintext");
+      const hpkeCipherText = await config.seal(info, plaintext, aad);
+
+      const decrypted = await cipherSuite.open(
+        {
+          recipientKey: privateKey,
+          info,
+          enc: hpkeCipherText.encapsulatedContext,
+        },
+        hpkeCipherText.payload,
+        aad,
+      );
+
+      assert.deepEqual(Buffer.from(decrypted), plaintext);
+    });
+
+    it("generates a valid DhP256HkdfSha256 HpkeCiphertext if the ids are valid", async () => {
+      const kem = new DhkemP256HkdfSha256();
+      const { publicKey, privateKey } = await kem.generateKeyPair();
+      const key = await kem.serializePublicKey(publicKey);
+      console.log(Buffer.from(key).toString("ascii"));
+
+      const config = new HpkeConfig(
+        100,
+        kem.id,
+        KdfId.HkdfSha256,
+        AeadId.Aes128Gcm,
+        Buffer.from(key),
       );
 
       const info = Buffer.from("info");
       const aad = Buffer.from("aad");
       const plaintext = Buffer.from("plaintext");
-      const hpkeCipherText = config.seal(info, plaintext, aad);
+      const hpkeCipherText = await config.seal(info, plaintext, aad);
 
-      const decrypted = config
-        .config()
-        .base_mode_open(
-          private_key,
-          hpkeCipherText.encapsulatedContext,
+      const decrypted = await config.cipherSuite().open(
+        {
+          recipientKey: privateKey,
+          enc: hpkeCipherText.encapsulatedContext,
           info,
-          hpkeCipherText.payload,
-          aad,
-        );
-
-      assert.deepEqual(decrypted, plaintext);
-    });
-
-    it("generates a valid DhP256HkdfSha256 HpkeCiphertext if the ids are valid", () => {
-      const kem = Kem.DhP256HkdfSha256;
-
-      const { public_key, private_key } = new Keypair(kem);
-
-      const config = new HpkeConfig(
-        100,
-        kem,
-        Kdf.Sha256,
-        Aead.AesGcm128,
-        Buffer.from(public_key),
+        },
+        hpkeCipherText.payload,
+        aad,
       );
 
-      const info = Buffer.from("info");
-      const aad = Buffer.from("aad");
-      const plaintext = Buffer.from("plaintext");
-      const hpkeCipherText = config.seal(info, plaintext, aad);
-
-      const decrypted = config
-        .config()
-        .base_mode_open(
-          private_key,
-          hpkeCipherText.encapsulatedContext,
-          info,
-          hpkeCipherText.payload,
-          aad,
-        );
-
-      assert.deepEqual(decrypted, plaintext);
+      assert.deepEqual(Buffer.from(decrypted), plaintext);
     });
   });
 });
