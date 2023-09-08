@@ -1,6 +1,6 @@
 import { Field } from "@divviup/field";
 import { nextPowerOf2, arr, fill } from "@divviup/common";
-import { Gadget } from "../gadget";
+import { Gadget } from "../gadget.js";
 
 export class Query extends Gadget {
   wire: bigint[][];

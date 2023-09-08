@@ -11,7 +11,7 @@ import {
   concat,
   arr,
   fill,
-} from "./index";
+} from "./index.js";
 
 describe("common", () => {
   describe("integerToOctetStringLE", () => {

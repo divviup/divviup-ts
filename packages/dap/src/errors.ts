@@ -1,4 +1,4 @@
-import { TaskId } from "./taskId";
+import { TaskId } from "./taskId.js";
 
 interface Problem {
   type: string;

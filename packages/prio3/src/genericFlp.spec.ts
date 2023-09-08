@@ -1,15 +1,15 @@
-import { Gadget } from "./gadget";
+import { Gadget } from "./gadget.js";
 import { Field, Field128, Field64 } from "@divviup/field";
-import { Count } from "./circuits/count";
-import { Sum } from "./circuits/sum";
-import { Histogram } from "./circuits/histogram";
-import { FlpGeneric } from "./genericFlp";
-import { runFlp } from "./flp.spec";
-import { Circuit, GenericCircuit } from "./circuit";
+import { Count } from "./circuits/count.js";
+import { Sum } from "./circuits/sum.js";
+import { Histogram } from "./circuits/histogram.js";
+import { FlpGeneric } from "./genericFlp.js";
+import { runFlp } from "./flp.spec.js";
+import { Circuit, GenericCircuit } from "./circuit.js";
 import { arr, nextPowerOf2 } from "@divviup/common";
 import assert from "assert";
-import { PolyEval } from "./gadgets/polyEval";
-import { Mul } from "./gadgets/mul";
+import { PolyEval } from "./gadgets/polyEval.js";
+import { Mul } from "./gadgets/mul.js";
 
 function testGadget(gadget: Gadget, field: Field, testLength: number) {
   const evalAt = field.randomElement();

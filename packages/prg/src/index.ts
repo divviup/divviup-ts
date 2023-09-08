@@ -1,3 +1,3 @@
-export { Prg } from "./prg";
-export type { PrgConstructor } from "./prg";
-export { PrgSha3 } from "./sha3";
+export { Prg } from "./prg.js";
+export type { PrgConstructor } from "./prg.js";
+export { PrgSha3 } from "./sha3.js";

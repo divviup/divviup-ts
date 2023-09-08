@@ -1,9 +1,9 @@
 import { arr } from "@divviup/common";
-import { Flp } from "./flp";
+import { Flp } from "./flp.js";
 import { Field } from "@divviup/field";
-import { Circuit } from "./circuit";
-import { Query } from "./circuits/query";
-import { Proof } from "./circuits/proof";
+import { Circuit } from "./circuit.js";
+import { Query } from "./circuits/query.js";
+import { Proof } from "./circuits/proof.js";
 
 export class FlpGeneric<M, AR> implements Flp<M, AR> {
   constructor(public circuit: Circuit<M, AR>) {}

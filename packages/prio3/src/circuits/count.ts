@@ -1,6 +1,6 @@
-import { Circuit } from "../circuit";
+import { Circuit } from "../circuit.js";
 import { Field64 } from "@divviup/field";
-import { Mul } from "../gadgets/mul";
+import { Mul } from "../gadgets/mul.js";
 
 export class Count extends Circuit<boolean, number> {
   gadgets = [new Mul()];

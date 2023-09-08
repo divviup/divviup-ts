@@ -7,7 +7,7 @@ import {
   encodeOpaque16,
   Parser,
   ParseSource,
-} from "./encoding";
+} from "./encoding.js";
 
 class Uint16 implements Encodable {
   constructor(public n: number) {}

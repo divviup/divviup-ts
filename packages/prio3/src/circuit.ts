@@ -1,5 +1,5 @@
 import { Field } from "@divviup/field";
-import { Gadget } from "./gadget";
+import { Gadget } from "./gadget.js";
 import { nextPowerOf2 } from "@divviup/common";
 
 export interface GenericCircuit {

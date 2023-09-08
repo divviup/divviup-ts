@@ -1,7 +1,7 @@
-import { Prio3 } from ".";
+import { Prio3 } from "./index.js";
 import assert from "assert";
-import { Prio3Count, Prio3Histogram, Prio3Sum } from "./instantiations";
-import { TestFlp128 } from "./flp.spec";
+import { Prio3Count, Prio3Histogram, Prio3Sum } from "./instantiations.js";
+import { TestFlp128 } from "./flp.spec.js";
 import { PrgSha3 } from "@divviup/prg";
 import { TestVector } from "@divviup/vdaf";
 import { arr } from "@divviup/common";

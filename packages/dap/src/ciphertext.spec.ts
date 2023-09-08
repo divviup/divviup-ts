@@ -1,4 +1,4 @@
-import { HpkeCiphertext } from "./ciphertext";
+import { HpkeCiphertext } from "./ciphertext.js";
 import assert from "assert";
 describe("DAP HpkeCiphertext", () => {
   it("cannot be built from a negative configId", () => {

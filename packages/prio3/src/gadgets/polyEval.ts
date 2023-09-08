@@ -1,6 +1,6 @@
 import { fill } from "@divviup/common";
 import { Field } from "@divviup/field";
-import { Gadget } from "../gadget";
+import { Gadget } from "../gadget.js";
 
 function stripPolynomial(polynomial: bigint[]): bigint[] {
   let index = polynomial.length - 1;

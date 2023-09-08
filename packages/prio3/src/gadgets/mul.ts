@@ -1,5 +1,5 @@
 import { Field } from "@divviup/field";
-import { Gadget } from "../gadget";
+import { Gadget } from "../gadget.js";
 
 export class Mul extends Gadget {
   arity = 2;

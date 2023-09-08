@@ -1,4 +1,4 @@
-import { ReportId } from "./reportId";
+import { ReportId } from "./reportId.js";
 import assert from "assert";
 
 describe("DAP ReportID", () => {

@@ -1,7 +1,11 @@
-import { Role } from "./constants";
-import { InputShareAad, InputShareInfo, PlaintextInputShare } from "./report";
-import { HpkeCiphertext } from "./ciphertext";
-import { HpkeConfigList } from "./hpkeConfig";
+import { Role } from "./constants.js";
+import {
+  InputShareAad,
+  InputShareInfo,
+  PlaintextInputShare,
+} from "./report.js";
+import { HpkeCiphertext } from "./ciphertext.js";
+import { HpkeConfigList } from "./hpkeConfig.js";
 
 export class Aggregator {
   public url: URL;

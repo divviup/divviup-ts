@@ -1,6 +1,6 @@
 import assert from "assert";
 import { Field, Field128 } from "@divviup/field";
-import { Flp } from "./flp";
+import { Flp } from "./flp.js";
 
 export function runFlp<M, AR>(
   flp: Flp<M, AR>,

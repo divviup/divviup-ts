@@ -1,7 +1,7 @@
 import { Buffer } from "buffer";
 import { CipherSuite, KemId, KdfId, AeadId } from "hpke-js";
-import { Parser, ParseSource, Encodable, encodeArray16 } from "./encoding";
-import { HpkeCiphertext } from "./ciphertext";
+import { Parser, ParseSource, Encodable, encodeArray16 } from "./encoding.js";
+import { HpkeCiphertext } from "./ciphertext.js";
 
 export class HpkeConfigList implements Encodable {
   #selectedConfig?: HpkeConfig;

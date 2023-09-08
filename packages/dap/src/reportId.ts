@@ -1,4 +1,4 @@
-import { Encodable } from "./encoding";
+import { Encodable } from "./encoding.js";
 import { randomBytes } from "@divviup/common";
 import { Buffer } from "buffer";
 

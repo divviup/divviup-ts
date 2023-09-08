@@ -1,5 +1,5 @@
-import { PrimeField } from "./PrimeField";
-export { Vector } from "./Vector";
+import { PrimeField } from "./PrimeField.js";
+export { Vector } from "./Vector.js";
 import {
   integerToOctetStringLE,
   octetStringToIntegerLE,

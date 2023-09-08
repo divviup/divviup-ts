@@ -2,7 +2,7 @@ import { Shares, Vdaf } from "@divviup/vdaf";
 import { PrgConstructor } from "@divviup/prg";
 import { fill, arr, concat } from "@divviup/common";
 import { Field } from "@divviup/field";
-import { Flp } from "./flp";
+import { Flp } from "./flp.js";
 import { Buffer } from "buffer";
 
 type PrepareState = {

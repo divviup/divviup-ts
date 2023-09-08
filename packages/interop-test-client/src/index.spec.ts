@@ -1,4 +1,4 @@
-import { app } from ".";
+import { app } from "./index.js";
 import { arr, randomBytes } from "@divviup/common";
 import { AddressInfo } from "node:net";
 import { spawnSync, SpawnSyncReturns } from "node:child_process";
