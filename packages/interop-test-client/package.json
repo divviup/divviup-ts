@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit -p ./tsconfig.json",
-    "start": "node --no-warnings --experimental-specifier-resolution=node --experimental-loader=ts-node/esm src/index.ts",
+    "start": "node --no-warnings --experimental-loader=ts-node/esm src/index.ts",
     "test": "mocha \"src/**/*.spec.ts\"",
     "lint": "eslint src --ext .ts && prettier -c src --ignore-path ../../.prettierignore",
     "format": "prettier -w src",

@@ -1,15 +1,15 @@
-import { Aggregator } from "./aggregator";
+import { Aggregator } from "./aggregator.js";
 import assert from "assert";
-import { Role } from "./constants";
-import { HpkeConfig, HpkeConfigList } from "./hpkeConfig";
+import { Role } from "./constants.js";
+import { HpkeConfig, HpkeConfigList } from "./hpkeConfig.js";
 import {
   InputShareAad,
   InputShareInfo,
   PlaintextInputShare,
   ReportMetadata,
-} from "./report";
-import { TaskId } from "./taskId";
-import { ReportId } from "./reportId";
+} from "./report.js";
+import { TaskId } from "./taskId.js";
+import { ReportId } from "./reportId.js";
 import { KdfId, AeadId } from "hpke-js";
 import { DhkemP256HkdfSha256 } from "@hpke/core";
 

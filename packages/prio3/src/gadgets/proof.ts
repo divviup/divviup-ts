@@ -1,6 +1,6 @@
 import { Field } from "@divviup/field";
 import { arr, fill, nextPowerOf2 } from "@divviup/common";
-import { Gadget } from "../gadget";
+import { Gadget } from "../gadget.js";
 
 export class Proof extends Gadget {
   gadget: Gadget;

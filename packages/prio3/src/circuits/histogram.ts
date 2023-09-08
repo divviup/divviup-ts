@@ -1,6 +1,6 @@
-import { Circuit } from "../circuit";
+import { Circuit } from "../circuit.js";
 import { Field128 } from "@divviup/field";
-import { PolyEval } from "../gadgets/polyEval";
+import { PolyEval } from "../gadgets/polyEval.js";
 
 export class Histogram extends Circuit<number, number[]> {
   gadgets = [new PolyEval([0n, -1n, 1n])];

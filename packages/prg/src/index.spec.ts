@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { PrgSha3 } from ".";
+import { PrgSha3 } from "./index.js";
 import { Field128, Field64 } from "@divviup/field";
 import PrgSha3TestVector from "./testVectors/PrgSha3.json" assert { type: "json" };
 

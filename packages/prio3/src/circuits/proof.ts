@@ -1,6 +1,6 @@
-import { Circuit } from "../circuit";
+import { Circuit } from "../circuit.js";
 import { Field } from "@divviup/field";
-import { Proof as ProofGadget } from "../gadgets/proof";
+import { Proof as ProofGadget } from "../gadgets/proof.js";
 
 export class Proof<M, AR> extends Circuit<M, AR> {
   gadgets: ProofGadget[];

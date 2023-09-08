@@ -1,5 +1,5 @@
 import jsSHA from "jssha";
-import { PrgConstructor, Prg } from "./prg";
+import { PrgConstructor, Prg } from "./prg.js";
 
 export const PrgSha3: PrgConstructor = class PrgSha3 extends Prg {
   static seedSize = 16;

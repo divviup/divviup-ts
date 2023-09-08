@@ -1,4 +1,4 @@
-import { HpkeConfig, HpkeConfigList } from "./hpkeConfig";
+import { HpkeConfig, HpkeConfigList } from "./hpkeConfig.js";
 import assert from "assert";
 import { KemId, KdfId, AeadId } from "hpke-js";
 import { DhkemX25519HkdfSha256 } from "@hpke/dhkem-x25519";

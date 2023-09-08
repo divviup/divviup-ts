@@ -1,6 +1,6 @@
-import { Circuit } from "../circuit";
+import { Circuit } from "../circuit.js";
 import { Field128 } from "@divviup/field";
-import { PolyEval } from "../gadgets/polyEval";
+import { PolyEval } from "../gadgets/polyEval.js";
 import { arr } from "@divviup/common";
 
 export class Sum extends Circuit<number | bigint, bigint> {

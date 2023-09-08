@@ -1,10 +1,10 @@
 import assert from "assert";
-import { DAPClient, KnownVdafSpec, VdafMeasurement } from "./client";
-import { HpkeConfig, HpkeConfigList } from "./hpkeConfig";
-import { TaskId } from "./taskId";
-import { DAPError } from "./errors";
+import { DAPClient, KnownVdafSpec, VdafMeasurement } from "./client.js";
+import { HpkeConfig, HpkeConfigList } from "./hpkeConfig.js";
+import { TaskId } from "./taskId.js";
+import { DAPError } from "./errors.js";
 import { zip } from "@divviup/common";
-import { encodeOpaque32 } from "./encoding";
+import { encodeOpaque32 } from "./encoding.js";
 import { Prio3Count, Prio3Histogram, Prio3Sum } from "@divviup/prio3";
 import { inspect } from "node:util";
 import { KdfId, AeadId, CipherSuite } from "hpke-js";

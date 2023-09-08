@@ -1,22 +1,22 @@
 import { Buffer } from "buffer";
-import { TaskId } from "./taskId";
-import { ReportId } from "./reportId";
+import { TaskId } from "./taskId.js";
+import { ReportId } from "./reportId.js";
 import {
   Report,
   ReportMetadata,
   InputShareAad,
   PlaintextInputShare,
-} from "./report";
-import { HpkeConfigList } from "./hpkeConfig";
+} from "./report.js";
+import { HpkeConfigList } from "./hpkeConfig.js";
 import { ClientVdaf } from "@divviup/vdaf";
-import { Extension } from "./extension";
-import { DAPError } from "./errors";
-import { CONTENT_TYPES, DAP_VERSION } from "./constants";
-import { Aggregator } from "./aggregator";
+import { Extension } from "./extension.js";
+import { DAPError } from "./errors.js";
+import { CONTENT_TYPES, DAP_VERSION } from "./constants.js";
+import { Aggregator } from "./aggregator.js";
 import { Prio3Count, Prio3Histogram, Prio3Sum } from "@divviup/prio3";
 import { randomBytes } from "@divviup/common";
 
-export { TaskId } from "./taskId";
+export { TaskId } from "./taskId.js";
 
 export interface ReportOptions {
   timestamp?: Date;

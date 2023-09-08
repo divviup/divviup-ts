@@ -1,5 +1,5 @@
 import assert from "assert";
-import { Field, Field64, Field96, Field128 } from ".";
+import { Field, Field64, Field96, Field128 } from "./index.js";
 import { arr } from "@divviup/common";
 
 function testField(field: Field, name: string) {

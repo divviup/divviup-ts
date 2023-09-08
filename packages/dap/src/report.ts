@@ -1,15 +1,15 @@
 import { Buffer } from "buffer";
-import { TaskId } from "./taskId";
+import { TaskId } from "./taskId.js";
 import {
   Encodable,
   encodeArray32,
   encodeArray16,
   encodeOpaque32,
-} from "./encoding";
-import { ReportId } from "./reportId";
-import { HpkeCiphertext } from "./ciphertext";
-import { DAP_VERSION, Role } from "./constants";
-import { Extension } from "./extension";
+} from "./encoding.js";
+import { ReportId } from "./reportId.js";
+import { HpkeCiphertext } from "./ciphertext.js";
+import { DAP_VERSION, Role } from "./constants.js";
+import { Extension } from "./extension.js";
 
 export class ReportMetadata implements Encodable {
   constructor(

@@ -1,4 +1,4 @@
-import { DAPError } from "./errors";
+import { DAPError } from "./errors.js";
 import assert from "assert";
 
 describe("DAPError", () => {

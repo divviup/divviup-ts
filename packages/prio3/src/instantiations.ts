@@ -1,9 +1,9 @@
 import { PrgSha3 } from "@divviup/prg";
-import { Prio3 } from ".";
-import { FlpGeneric } from "./genericFlp";
-import { Count } from "./circuits/count";
-import { Histogram } from "./circuits/histogram";
-import { Sum } from "./circuits/sum";
+import { Prio3 } from "./index.js";
+import { FlpGeneric } from "./genericFlp.js";
+import { Count } from "./circuits/count.js";
+import { Histogram } from "./circuits/histogram.js";
+import { Sum } from "./circuits/sum.js";
 
 export class Prio3Count extends Prio3<boolean, number> {
   constructor({ shares }: { shares: number }) {

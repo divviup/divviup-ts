@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 import { randomBytes } from "@divviup/common";
-import { Encodable } from "./encoding";
+import { Encodable } from "./encoding.js";
 
 export class TaskId implements Encodable {
   buffer: Buffer;

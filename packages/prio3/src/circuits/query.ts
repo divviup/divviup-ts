@@ -1,7 +1,7 @@
-import { Circuit } from "../circuit";
+import { Circuit } from "../circuit.js";
 import { Field } from "@divviup/field";
 import { nextPowerOf2 } from "@divviup/common";
-import { Query as QueryGadget } from "../gadgets/query";
+import { Query as QueryGadget } from "../gadgets/query.js";
 
 export class Query<M, AR> extends Circuit<M, AR> {
   gadgets: QueryGadget[];

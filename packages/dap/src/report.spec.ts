@@ -4,12 +4,12 @@ import {
   PlaintextInputShare,
   Report,
   ReportMetadata,
-} from "./report";
-import { TaskId } from "./taskId";
-import { ReportId } from "./reportId";
-import { HpkeCiphertext } from "./ciphertext";
+} from "./report.js";
+import { TaskId } from "./taskId.js";
+import { ReportId } from "./reportId.js";
+import { HpkeCiphertext } from "./ciphertext.js";
 import assert from "assert";
-import { Role } from "./constants";
+import { Role } from "./constants.js";
 
 describe("DAP Report", () => {
   it("encodes as expected", () => {

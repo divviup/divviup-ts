@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import { Encodable, encodeOpaque16, encodeOpaque32 } from "./encoding";
+import { Encodable, encodeOpaque16, encodeOpaque32 } from "./encoding.js";
 
 export class HpkeCiphertext implements Encodable {
   constructor(
