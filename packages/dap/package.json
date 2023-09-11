@@ -22,7 +22,7 @@
     "@divviup/common": "^0.1.0",
     "@divviup/prio3": "^0.1.0",
     "@divviup/vdaf": "^0.1.0",
-    "hpke-js": "^1.2.2"
+    "hpke-js": "^1.2.3"
   },
   "devDependencies": {
     "@hpke/chacha20poly1305": "^1.2.2",
