@@ -7,6 +7,7 @@
     "lib": ["dom", "es2020"],
     "module": "esnext",
     "moduleResolution": "node",
+    "strict": true,
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "declaration": true,
