@@ -1,7 +1,8 @@
 import { app } from "./index.js";
 import { arr, randomBytes } from "@divviup/common";
-import { AddressInfo } from "node:net";
-import { spawnSync, SpawnSyncReturns } from "node:child_process";
+import type { AddressInfo } from "node:net";
+import type { SpawnSyncReturns } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { Server } from "node:http";
 
 const JANUS_INTEROP_AGGREGATOR_IMAGE =

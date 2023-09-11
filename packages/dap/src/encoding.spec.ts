@@ -1,13 +1,8 @@
 import assert from "assert";
 import { Buffer } from "buffer";
 import { arr } from "@divviup/common";
-import {
-  Encodable,
-  encodeArray16,
-  encodeOpaque16,
-  Parser,
-  ParseSource,
-} from "./encoding.js";
+import type { Encodable, ParseSource } from "./encoding.js";
+import { encodeArray16, encodeOpaque16, Parser } from "./encoding.js";
 
 class Uint16 implements Encodable {
   constructor(public n: number) {}

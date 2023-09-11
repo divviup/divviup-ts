@@ -1,11 +1,7 @@
 import { Buffer } from "buffer";
 import { TaskId } from "./taskId.js";
-import {
-  Encodable,
-  encodeArray32,
-  encodeArray16,
-  encodeOpaque32,
-} from "./encoding.js";
+import type { Encodable } from "./encoding.js";
+import { encodeArray32, encodeArray16, encodeOpaque32 } from "./encoding.js";
 import { ReportId } from "./reportId.js";
 import { HpkeCiphertext } from "./ciphertext.js";
 import { DAP_VERSION, Role } from "./constants.js";

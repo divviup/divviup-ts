@@ -8,7 +8,7 @@ import {
   PlaintextInputShare,
 } from "./report.js";
 import { HpkeConfigList } from "./hpkeConfig.js";
-import { ClientVdaf } from "@divviup/vdaf";
+import type { ClientVdaf } from "@divviup/vdaf";
 import { Extension } from "./extension.js";
 import { DAPError } from "./errors.js";
 import { CONTENT_TYPES, DAP_VERSION } from "./constants.js";

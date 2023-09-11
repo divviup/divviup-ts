@@ -3,7 +3,7 @@ import assert from "assert";
 import { Prio3Count, Prio3Histogram, Prio3Sum } from "./instantiations.js";
 import { TestFlp128 } from "./flp.spec.js";
 import { PrgSha3 } from "@divviup/prg";
-import { TestVector } from "@divviup/vdaf";
+import type { TestVector } from "@divviup/vdaf";
 import { arr } from "@divviup/common";
 import countTestVector0 from "./testVectors/Prio3Count_0.json" assert { type: "json" };
 import histogramTestVector0 from "./testVectors/Prio3Histogram_0.json" assert { type: "json" };

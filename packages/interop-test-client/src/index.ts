@@ -1,6 +1,8 @@
 // This script implements the client role of draft-dcook-ppm-dap-interop-test-design-02.
-import express, { Request, Response } from "express";
-import DAPClient, { ReportOptions } from "@divviup/dap";
+import type { Request, Response } from "express";
+import express from "express";
+import type { ReportOptions } from "@divviup/dap";
+import DAPClient from "@divviup/dap";
 
 import * as url from "node:url";
 import * as fs from "node:fs";

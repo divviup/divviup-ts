@@ -1,5 +1,6 @@
 import { Field128 } from "@divviup/field";
-import { Shares, Vdaf } from "./index.js";
+import type { Shares } from "./index.js";
+import { Vdaf } from "./index.js";
 import { PrgSha3 } from "@divviup/prg";
 import assert from "assert";
 
