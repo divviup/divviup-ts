@@ -1,5 +1,6 @@
 import assert from "assert";
-import { DAPClient, KnownVdafSpec, VdafMeasurement } from "./client.js";
+import type { KnownVdafSpec, VdafMeasurement } from "./client.js";
+import { DAPClient } from "./client.js";
 import { HpkeConfig, HpkeConfigList } from "./hpkeConfig.js";
 import { TaskId } from "./taskId.js";
 import { DAPError } from "./errors.js";

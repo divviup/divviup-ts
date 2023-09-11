@@ -1,5 +1,5 @@
 import { arr } from "@divviup/common";
-import { Flp } from "./flp.js";
+import type { Flp } from "./flp.js";
 import { Field } from "@divviup/field";
 import { Circuit } from "./circuit.js";
 import { Query } from "./circuits/query.js";

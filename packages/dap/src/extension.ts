@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import { Encodable } from "./encoding.js";
+import type { Encodable } from "./encoding.js";
 
 enum ExtensionType {
   TBD,
