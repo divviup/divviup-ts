@@ -1,6 +1,6 @@
 import assert from "assert";
-import type { KnownVdafSpec, VdafMeasurement } from "./client.js";
-import { DAPClient } from "./client.js";
+import type { KnownVdafSpec, VdafMeasurement } from "./task.js";
+import { Task } from "./task.js";
 import { HpkeConfig, HpkeConfigList } from "./hpkeConfig.js";
 import { TaskId } from "./taskId.js";
 import { DAPError } from "./errors.js";
@@ -97,29 +97,29 @@ async function withHpkeConfigs<
   Spec extends KnownVdafSpec,
   Measurement extends VdafMeasurement<Spec>,
 >(
-  dapClient: DAPClient<Spec, Measurement>,
-): Promise<DAPClient<Spec, Measurement>> {
-  for (const aggregator of dapClient.aggregators) {
+  task: Task<Spec, Measurement>,
+): Promise<Task<Spec, Measurement>> {
+  for (const aggregator of task.aggregators) {
     aggregator.hpkeConfigList = await buildHpkeConfigList();
   }
-  return dapClient;
+  return task;
 }
 
-describe("DAPClient", () => {
+describe("Task", () => {
   describe("constructor variations", () => {
     it("accepts a string taskId that is the base64url encoding of a taskId", () => {
-      const client = new DAPClient({
+      const task = new Task({
         ...buildParams(),
         taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
       });
       assert.equal(
-        client.taskId.toString(),
+        task.taskId.toString(),
         "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
       );
     });
 
     it("accepts a buffer taskId", () => {
-      const client = new DAPClient({
+      const task = new Task({
         ...buildParams(),
         taskId: Buffer.from(
           "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
@@ -128,13 +128,13 @@ describe("DAPClient", () => {
       });
 
       assert.equal(
-        client.taskId.toString(),
+        task.taskId.toString(),
         "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
       );
     });
 
     it("can build a histogram vdaf", () => {
-      const client = new DAPClient({
+      const task = new Task({
         type: "histogram",
         buckets: [10, 20, 30],
         helper: "http://helper",
@@ -143,11 +143,11 @@ describe("DAPClient", () => {
         timePrecisionSeconds: 3600,
       });
 
-      assert(client.vdaf instanceof Prio3Histogram);
+      assert(task.vdaf instanceof Prio3Histogram);
     });
 
     it("can build a sum vdaf", () => {
-      const client = new DAPClient({
+      const task = new Task({
         type: "sum",
         bits: 8,
         helper: "http://helper",
@@ -156,11 +156,11 @@ describe("DAPClient", () => {
         timePrecisionSeconds: 3600,
       });
 
-      assert(client.vdaf instanceof Prio3Sum);
+      assert(task.vdaf instanceof Prio3Sum);
     });
 
     it("can build a count vdaf", () => {
-      const client = new DAPClient({
+      const task = new Task({
         type: "count",
         bits: 8,
         helper: "http://helper",
@@ -169,13 +169,13 @@ describe("DAPClient", () => {
         timePrecisionSeconds: 3600,
       });
 
-      assert(client.vdaf instanceof Prio3Count);
+      assert(task.vdaf instanceof Prio3Count);
     });
 
     it("throws if the timePrecisionSeconds is not a number", () => {
       assert.throws(
         () =>
-          new DAPClient({
+          new Task({
             ...buildParams(),
             timePrecisionSeconds: "ten" as unknown as number,
           }),
@@ -202,15 +202,15 @@ describe("DAPClient", () => {
         ],
       });
 
-      const client = new DAPClient(params);
-      client.fetch = fetch;
-      await client.fetchKeyConfiguration();
+      const task = new Task(params);
+      task.fetch = fetch;
+      await task.fetchKeyConfiguration();
       assert.equal(fetch.calls.length, 2);
       assert.deepEqual(fetch.calls[1][1], {
         headers: { Accept: "application/dap-hpke-config-list" },
       });
-      assert.deepEqual(client.aggregators[0].hpkeConfigList, hpkeConfig1);
-      assert.deepEqual(client.aggregators[1].hpkeConfigList, hpkeConfig2);
+      assert.deepEqual(task.aggregators[0].hpkeConfigList, hpkeConfig1);
+      assert.deepEqual(task.aggregators[1].hpkeConfigList, hpkeConfig2);
     });
 
     it("throws an error if the status is not 200", async () => {
@@ -226,10 +226,10 @@ describe("DAPClient", () => {
         ],
       });
 
-      const client = new DAPClient(params);
-      client.fetch = fetch;
+      const task = new Task(params);
+      task.fetch = fetch;
 
-      await assert.rejects(client.fetchKeyConfiguration(), (error: Error) => {
+      await assert.rejects(task.fetchKeyConfiguration(), (error: Error) => {
         assert.match(error.message, /418/);
         return true;
       });
@@ -238,10 +238,10 @@ describe("DAPClient", () => {
     });
 
     it("does not fetch key configuration if all of the aggregators already have key configs", async () => {
-      const client = await withHpkeConfigs(new DAPClient(buildParams()));
+      const task = await withHpkeConfigs(new Task(buildParams()));
       const fetch = mockFetch({});
-      client.fetch = fetch;
-      await client.fetchKeyConfiguration();
+      task.fetch = fetch;
+      await task.fetchKeyConfiguration();
       assert.equal(fetch.calls.length, 0);
     });
 
@@ -262,9 +262,9 @@ describe("DAPClient", () => {
           },
         ],
       });
-      const client = new DAPClient(params);
-      client.fetch = fetch;
-      await assert.rejects(client.fetchKeyConfiguration());
+      const task = new Task(params);
+      task.fetch = fetch;
+      await assert.rejects(task.fetchKeyConfiguration());
       assert.equal(fetch.calls.length, 2);
     });
   });
@@ -272,7 +272,7 @@ describe("DAPClient", () => {
   describe("generating reports", () => {
     it("can succeed", async () => {
       const privateKeys = [] as [CryptoKey, number][];
-      const client = new DAPClient({
+      const task = new Task({
         ...buildParams(),
         taskId: new TaskId(Buffer.alloc(32, 1)),
       });
@@ -280,7 +280,7 @@ describe("DAPClient", () => {
       const kdf = KdfId.HkdfSha256;
       const aead = AeadId.Aes128Gcm;
 
-      for (const aggregator of client.aggregators) {
+      for (const aggregator of task.aggregators) {
         const { publicKey, privateKey } = await kem.generateKeyPair();
         const key = await kem.serializePublicKey(publicKey);
         privateKeys.push([privateKey, aggregator.role]);
@@ -295,7 +295,7 @@ describe("DAPClient", () => {
         ]);
       }
 
-      const report = await client.generateReport(21);
+      const report = await task.generateReport(21);
       assert.equal(report.encryptedInputShares.length, 2);
       assert(
         Math.floor(Date.now() / 1000) - Number(report.metadata.time) <
@@ -303,7 +303,7 @@ describe("DAPClient", () => {
       );
 
       const aad = Buffer.concat([
-        client.taskId.encode(),
+        task.taskId.encode(),
         report.metadata.encode(),
         encodeOpaque32(report.publicShare),
       ]);
@@ -320,7 +320,7 @@ describe("DAPClient", () => {
 
         // at some point we might want to run the vdaf to completion
         // with these decrypted shares in order to assert that the
-        // client does in fact generate valid input shares, but for
+        // task does in fact generate valid input shares, but for
         // now we just assert that the hpke layer is as expected
         await assert.doesNotReject(
           new CipherSuite({ aead, kdf, kem }).open(
@@ -333,38 +333,38 @@ describe("DAPClient", () => {
     });
 
     it("accepts an optional timestamp", async () => {
-      const client = await withHpkeConfigs(new DAPClient(buildParams()));
+      const task = await withHpkeConfigs(new Task(buildParams()));
       const fetch = mockFetch({});
-      client.fetch = fetch;
+      task.fetch = fetch;
       const timestamp = new Date(0);
-      const report = await client.generateReport(1, {
+      const report = await task.generateReport(1, {
         timestamp,
       });
       assert.equal(report.metadata.time, timestamp.getTime());
     });
 
     it("fails if the measurement is not valid", async () => {
-      const client = await withHpkeConfigs(new DAPClient(buildParams()));
+      const task = await withHpkeConfigs(new Task(buildParams()));
       await assert.rejects(
-        client.generateReport(-25.25),
+        task.generateReport(-25.25),
         /measurement -25.25 was not an integer/, // this is specific to the Sum circuit as configured
       );
     });
 
     it("fails if there is an hpke error", async () => {
-      const client = await withHpkeConfigs(new DAPClient(buildParams()));
-      assert(client.aggregators[0].hpkeConfigList);
-      client.aggregators[0].hpkeConfigList.configs[0].publicKey = Buffer.from(
+      const task = await withHpkeConfigs(new Task(buildParams()));
+      assert(task.aggregators[0].hpkeConfigList);
+      task.aggregators[0].hpkeConfigList.configs[0].publicKey = Buffer.from(
         "not a valid public key",
       );
-      await assert.rejects(client.generateReport(21));
+      await assert.rejects(task.generateReport(21));
     });
 
     it("fails if the HpkeConfig cannot be converted to a hpke.Config", async () => {
-      const client = await withHpkeConfigs(new DAPClient(buildParams()));
-      assert(client.aggregators[0].hpkeConfigList);
-      client.aggregators[0].hpkeConfigList.configs[0].aeadId = 500.25;
-      await assert.rejects(client.generateReport(21));
+      const task = await withHpkeConfigs(new Task(buildParams()));
+      assert(task.aggregators[0].hpkeConfigList);
+      task.aggregators[0].hpkeConfigList.configs[0].aeadId = 500.25;
+      await assert.rejects(task.generateReport(21));
     });
 
     it("fetches hpke configs if needed", async () => {
@@ -378,9 +378,9 @@ describe("DAPClient", () => {
           await hpkeConfigResponse(),
         ],
       });
-      const client = new DAPClient(params);
-      client.fetch = fetch;
-      await assert.doesNotReject(client.generateReport(10));
+      const task = new Task(params);
+      task.fetch = fetch;
+      await assert.doesNotReject(task.generateReport(10));
       assert.equal(fetch.calls.length, 2);
     });
   });
@@ -392,10 +392,10 @@ describe("DAPClient", () => {
       const fetch = mockFetch({
         [`https://a.example.com/v1/tasks/${taskId}/reports`]: [{ status: 201 }],
       });
-      const client = await withHpkeConfigs(new DAPClient(params));
-      client.fetch = fetch;
-      const report = await client.generateReport(100);
-      await client.sendReport(report);
+      const task = await withHpkeConfigs(new Task(params));
+      task.fetch = fetch;
+      const report = await task.generateReport(100);
+      await task.sendReport(report);
       assert.equal(fetch.calls.length, 1);
       const [[url, args]] = fetch.calls;
       const request = new Request(url, args);
@@ -414,10 +414,10 @@ describe("DAPClient", () => {
 
     it("throws an error on failure", async () => {
       const fetch = mockFetch({});
-      const client = await withHpkeConfigs(new DAPClient(buildParams()));
-      client.fetch = fetch;
-      const report = await client.generateReport(100);
-      await assert.rejects(client.sendReport(report));
+      const task = await withHpkeConfigs(new Task(buildParams()));
+      task.fetch = fetch;
+      const report = await task.generateReport(100);
+      await assert.rejects(task.sendReport(report));
       assert.equal(fetch.calls.length, 1);
     });
   });
@@ -436,9 +436,9 @@ describe("DAPClient", () => {
         [`https://a.example.com/v1/tasks/${taskId}/reports`]: [{ status: 201 }],
       });
 
-      const client = new DAPClient(params);
-      client.fetch = fetch;
-      await client.sendMeasurement(10);
+      const task = new Task(params);
+      task.fetch = fetch;
+      await task.sendMeasurement(10);
       assert.equal(fetch.calls.length, 3);
     });
 
@@ -473,9 +473,9 @@ describe("DAPClient", () => {
         ],
       });
 
-      const client = new DAPClient(params);
-      client.fetch = fetch;
-      await client.sendMeasurement(10);
+      const task = new Task(params);
+      task.fetch = fetch;
+      await task.sendMeasurement(10);
       assert.equal(fetch.calls.length, 6);
     });
 
@@ -497,10 +497,10 @@ describe("DAPClient", () => {
         ],
       });
 
-      const client = new DAPClient(params);
-      client.fetch = fetch;
+      const task = new Task(params);
+      task.fetch = fetch;
       await assert.rejects(
-        client.sendMeasurement(10),
+        task.sendMeasurement(10),
         (e) => e instanceof DAPError && e.shortType == "outdatedConfig",
       );
       assert.equal(fetch.calls.length, 6); // we do not try again

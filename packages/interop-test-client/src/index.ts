@@ -2,7 +2,7 @@
 import type { Request, Response } from "express";
 import express from "express";
 import type { ReportOptions } from "@divviup/dap";
-import DAPClient from "@divviup/dap";
+import Task from "@divviup/dap";
 
 import * as url from "node:url";
 import * as fs from "node:fs";
@@ -239,7 +239,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
   try {
     switch (body.vdaf.type) {
       case "Prio3Count":
-        await new DAPClient({
+        await new Task({
           taskId: body.task_id,
           leader: body.leader,
           helper: body.helper,
@@ -249,7 +249,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
         break;
 
       case "Prio3Sum":
-        await new DAPClient({
+        await new Task({
           taskId: body.task_id,
           leader: body.leader,
           helper: body.helper,
@@ -260,7 +260,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
         break;
 
       case "Prio3Histogram":
-        await new DAPClient({
+        await new Task({
           taskId: body.task_id,
           leader: body.leader,
           helper: body.helper,

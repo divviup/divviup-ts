@@ -23,12 +23,12 @@ export interface ReportOptions {
 }
 
 /**
-   Parameters from which to build a DAPClient
+   Parameters from which to build a Task
    @typeParam Measurement The Measurement for the provided vdaf, usually inferred from the vdaf.
 */
 export interface ClientParameters {
   /**
-     The task identifier for this {@linkcode DAPClient}. This can be specified
+     The task identifier for this {@linkcode Task}. This can be specified
      either as a Buffer, a {@linkcode TaskId} or a base64url-encoded
      string
   **/
@@ -98,7 +98,7 @@ function vdafFromSpec<Spec extends KnownVdafSpec>(
    {@linkcode ClientVdaf}, such as an implementation of Prio3, as specified by
    [draft-irtf-cfrg-vdaf-03](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf/03/).
 */
-export class DAPClient<
+export class Task<
   Spec extends KnownVdafSpec,
   Measurement extends VdafMeasurement<Spec>,
 > {
@@ -110,11 +110,11 @@ export class DAPClient<
   #fetch: Fetch = globalThis.fetch.bind(globalThis);
   #hpkeConfigsWereInvalid = false;
 
-  /** the protocol version for this client, usually in the form `dap-{nn}` */
+  /** the protocol version for this task, usually in the form `dap-{nn}` */
   static readonly protocolVersion = DAP_VERSION;
 
   /**
-     Builds a new DAPClient from the {@linkcode ClientParameters} provided. 
+     Builds a new Task from the {@linkcode ClientParameters} provided. 
    */
   constructor(parameters: ClientParameters & Spec) {
     this.#vdaf = vdafFromSpec(parameters) as ClientVdaf<Measurement>;
@@ -157,7 +157,7 @@ export class DAPClient<
      leader and helper, if needed.
 
      @param measurement The type of this argument will be determined
-     by the Vdaf that this client is constructed for.
+     by the Vdaf that this task is constructed for.
 
      @throws `Error` if there is any issue in generating the report
    */
@@ -225,8 +225,8 @@ export class DAPClient<
      needed), generate a report from the provided measurement and send
      that report to the leader aggregator.
 
-     This will call {@linkcode DAPClient.generateReport} and
-     {@linkcode DAPClient.sendReport}, while automatically handling
+     This will call {@linkcode Task.generateReport} and
+     {@linkcode Task.sendReport}, while automatically handling
      any errors due to server key rotation with re-encryption and a
      retry.
 

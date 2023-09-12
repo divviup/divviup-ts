@@ -1,6 +1,6 @@
-import DAPClient from "dap";
+import Task from "dap";
 async function main() {
-  const client = new DAPClient({
+  const client = new Task({
     taskId: process.argv[2],
     leader: "http://localhost:8080",
     helper: "http://localhost:8081",
