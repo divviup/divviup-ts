@@ -80,7 +80,7 @@ function buildParams(): {
   bits: number;
   helper: string;
   leader: string;
-  taskId: TaskId;
+  id: TaskId;
   timePrecisionSeconds: number;
 } {
   return {
@@ -88,7 +88,7 @@ function buildParams(): {
     bits: 16,
     leader: "https://a.example.com/v1",
     helper: "https://b.example.com/dap/",
-    taskId: TaskId.random(),
+    id: TaskId.random(),
     timePrecisionSeconds: 1,
   };
 }
@@ -105,28 +105,28 @@ async function withHpkeConfigs<
 
 describe("Task", () => {
   describe("constructor variations", () => {
-    it("accepts a string taskId that is the base64url encoding of a taskId", () => {
+    it("accepts a string id that is the base64url encoding of a id", () => {
       const task = new Task({
         ...buildParams(),
-        taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+        id: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
       });
       assert.equal(
-        task.taskId.toString(),
+        task.id.toString(),
         "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
       );
     });
 
-    it("accepts a buffer taskId", () => {
+    it("accepts a buffer id", () => {
       const task = new Task({
         ...buildParams(),
-        taskId: Buffer.from(
+        id: Buffer.from(
           "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
           "base64url",
         ),
       });
 
       assert.equal(
-        task.taskId.toString(),
+        task.id.toString(),
         "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
       );
     });
@@ -137,7 +137,7 @@ describe("Task", () => {
         buckets: [10, 20, 30],
         helper: "http://helper",
         leader: "http://leader",
-        taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+        id: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
         timePrecisionSeconds: 3600,
       });
 
@@ -150,7 +150,7 @@ describe("Task", () => {
         bits: 8,
         helper: "http://helper",
         leader: "http://leader",
-        taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+        id: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
         timePrecisionSeconds: 3600,
       });
 
@@ -163,7 +163,7 @@ describe("Task", () => {
         bits: 8,
         helper: "http://helper",
         leader: "http://leader",
-        taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+        id: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
         timePrecisionSeconds: 3600,
       });
 
@@ -189,13 +189,13 @@ describe("Task", () => {
         await buildHpkeConfigList(),
         await buildHpkeConfigList(),
       ];
-      const taskId = params.taskId.buffer.toString("base64url");
+      const id = params.id.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(hpkeConfig1),
         ],
 
-        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(hpkeConfig2),
         ],
       });
@@ -213,13 +213,13 @@ describe("Task", () => {
 
     it("throws an error if the status is not 200", async () => {
       const params = buildParams();
-      const taskId = params.taskId.buffer.toString("base64url");
+      const id = params.id.buffer.toString("base64url");
 
       const fetch = mockFetch({
-        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${id}`]: [
           { status: 418 },
         ],
-        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${id}`]: [
           { status: 500 },
         ],
       });
@@ -245,15 +245,15 @@ describe("Task", () => {
 
     it("throws an error if the content type is not correct", async () => {
       const params = buildParams();
-      const taskId = params.taskId.buffer.toString("base64url");
+      const id = params.id.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${id}`]: [
           {
             contentType: "application/text",
             body: (await buildHpkeConfigList()).encode(),
           },
         ],
-        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${id}`]: [
           {
             contentType: "application/text",
             body: (await buildHpkeConfigList()).encode(),
@@ -272,7 +272,7 @@ describe("Task", () => {
       const privateKeys = [] as [CryptoKey, number][];
       const task = new Task({
         ...buildParams(),
-        taskId: new TaskId(Buffer.alloc(32, 1)),
+        id: new TaskId(Buffer.alloc(32, 1)),
       });
       const kem = new DhkemP256HkdfSha256();
       const kdf = KdfId.HkdfSha256;
@@ -301,7 +301,7 @@ describe("Task", () => {
       );
 
       const aad = Buffer.concat([
-        task.taskId.encode(),
+        task.id.encode(),
         report.metadata.encode(),
         encodeOpaque32(report.publicShare),
       ]);
@@ -367,12 +367,12 @@ describe("Task", () => {
 
     it("fetches hpke configs if needed", async () => {
       const params = buildParams();
-      const taskId = params.taskId.buffer.toString("base64url");
+      const id = params.id.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(),
         ],
-        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(),
         ],
       });
@@ -386,9 +386,9 @@ describe("Task", () => {
   describe("sending reports", () => {
     it("can succeed", async () => {
       const params = buildParams();
-      const taskId = params.taskId.buffer.toString("base64url");
+      const id = params.id.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/v1/tasks/${taskId}/reports`]: [{ status: 201 }],
+        [`https://a.example.com/v1/tasks/${id}/reports`]: [{ status: 201 }],
       });
       const task = await withHpkeConfigs(new Task(params));
       task.fetch = fetch;
@@ -397,10 +397,7 @@ describe("Task", () => {
       assert.equal(fetch.calls.length, 1);
       const [[url, args]] = fetch.calls;
       const request = new Request(url, args);
-      assert.equal(
-        request.url,
-        `https://a.example.com/v1/tasks/${taskId}/reports`,
-      );
+      assert.equal(request.url, `https://a.example.com/v1/tasks/${id}/reports`);
       assert(!!args);
       assert.deepEqual(args.body, report.encode());
       assert.equal(request.method, "PUT");
@@ -423,15 +420,15 @@ describe("Task", () => {
   describe("sending measurement", () => {
     it("makes the correct number of http requests when all goes well", async () => {
       const params = buildParams();
-      const taskId = params.taskId.buffer.toString("base64url");
+      const id = params.id.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(),
         ],
-        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(),
         ],
-        [`https://a.example.com/v1/tasks/${taskId}/reports`]: [{ status: 201 }],
+        [`https://a.example.com/v1/tasks/${id}/reports`]: [{ status: 201 }],
       });
 
       const task = new Task(params);
@@ -442,17 +439,17 @@ describe("Task", () => {
 
     it("retries once if the configs were outdated", async () => {
       const params = buildParams();
-      const taskId = params.taskId.buffer.toString("base64url");
+      const id = params.id.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(),
           await hpkeConfigResponse(),
         ],
-        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(),
           await hpkeConfigResponse(),
         ],
-        [`https://a.example.com/v1/tasks/${taskId}/reports`]: [
+        [`https://a.example.com/v1/tasks/${id}/reports`]: [
           {
             status: 400,
             contentType: "application/problem+json",
@@ -464,7 +461,7 @@ describe("Task", () => {
               detail:
                 "The message was generated using an outdated configuration.",
               instance: "..",
-              taskid: params.taskId.toString(),
+              taskid: params.id.toString(),
             }),
           },
           {},
@@ -479,19 +476,19 @@ describe("Task", () => {
 
     it("does not retry more than once if the [refetched] configs were [still] outdated", async () => {
       const params = buildParams();
-      const taskId = params.taskId.buffer.toString("base64url");
+      const id = params.id.buffer.toString("base64url");
       const fetch = mockFetch({
-        [`https://a.example.com/v1/hpke_config?task_id=${taskId}`]: [
+        [`https://a.example.com/v1/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(),
           await hpkeConfigResponse(),
         ],
-        [`https://b.example.com/dap/hpke_config?task_id=${taskId}`]: [
+        [`https://b.example.com/dap/hpke_config?task_id=${id}`]: [
           await hpkeConfigResponse(),
           await hpkeConfigResponse(),
         ],
-        [`https://a.example.com/v1/tasks/${taskId}/reports`]: [
-          outdatedConfigResponse(params.taskId),
-          outdatedConfigResponse(params.taskId),
+        [`https://a.example.com/v1/tasks/${id}/reports`]: [
+          outdatedConfigResponse(params.id),
+          outdatedConfigResponse(params.id),
         ],
       });
 
@@ -506,7 +503,7 @@ describe("Task", () => {
   });
 });
 
-function outdatedConfigResponse(taskId: TaskId): ResponseSpec {
+function outdatedConfigResponse(id: TaskId): ResponseSpec {
   return {
     status: 400,
     contentType: "application/problem+json",
@@ -516,7 +513,7 @@ function outdatedConfigResponse(taskId: TaskId): ResponseSpec {
       status: 400,
       detail: "The message was generated using an outdated configuration.",
       instance: "..",
-      taskid: taskId.toString(),
+      taskid: id.toString(),
     }),
   };
 }

@@ -240,7 +240,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
     switch (body.vdaf.type) {
       case "Prio3Count":
         await new Task({
-          taskId: body.task_id,
+          id: body.task_id,
           leader: body.leader,
           helper: body.helper,
           timePrecisionSeconds: body.time_precision,
@@ -250,7 +250,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
 
       case "Prio3Sum":
         await new Task({
-          taskId: body.task_id,
+          id: body.task_id,
           leader: body.leader,
           helper: body.helper,
           timePrecisionSeconds: body.time_precision,
@@ -261,7 +261,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
 
       case "Prio3Histogram":
         await new Task({
-          taskId: body.task_id,
+          id: body.task_id,
           leader: body.leader,
           helper: body.helper,
           timePrecisionSeconds: body.time_precision,

@@ -33,7 +33,7 @@ function buildClient<
     new Task({
       helper: "http://helper.example.com",
       leader: "http://leader.example.com",
-      taskId: TaskId.random(),
+      id: TaskId.random(),
       timePrecisionSeconds: 1,
       ...spec,
     })

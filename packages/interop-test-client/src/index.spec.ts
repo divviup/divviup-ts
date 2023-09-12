@@ -148,9 +148,9 @@ async function checkResponseError(
 }
 
 class Aggregator extends Container {
-  async endpointForTask(taskId: EncodedBlob, role: string): Promise<URL> {
+  async endpointForTask(id: EncodedBlob, role: string): Promise<URL> {
     const rawBody = await this.sendRequest("endpoint_for_task", {
-      task_id: taskId.toString(),
+      task_id: id.toString(),
       role: role,
       hostname: this.name,
     });
@@ -168,7 +168,7 @@ class Aggregator extends Container {
 
   /** Send an /internal/test/add_task request. */
   async addTask(
-    taskId: EncodedBlob,
+    id: EncodedBlob,
     role: string,
     leaderEndpoint: URL,
     helperEndpoint: URL,
@@ -183,7 +183,7 @@ class Aggregator extends Container {
     taskExpiration: number,
   ): Promise<void> {
     const requestBody: Record<string, string | number | object> = {
-      task_id: taskId.toString(),
+      task_id: id.toString(),
       leader: leaderEndpoint.toString(),
       helper: helperEndpoint.toString(),
       vdaf: vdaf,
@@ -207,13 +207,13 @@ class Aggregator extends Container {
 class Collector extends Container {
   /** Send an /internal/test/add_task request, and return the encoded collector HPKE configuration. */
   async addTask(
-    taskId: EncodedBlob,
+    id: EncodedBlob,
     leaderEndpoint: URL,
     vdaf: object,
     collectorAuthToken: string,
   ): Promise<string> {
     const rawBody = await this.sendRequest("add_task", {
-      task_id: taskId.toString(),
+      task_id: id.toString(),
       leader: leaderEndpoint.toString(),
       vdaf: vdaf,
       collector_authentication_token: collectorAuthToken,
@@ -233,12 +233,12 @@ class Collector extends Container {
 
   /** Send an /internal/test/collection_start request, and return the handle for the request. */
   async collectionStart(
-    taskId: EncodedBlob,
+    id: EncodedBlob,
     batchIntervalStart: number,
     batchIntervalDuration: number,
   ): Promise<string> {
     const rawBody = await this.sendRequest("collection_start", {
-      task_id: taskId.toString(),
+      task_id: id.toString(),
       agg_param: "",
       query: {
         type: 1,
@@ -299,7 +299,7 @@ type Collection = {
 
 async function upload(
   clientPort: number,
-  taskId: EncodedBlob,
+  id: EncodedBlob,
   leaderEndpoint: URL,
   helperEndpoint: URL,
   vdaf: object,
@@ -314,7 +314,7 @@ async function upload(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        task_id: taskId.toString(),
+        task_id: id.toString(),
         leader: leaderEndpoint.toString(),
         helper: helperEndpoint.toString(),
         vdaf: vdaf,
@@ -395,22 +395,22 @@ async function runIntegrationTest(
   await helper.waitForReady();
   await collector.waitForReady();
 
-  const taskId = EncodedBlob.random(32);
+  const id = EncodedBlob.random(32);
   const aggregatorAuthToken = `aggregator-${randomSuffix()}`;
   const collectorAuthToken = `collector-${randomSuffix()}`;
   const vdafVerifyKey = EncodedBlob.random(16);
 
-  const leaderEndpoint = await leader.endpointForTask(taskId, "leader");
-  const helperEndpoint = await helper.endpointForTask(taskId, "helper");
+  const leaderEndpoint = await leader.endpointForTask(id, "leader");
+  const helperEndpoint = await helper.endpointForTask(id, "helper");
 
   const collectorHpkeConfig = await collector.addTask(
-    taskId,
+    id,
     leaderEndpoint,
     vdaf,
     collectorAuthToken,
   );
   await leader.addTask(
-    taskId,
+    id,
     "leader",
     leaderEndpoint,
     helperEndpoint,
@@ -425,7 +425,7 @@ async function runIntegrationTest(
     taskExpiration,
   );
   await helper.addTask(
-    taskId,
+    id,
     "helper",
     leaderEndpoint,
     helperEndpoint,
@@ -462,7 +462,7 @@ async function runIntegrationTest(
   for (const measurement of measurements) {
     await upload(
       clientPort,
-      taskId,
+      id,
       leaderEndpointForClient,
       helperEndpointForClient,
       vdaf,
@@ -472,7 +472,7 @@ async function runIntegrationTest(
   }
 
   const collectHandle = await collector.collectionStart(
-    taskId,
+    id,
     Math.floor(start.getTime() / 1000 / timePrecision) * timePrecision,
     timePrecision * 2,
   );

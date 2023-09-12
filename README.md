@@ -28,7 +28,7 @@ import Task from "@divviup/dap";
 const task = new Task({
   type: "sum",
   bits: 8,
-  taskId: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+  id: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
   leader: "http://localhost:8080",
   helper: "http://localhost:8081",
   timePrecisionSeconds: 3600,
