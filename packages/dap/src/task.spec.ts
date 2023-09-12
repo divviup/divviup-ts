@@ -96,9 +96,7 @@ function buildParams(): {
 async function withHpkeConfigs<
   Spec extends KnownVdafSpec,
   Measurement extends VdafMeasurement<Spec>,
->(
-  task: Task<Spec, Measurement>,
-): Promise<Task<Spec, Measurement>> {
+>(task: Task<Spec, Measurement>): Promise<Task<Spec, Measurement>> {
   for (const aggregator of task.aggregators) {
     aggregator.hpkeConfigList = await buildHpkeConfigList();
   }
