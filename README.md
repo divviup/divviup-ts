@@ -9,12 +9,12 @@
 
 The `main` branch is under continuous development and will usually be partway between DAP and VDAF drafts. divviup-ts uses stable release branches to maintain implementations of different draft versions. Artifacts for some draft version are published from a corresponding `release/dap-draft-xy` branch. Only supported release branches receive dependency updates and backports.
 
-| Git branch | Draft version | Conforms to specification? | Status |
-| ---------- | ------------- | -------------------------- | ------ |
-| `release/dap-draft-02` | [`draft-ietf-ppm-dap-02`][dap-02] | Yes | Unmaintained |
-| `release/dap-draft-03` | [`draft-ietf-ppm-dap-03`][dap-03] | Yes | Unmaintained as of May 22, 2023 |
-| `release/dap-draft-04` | [`draft-ietf-ppm-dap-04`][dap-04] | Yes | Supported |
-| `main` | [`draft-ietf-ppm-dap-07`][dap-07] | [Partially][dap-07-issue] | Supported |
+| Package version | Git branch | Protocol version | Conforms to specification? | Status |
+| --------------- | ---------- | ------------- | -------------------------- | ------ |
+| N/A | `release/dap-draft-02` | [`draft-ietf-ppm-dap-02`][dap-02] | Yes | Unmaintained |
+| N/A | `release/dap-draft-03` | [`draft-ietf-ppm-dap-03`][dap-03] | Yes | Unmaintained as of May 22, 2023 |
+| 0.1 | `release/dap-draft-04` | [`draft-ietf-ppm-dap-04`][dap-04] | Yes | Supported |
+| 0.2 | `main` | [`draft-ietf-ppm-dap-07`][dap-07] | [Partially][dap-07-issue] | Supported |
 
 [dap-02]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/02/
 [dap-03]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/03/
