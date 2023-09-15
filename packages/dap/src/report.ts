@@ -9,13 +9,13 @@ import { Extension } from "./extension.js";
 
 export class ReportMetadata implements Encodable {
   constructor(
-    public reportID: ReportId,
+    public reportId: ReportId,
     public time: number,
   ) {}
 
   encode(): Buffer {
     const buffer = Buffer.alloc(24);
-    this.reportID.encode().copy(buffer, 0);
+    this.reportId.encode().copy(buffer, 0);
     buffer.writeUInt32BE(this.time, 16 + 4);
     return buffer;
   }

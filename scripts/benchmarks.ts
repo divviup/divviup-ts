@@ -1,5 +1,5 @@
 import Benchmark from "benchmark";
-import { DAPClient, KnownVdafSpec, VdafMeasurement } from "dap/client";
+import { Task, KnownVdafSpec, VdafMeasurement } from "dap/client";
 import { TaskId } from "dap/taskId";
 import { HpkeConfig } from "dap/hpkeConfig";
 import * as hpke from "hpke";
@@ -18,22 +18,22 @@ function buildHpkeConfig(): HpkeConfig {
 function withHpkeConfigs<
   Spec extends KnownVdafSpec,
   Measurement extends VdafMeasurement<Spec>
->(dapClient: DAPClient<Spec, Measurement>): DAPClient<Spec, Measurement> {
-  for (const aggregator of dapClient.aggregators) {
+>(task: Task<Spec, Measurement>): Task<Spec, Measurement> {
+  for (const aggregator of task.aggregators) {
     aggregator.hpkeConfig = buildHpkeConfig();
   }
-  return dapClient;
+  return task;
 }
 
 function buildClient<
   Spec extends KnownVdafSpec,
   Measurement extends VdafMeasurement<Spec>
->(spec: Spec): DAPClient<Spec, Measurement> {
+>(spec: Spec): Task<Spec, Measurement> {
   return withHpkeConfigs(
-    new DAPClient({
+    new Task({
       helper: "http://helper.example.com",
       leader: "http://leader.example.com",
-      taskId: TaskId.random(),
+      id: TaskId.random(),
       timePrecisionSeconds: 1,
       ...spec,
     })

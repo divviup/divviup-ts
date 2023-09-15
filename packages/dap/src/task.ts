@@ -23,16 +23,16 @@ export interface ReportOptions {
 }
 
 /**
-   Parameters from which to build a DAPClient
+   Parameters from which to build a Task
    @typeParam Measurement The Measurement for the provided vdaf, usually inferred from the vdaf.
 */
 export interface ClientParameters {
   /**
-     The task identifier for this {@linkcode DAPClient}. This can be specified
+     The task identifier for this {@linkcode Task}. This can be specified
      either as a Buffer, a {@linkcode TaskId} or a base64url-encoded
      string
   **/
-  taskId: TaskId | Buffer | string;
+  id: TaskId | Buffer | string;
   /**
      the url of the leader aggregator, specified as either a string
      or a {@linkcode URL}
@@ -98,27 +98,27 @@ function vdafFromSpec<Spec extends KnownVdafSpec>(
    {@linkcode ClientVdaf}, such as an implementation of Prio3, as specified by
    [draft-irtf-cfrg-vdaf-03](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-vdaf/03/).
 */
-export class DAPClient<
+export class Task<
   Spec extends KnownVdafSpec,
   Measurement extends VdafMeasurement<Spec>,
 > {
   #vdaf: ClientVdaf<Measurement>;
-  #taskId: TaskId;
+  #id: TaskId;
   #aggregators: Aggregator[];
   #timePrecisionSeconds: number;
   #extensions: Extension[] = [];
   #fetch: Fetch = globalThis.fetch.bind(globalThis);
   #hpkeConfigsWereInvalid = false;
 
-  /** the protocol version for this client, usually in the form `dap-{nn}` */
+  /** the protocol version for this task, usually in the form `dap-{nn}` */
   static readonly protocolVersion = DAP_VERSION;
 
   /**
-     Builds a new DAPClient from the {@linkcode ClientParameters} provided. 
+     Builds a new Task from the {@linkcode ClientParameters} provided. 
    */
   constructor(parameters: ClientParameters & Spec) {
     this.#vdaf = vdafFromSpec(parameters) as ClientVdaf<Measurement>;
-    this.#taskId = taskIdFromDefinition(parameters.taskId);
+    this.#id = idFromDefinition(parameters.id);
     this.#aggregators = aggregatorsFromParameters(parameters);
     if (typeof parameters.timePrecisionSeconds !== "number") {
       throw new Error("timePrecisionSeconds must be a number");
@@ -146,8 +146,8 @@ export class DAPClient<
 
   /** @internal */
   //this exists for testing, and should not be considered part of the public api.
-  get taskId(): TaskId {
-    return this.#taskId;
+  get id(): TaskId {
+    return this.#id;
   }
 
   /**
@@ -157,7 +157,7 @@ export class DAPClient<
      leader and helper, if needed.
 
      @param measurement The type of this argument will be determined
-     by the Vdaf that this client is constructed for.
+     by the Vdaf that this task is constructed for.
 
      @throws `Error` if there is any issue in generating the report
    */
@@ -177,7 +177,7 @@ export class DAPClient<
 
     const time = roundedTime(this.#timePrecisionSeconds, options?.timestamp);
     const metadata = new ReportMetadata(reportId, time);
-    const aad = new InputShareAad(this.taskId, metadata, publicShare);
+    const aad = new InputShareAad(this.id, metadata, publicShare);
     const ciphertexts = await Promise.all(
       this.#aggregators.map((aggregator, i) =>
         aggregator.seal(
@@ -200,9 +200,9 @@ export class DAPClient<
   async sendReport(report: Report) {
     const body = report.encode();
     const leader = this.#aggregators[0];
-    const taskId = this.#taskId.toString();
+    const id = this.#id.toString();
     const response = await this.#fetch(
-      new URL(`tasks/${taskId}/reports`, leader.url).toString(),
+      new URL(`tasks/${id}/reports`, leader.url).toString(),
       {
         method: "PUT",
         headers: { "Content-Type": CONTENT_TYPES.REPORT },
@@ -225,8 +225,8 @@ export class DAPClient<
      needed), generate a report from the provided measurement and send
      that report to the leader aggregator.
 
-     This will call {@linkcode DAPClient.generateReport} and
-     {@linkcode DAPClient.sendReport}, while automatically handling
+     This will call {@linkcode Task.generateReport} and
+     {@linkcode Task.sendReport}, while automatically handling
      any errors due to server key rotation with re-encryption and a
      retry.
 
@@ -276,7 +276,7 @@ export class DAPClient<
     await Promise.all(
       this.#aggregators.map(async (aggregator) => {
         const url = new URL("hpke_config", aggregator.url);
-        url.searchParams.append("task_id", this.#taskId.toString());
+        url.searchParams.append("task_id", this.#id.toString());
 
         const response = await this.#fetch(url.toString(), {
           headers: { Accept: CONTENT_TYPES.HPKE_CONFIG_LIST },
@@ -314,11 +314,9 @@ function aggregatorsFromParameters({
   return [Aggregator.leader(leader), Aggregator.helper(helper)];
 }
 
-function taskIdFromDefinition(
-  taskIdDefinition: Buffer | TaskId | string,
-): TaskId {
-  if (taskIdDefinition instanceof TaskId) return taskIdDefinition;
-  else return new TaskId(taskIdDefinition);
+function idFromDefinition(idDefinition: Buffer | TaskId | string): TaskId {
+  if (idDefinition instanceof TaskId) return idDefinition;
+  else return new TaskId(idDefinition);
 }
 
 function roundedTime(timePrecisionSeconds: number, date?: Date): number {
