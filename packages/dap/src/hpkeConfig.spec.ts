@@ -252,7 +252,6 @@ describe("DAP HpkeConfig", () => {
       const kem = new DhkemP256HkdfSha256();
       const { publicKey, privateKey } = await kem.generateKeyPair();
       const key = await kem.serializePublicKey(publicKey);
-      console.log(Buffer.from(key).toString("ascii"));
 
       const config = new HpkeConfig(
         100,
