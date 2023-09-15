@@ -28,6 +28,7 @@
       {
         "allowEmptyCatch": true
       }
-    ]
+    ],
+    "no-console": "error"
   }
 }
