@@ -1,4 +1,7 @@
 // This script implements the client role of draft-dcook-ppm-dap-interop-test-design-02.
+
+/* eslint no-console: "off" */
+
 import type { Request, Response } from "express";
 import express from "express";
 import type { ReportOptions } from "@divviup/dap";

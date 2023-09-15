@@ -1,3 +1,5 @@
+/* eslint no-console: "off" */
+
 import Benchmark from "benchmark";
 import { Task, KnownVdafSpec, VdafMeasurement } from "dap/client";
 import { TaskId } from "dap/taskId";
