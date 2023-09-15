@@ -5,3 +5,5 @@ coverage/
 .github
 typedoc.base.json
 **/typedoc.json
+**/*.spec.*
+**/testVectors/
