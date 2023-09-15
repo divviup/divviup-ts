@@ -13,12 +13,14 @@ The `main` branch is under continuous development and will usually be partway be
 | ---------- | ------------- | -------------------------- | ------ |
 | `release/dap-draft-02` | [`draft-ietf-ppm-dap-02`][dap-02] | Yes | Unmaintained |
 | `release/dap-draft-03` | [`draft-ietf-ppm-dap-03`][dap-03] | Yes | Unmaintained as of May 22, 2023 |
-| `main` | [`draft-ietf-ppm-dap-04`][dap-04] | [Partially][dap-04-issue] | Supported |
+| `release/dap-draft-04` | [`draft-ietf-ppm-dap-04`][dap-04] | Yes | Supported |
+| `main` | [`draft-ietf-ppm-dap-07`][dap-07] | [Partially][dap-07-issue] | Supported |
 
 [dap-02]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/02/
 [dap-03]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/03/
 [dap-04]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/04/
-[dap-04-issue]: https://github.com/divviup/divviup-ts/issues/216
+[dap-07]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/07/
+[dap-07-issue]: https://github.com/divviup/divviup-ts/issues/359
 
 ## Usage
 
