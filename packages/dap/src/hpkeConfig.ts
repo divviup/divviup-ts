@@ -43,10 +43,18 @@ export class HpkeConfig implements Encodable {
     if (id !== Math.floor(id) || id < 0 || id > 255) {
       throw new Error("id must be an integer in [0, 255]");
     }
-
-    this.validate(KemId, "kemId");
-    this.validate(KdfId, "kdfId");
-    this.validate(AeadId, "aeadId");
+    if (kemId !== Math.floor(kemId) || kemId < 0 || kemId > 0xffff) {
+      throw new Error("kemId must be an integer in [0, 65535]");
+    }
+    if (kdfId !== Math.floor(kdfId) || kdfId < 0 || kdfId > 0xffff) {
+      throw new Error("kdfId must be an integer in [0, 65535]");
+    }
+    if (aeadId !== Math.floor(aeadId) || aeadId < 0 || aeadId > 0xffff) {
+      throw new Error("aeadId must be an integer in [0, 65535]");
+    }
+    if (publicKey.length > 0xffff) {
+      throw new Error("publicKey must not be longer than 65535 bytes");
+    }
   }
 
   private validate(
@@ -92,6 +100,10 @@ export class HpkeConfig implements Encodable {
 
   /** @internal */
   cipherSuite(): CipherSuite {
+    this.validate(KemId, "kemId");
+    this.validate(KdfId, "kdfId");
+    this.validate(AeadId, "aeadId");
+
     const aead: AeadId = this.aeadId as AeadId;
     const kdf: KdfId = this.kdfId as KdfId;
     const kem: KemId = this.kemId as KemId;

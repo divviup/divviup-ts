@@ -51,28 +51,34 @@ describe("DAP HpkeConfigList", () => {
   });
 
   it("selects the first config that it recognizes", () => {
+    const list = HpkeConfigList.parse(
+      Buffer.from(
+        "0022" + // Overall length prefix
+          // Unrecognized configuration first
+          "64" + // id
+          "0064" + // kem_id
+          "0064" + // kdf_id
+          "0064" + // aead_id
+          "0008" + // Length prefix for public key
+          "4141414141414141" + // public_key
+          // Valid configuration
+          "ff" + // id
+          "0010" + // kem_id, KemId.DhkemP256HkdfSha256
+          "0001" + // kdf_id, KdfId.HkdfSha256
+          "0001" + // aead_id, AeadId.Aes128Gcm
+          "0008" + // Length prefix for public_key
+          "4141414141414141", // public_key
+        "hex",
+      ),
+    );
+
     const validConfig = new HpkeConfig(
       255,
       KemId.DhkemP256HkdfSha256,
       KdfId.HkdfSha256,
       AeadId.Aes128Gcm,
-      Buffer.from("public key"),
+      Buffer.from("AAAAAAAA"),
     );
-
-    const invalidConfig = new HpkeConfig(
-      100,
-      KemId.DhkemX25519HkdfSha256,
-      KdfId.HkdfSha512,
-      AeadId.Chacha20Poly1305,
-      Buffer.from("public key"),
-    );
-
-    // none of these are known ids, so we skip the invalid config
-    invalidConfig.aeadId = 100;
-    invalidConfig.kdfId = 100;
-    invalidConfig.kemId = 100;
-
-    const list = new HpkeConfigList([invalidConfig, validConfig]);
 
     assert.deepEqual(list.selectConfig(), validConfig);
   });
@@ -144,33 +150,60 @@ describe("DAP HpkeConfig", () => {
     }, /id must be an integer in \[0, 255\]/);
   });
 
-  it("cannot be built from an unrecognized kemId", () => {
+  it("cannot be built from an invalid kemId", () => {
+    for (const badKemId of [-1, 65536, 0.5, NaN]) {
+      assert.throws(() => {
+        new HpkeConfig(0, badKemId, 1, 1, Buffer.alloc(10));
+      }, /kemId must be an integer in \[0, 65535\]/);
+    }
+  });
+
+  it("cannot be buit from an invalid kdfId", () => {
+    for (const badKdfId of [-1, 65536, 0.5, NaN]) {
+      assert.throws(() => {
+        new HpkeConfig(0, 1, badKdfId, 1, Buffer.alloc(10));
+      }, /kdfId must be an integer in \[0, 65535\]/);
+    }
+  });
+
+  it("cannot be built from an invalid aeadId", () => {
+    for (const badAeadId of [-1, 65536, 0.5, NaN]) {
+      assert.throws(() => {
+        new HpkeConfig(0, 1, 1, badAeadId, Buffer.alloc(10));
+      }, /aeadId must be an integer in \[0, 65535\]/);
+    }
+  });
+
+  it("cannot be used if it contains an unrecognized kemId", () => {
+    const config = new HpkeConfig(10, 10, 1, 1, Buffer.alloc(10));
     assert.throws(() => {
-      new HpkeConfig(10, 10, 1, 1, Buffer.alloc(10));
+      config.cipherSuite();
     }, /kemId was 10 but must be one of the following:/);
   });
 
-  it("cannot be built from an unrecognized kdfId", () => {
+  it("cannot be used if it contains an unrecognized kdfId", () => {
+    const config = new HpkeConfig(
+      100,
+      KemId.DhkemP256HkdfSha256,
+      50,
+      AeadId.Chacha20Poly1305,
+      Buffer.alloc(10),
+    );
     assert.throws(() => {
-      new HpkeConfig(
-        100,
-        KemId.DhkemP256HkdfSha256,
-        50,
-        AeadId.Chacha20Poly1305,
-        Buffer.alloc(10),
-      );
+      config.cipherSuite();
     }, /kdfId was 50 but must be one of the following:/);
   });
 
-  it("cannot be built from an unrecognized aeadId", () => {
+  it("cannot be used if it contains an unrecognized aeadId", () => {
+    const config = new HpkeConfig(
+      100,
+      KemId.DhkemP256HkdfSha256,
+      KdfId.HkdfSha512,
+      5,
+      Buffer.alloc(10),
+    );
     assert.throws(() => {
-      new HpkeConfig(
-        100,
-        KemId.DhkemP256HkdfSha256,
-        KdfId.HkdfSha512,
-        5,
-        Buffer.alloc(10),
-      );
+      config.cipherSuite();
     }, /aeadId was 5 but must be one of the following:/);
   });
 
