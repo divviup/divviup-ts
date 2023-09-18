@@ -1,6 +1,6 @@
 {
   "name": "@divviup/prio3",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,10 +19,10 @@
   "type": "module",
   "license": "MPL-2.0",
   "dependencies": {
-    "@divviup/common": "^0.1.0",
-    "@divviup/field": "^0.1.0",
-    "@divviup/prg": "^0.1.0",
-    "@divviup/vdaf": "^0.1.0",
+    "@divviup/common": "^0.2.0",
+    "@divviup/field": "^0.2.0",
+    "@divviup/prg": "^0.2.0",
+    "@divviup/vdaf": "^0.2.0",
     "buffer": "^6.0.3"
   }
 }

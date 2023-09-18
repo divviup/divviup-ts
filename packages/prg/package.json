@@ -1,6 +1,6 @@
 {
   "name": "@divviup/prg",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,8 +19,8 @@
     "test:coverage": "c8 npm test"
   },
   "dependencies": {
-    "@divviup/common": "^0.1.0",
-    "@divviup/field": "^0.1.0",
+    "@divviup/common": "^0.2.0",
+    "@divviup/field": "^0.2.0",
     "jssha": "^3.3.1"
   }
 }
