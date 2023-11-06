@@ -22,11 +22,11 @@
     "@divviup/common": "^0.2.0",
     "@divviup/prio3": "^0.2.0",
     "@divviup/vdaf": "^0.2.0",
-    "hpke-js": "^1.2.3"
+    "hpke-js": "^1.2.4"
   },
   "devDependencies": {
-    "@hpke/chacha20poly1305": "^1.2.3",
-    "@hpke/core": "^1.2.3",
-    "@hpke/dhkem-x25519": "^1.2.3"
+    "@hpke/chacha20poly1305": "^1.2.4",
+    "@hpke/core": "^1.2.4",
+    "@hpke/dhkem-x25519": "^1.2.4"
   }
 }
