@@ -45,8 +45,12 @@ describe("XofShake128", () => {
     const dst = Buffer.from("dst", "ascii");
     const binder = Buffer.from("binder", "ascii");
     const { seedSize } = XofShake128;
-    assert.throws(() => new XofShake128(Buffer.alloc(seedSize - 1), dst, binder));
-    assert.throws(() => new XofShake128(Buffer.alloc(seedSize + 1), dst, binder));
+    assert.throws(
+      () => new XofShake128(Buffer.alloc(seedSize - 1), dst, binder),
+    );
+    assert.throws(
+      () => new XofShake128(Buffer.alloc(seedSize + 1), dst, binder),
+    );
   });
 
   it("cannot be built with too long a dst", () => {

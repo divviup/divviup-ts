@@ -66,7 +66,7 @@ export class Prio3<Measurement, AggregationResult> extends Vdaf<
       (1 + 2 * (shares - 1) + (flp.jointRandLen === 0 ? 0 : shares));
   }
 
-  async measurementToInputShares(
+  async shard(
     measurement: Measurement,
     nonce: Buffer,
     rand: Buffer,

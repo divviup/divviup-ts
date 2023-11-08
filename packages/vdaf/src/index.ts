@@ -25,7 +25,7 @@ export abstract class Vdaf<
   abstract nonceSize: number;
   abstract randSize: number;
 
-  abstract measurementToInputShares(
+  abstract shard(
     measurement: Measurement,
     nonce: Buffer,
     rand: Buffer,
@@ -112,11 +112,7 @@ export interface ClientVdaf<Measurement> {
   randSize: number;
   nonceSize: number;
 
-  measurementToInputShares(
-    measurement: Measurement,
-    nonce: Buffer,
-    rand: Buffer,
-  ): Promise<Shares>;
+  shard(measurement: Measurement, nonce: Buffer, rand: Buffer): Promise<Shares>;
 }
 
 function hex(b: Buffer): string {
@@ -151,7 +147,7 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
     measurements.map(async (measurement, i) => {
       const nonce = args.nonces?.[i] ?? Buffer.from(randomBytes(nonceSize));
       const rand = args.rands?.[i] ?? Buffer.from(randomBytes(randSize));
-      const { publicShare, inputShares } = await vdaf.measurementToInputShares(
+      const { publicShare, inputShares } = await vdaf.shard(
         measurement,
         nonce,
         rand,

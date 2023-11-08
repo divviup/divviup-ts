@@ -31,7 +31,7 @@ export class VdafTest extends Vdaf<
   randSize = 16;
   nonceSize = 0;
 
-  async measurementToInputShares(
+  async shard(
     measurement: Measurement,
     _nonce: Buffer,
     rand: Buffer,

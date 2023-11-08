@@ -71,7 +71,7 @@ export type KnownVdafSpec = {
 type KnownVdaf<Spec extends KnownVdafSpec> = KnownVdafs[Spec["type"]];
 type VdafInstance<Spec extends KnownVdafSpec> = InstanceType<KnownVdaf<Spec>>;
 export type VdafMeasurement<Spec extends KnownVdafSpec> = Parameters<
-  VdafInstance<Spec>["measurementToInputShares"]
+  VdafInstance<Spec>["shard"]
 >[0];
 function vdafFromSpec<Spec extends KnownVdafSpec>(
   spec: Spec,
@@ -168,12 +168,11 @@ export class Task<
     await this.fetchKeyConfiguration();
     const reportId = ReportId.random();
     const rand = Buffer.from(randomBytes(this.#vdaf.randSize));
-    const { publicShare, inputShares } =
-      await this.#vdaf.measurementToInputShares(
-        measurement,
-        reportId.encode(),
-        rand,
-      );
+    const { publicShare, inputShares } = await this.#vdaf.shard(
+      measurement,
+      reportId.encode(),
+      rand,
+    );
 
     const time = roundedTime(this.#timePrecisionSeconds, options?.timestamp);
     const metadata = new ReportMetadata(reportId, time);

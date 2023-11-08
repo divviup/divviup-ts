@@ -101,10 +101,13 @@ function testField(field: Field, name: string) {
           const input = field.fillRandom(1);
           const shares = field.additiveSecretShare(input, numShares);
           assert.equal(shares.length, numShares);
-          assert.deepEqual(input, shares.reduce((all, share) => field.vecAdd(all, share)))
-        })
+          assert.deepEqual(
+            input,
+            shares.reduce((all, share) => field.vecAdd(all, share)),
+          );
+        });
       }
-    })
+    });
   });
 }
 
