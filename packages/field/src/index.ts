@@ -114,6 +114,12 @@ export class Field {
       0n,
     );
   }
+
+  additiveSecretShare(input: bigint[], numShares: number): bigint[][] {
+    const shares = arr(numShares - 1, () => this.fillRandom(input.length));
+    shares.push(shares.reduce((last, share) => this.vecSub(last, share), input));
+    return shares;
+  }
 }
 
 interface FieldConstructorArgs {
