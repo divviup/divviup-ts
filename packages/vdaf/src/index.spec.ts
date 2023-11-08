@@ -1,7 +1,7 @@
 import { Field128 } from "@divviup/field";
 import type { Shares } from "./index.js";
 import { Vdaf } from "./index.js";
-import { PrgSha3 } from "@divviup/prg";
+import { XofShake128 } from "@divviup/xof";
 import assert from "assert";
 
 type PrepareState = {
@@ -37,7 +37,7 @@ export class VdafTest extends Vdaf<
     rand: Buffer,
   ): Promise<Shares> {
     const { field, shares } = this;
-    const helperShares = await PrgSha3.expandIntoVec(
+    const helperShares = await XofShake128.expandIntoVec(
       field,
       rand,
       Buffer.alloc(0),

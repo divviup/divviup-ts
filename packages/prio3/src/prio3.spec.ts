@@ -2,7 +2,7 @@ import { Prio3 } from "./index.js";
 import assert from "assert";
 import { Prio3Count, Prio3Histogram, Prio3Sum } from "./instantiations.js";
 import { TestFlp128 } from "./flp.spec.js";
-import { PrgSha3 } from "@divviup/prg";
+import { XofShake128 } from "@divviup/xof";
 import type { TestVector } from "@divviup/vdaf";
 import { arr } from "@divviup/common";
 import countTestVector0 from "./testVectors/Prio3Count_0.json" assert { type: "json" };
@@ -11,7 +11,7 @@ import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type: "json"
 
 describe("prio3 vdaf", () => {
   it("test flp", async () => {
-    const testFlp = new Prio3(PrgSha3, new TestFlp128(), 2, 255);
+    const testFlp = new Prio3(XofShake128, new TestFlp128(), 2, 255);
     assert.equal(await testFlp.test(null, [1, 2, 3, 4, 4]), 14);
   });
 

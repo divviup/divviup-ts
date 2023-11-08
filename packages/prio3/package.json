@@ -21,7 +21,7 @@
   "dependencies": {
     "@divviup/common": "^0.2.0",
     "@divviup/field": "^0.2.0",
-    "@divviup/prg": "^0.2.0",
+    "@divviup/xof": "^0.2.0",
     "@divviup/vdaf": "^0.2.0",
     "buffer": "^6.0.3"
   }
