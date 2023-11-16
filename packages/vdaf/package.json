@@ -12,11 +12,9 @@
     "build:clean": "npm run clean && npm run build",
     "build": "tsc -p ./tsconfig.json",
     "docs": "typedoc src",
-    "test": "mocha \"src/**/*.spec.ts\"",
     "lint": "eslint src --ext .ts && prettier -c src",
     "check": "tsc --noEmit -p ./tsconfig.json",
-    "format": "prettier -w src",
-    "test:coverage": "c8 npm test"
+    "format": "prettier -w src"
   },
   "dependencies": {
     "@divviup/common": "^0.2.0",

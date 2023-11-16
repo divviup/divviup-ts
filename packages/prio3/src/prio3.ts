@@ -25,21 +25,7 @@ type PreparationShare = {
   jointRandomnessPart: Buffer;
 };
 type PreparationMessage = { jointRand: Buffer };
-
-interface DecodedShare {
-  measurementShare: bigint[];
-  proofShare: bigint[];
-  blind: Buffer;
-}
-
-interface Share {
-  measurementShare: bigint[];
-  wireMeasurementShare: Buffer;
-  blind: Buffer;
-  wireProofShare: Buffer;
-  proofShare: bigint[];
-  jointRandSeed: Buffer;
-}
+type Share = InputShare & { jointRandSeed: Buffer };
 
 enum Usage {
   MeasurementShare = 1,
