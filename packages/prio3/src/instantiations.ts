@@ -4,6 +4,7 @@ import { FlpGeneric } from "./genericFlp.js";
 import { Count } from "./circuits/count.js";
 import { Histogram } from "./circuits/histogram.js";
 import { Sum } from "./circuits/sum.js";
+import { SumVec } from "./circuits/sumVec.js";
 
 export class Prio3Count extends Prio3<boolean, number> {
   constructor({ shares }: { shares: number }) {
@@ -36,5 +37,29 @@ export class Prio3Histogram extends Prio3<number, number[]> {
     );
     this.chunkLength = chunkLength;
     this.length = length;
+  }
+}
+
+interface SumVecArgs {
+  shares: number;
+  length: number;
+  chunkLength: number;
+  bits: number;
+}
+
+export class Prio3SumVec extends Prio3<number[], number[]> {
+  public readonly chunkLength: number;
+  public readonly length: number;
+  public readonly bits: number;
+  constructor({ shares, length, chunkLength, bits }: SumVecArgs) {
+    super(
+      XofShake128,
+      new FlpGeneric(new SumVec(length, bits, chunkLength)),
+      shares,
+      2,
+    );
+    this.chunkLength = chunkLength;
+    this.length = length;
+    this.bits = bits;
   }
 }

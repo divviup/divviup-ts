@@ -1,6 +1,11 @@
 import { Prio3 } from "./index.js";
 import assert from "assert";
-import { Prio3Count, Prio3Histogram, Prio3Sum } from "./instantiations.js";
+import {
+  Prio3Count,
+  Prio3Histogram,
+  Prio3Sum,
+  Prio3SumVec,
+} from "./instantiations.js";
 import { TestFlp128 } from "./flp.spec.js";
 import { XofShake128 } from "@divviup/xof";
 import type { TestVector } from "@divviup/vdaf";
@@ -10,6 +15,8 @@ import histogramTestVector0 from "./testVectors/Prio3Histogram_0.json" assert { 
 import histogramTestVector1 from "./testVectors/Prio3Histogram_1.json" assert { type: "json" };
 import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type: "json" };
 import sumTestVector1 from "./testVectors/Prio3Sum_1.json" assert { type: "json" };
+import sumVecTestVector0 from "./testVectors/Prio3SumVec_0.json" assert { type: "json" };
+import sumVecTestVector1 from "./testVectors/Prio3SumVec_1.json" assert { type: "json" };
 
 async function assertCountTestVector(
   testVector: TestVector<null, number | boolean, number>,
@@ -27,6 +34,27 @@ async function assertSumTestVector(
   const { shares, bits } = testVector;
   const instantiation = new Prio3Sum({ shares: shares, bits: bits });
   await assertPrio3TestVector(testVector, instantiation, { bits });
+}
+
+async function assertSumVecTestVector(
+  testVector: TestVector<null, number[], number[]> & {
+    bits: number;
+    length: number;
+    chunk_length: number;
+  },
+) {
+  const { shares, length, bits, chunk_length } = testVector;
+  const instantiation = new Prio3SumVec({
+    shares,
+    chunkLength: chunk_length,
+    bits,
+    length,
+  });
+  await assertPrio3TestVector(testVector, instantiation, {
+    length,
+    chunk_length,
+    bits,
+  });
 }
 
 async function assertHistogramTestVector(
@@ -107,6 +135,30 @@ describe("prio3 vdaf", () => {
 
     it("conforms to test vector 1", async () => {
       await assertHistogramTestVector(histogramTestVector1);
+    });
+  });
+
+  describe("SumVec", () => {
+    it("passes tests", async () => {
+      const sumVec = new Prio3SumVec({
+        length: 10,
+        bits: 8,
+        chunkLength: 9,
+        shares: 2,
+      });
+      assert.equal(sumVec.id, 2);
+      assert.deepEqual(
+        await sumVec.test(null, [[1, 61, 86, 61, 23, 0, 255, 3, 2, 1]]),
+        [1, 61, 86, 61, 23, 0, 255, 3, 2, 1],
+      );
+    });
+
+    it("conforms to test vector 0", async () => {
+      await assertSumVecTestVector(sumVecTestVector0);
+    });
+
+    it("conforms to test vector 1", async () => {
+      await assertSumVecTestVector(sumVecTestVector1);
     });
   });
 });
