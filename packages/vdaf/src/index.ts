@@ -30,6 +30,24 @@ export abstract class Vdaf<
     rand: Buffer,
   ): Promise<{ publicShare: PublicShare; inputShares: InputShare[] }>;
 
+  async shardEncoded(
+    measurement: Measurement,
+    nonce: Buffer,
+    rand: Buffer,
+  ): Promise<{ publicShare: Buffer; inputShares: Buffer[] }> {
+    const { inputShares, publicShare } = await this.shard(
+      measurement,
+      nonce,
+      rand,
+    );
+    return {
+      publicShare: this.encodePublicShare(publicShare),
+      inputShares: inputShares.map((inputShare) =>
+        this.encodeInputShare(inputShare),
+      ),
+    };
+  }
+
   abstract isValid(
     aggregationParameter: AggregationParameter,
     previousAggregationParameters: AggregationParameter[],
@@ -97,6 +115,21 @@ export abstract class Vdaf<
     });
   }
 
+  encodeInputShare(inputShare: InputShare): Buffer {
+    inputShare;
+    return Buffer.alloc(0);
+  }
+
+  encodePublicShare(publicShare: PublicShare): Buffer {
+    publicShare;
+    return Buffer.alloc(0);
+  }
+
+  encodeAggregatorShare(aggregatorShare: AggregatorShare): Buffer {
+    aggregatorShare;
+    return Buffer.alloc(0);
+  }
+
   async test(
     aggregationParameter: AggregationParameter,
     measurements: Measurement[],
@@ -105,16 +138,13 @@ export abstract class Vdaf<
   }
 
   encodeTestVectorInputShare(inputShare: InputShare): string {
-    inputShare;
-    return "";
+    return this.encodeInputShare(inputShare).toString("hex");
   }
   encodeTestVectorPublicShare(publicShare: PublicShare): string {
-    publicShare;
-    return "";
+    return this.encodePublicShare(publicShare).toString("hex");
   }
   encodeTestVectorAggregatorShare(aggregatorShare: AggregatorShare): string {
-    aggregatorShare;
-    return "";
+    return this.encodeAggregatorShare(aggregatorShare).toString("hex");
   }
   encodeTestVectorPreparationShare(preparationShare: PreparationShare): string {
     preparationShare;
@@ -132,24 +162,20 @@ export abstract class Vdaf<
   }
 }
 
-export interface ClientVdaf<Measurement, PublicShare, InputShare> {
+export interface ClientVdaf<Measurement> {
   shares: number;
   rounds: number;
   randSize: number;
   nonceSize: number;
 
-  shard(
+  shardEncoded(
     measurement: Measurement,
     nonce: Buffer,
     rand: Buffer,
   ): Promise<{
-    publicShare: PublicShare;
-    inputShare: InputShare[];
+    publicShare: Buffer;
+    inputShares: Buffer[];
   }>;
-}
-
-function hex(b: Buffer): string {
-  return b.toString("hex");
 }
 
 interface RunVdafArguments<M, AP, PuSh, IS, OS, AS, AR, PrSt, PrSh, PM> {
@@ -173,7 +199,7 @@ export async function runVdaf<M, AP, PuSh, IS, OS, AS, AR, PrSt, PrSh, PM>(
     agg_param: aggregationParameter,
     agg_shares: [],
     prep: [],
-    verify_key: hex(verifyKey),
+    verify_key: verifyKey.toString("hex"),
     shares,
   };
 
@@ -192,12 +218,12 @@ export async function runVdaf<M, AP, PuSh, IS, OS, AS, AR, PrSt, PrSh, PM>(
           vdaf.encodeTestVectorInputShare(inputShare),
         ),
         measurement,
-        nonce: hex(nonce),
+        nonce: nonce.toString("hex"),
         out_shares: [],
         prep_messages: [],
         prep_shares: arr(rounds, () => []),
         public_share: vdaf.encodeTestVectorPublicShare(publicShare),
-        rand: hex(rand),
+        rand: rand.toString("hex"),
       };
 
       let prepare = await Promise.all(

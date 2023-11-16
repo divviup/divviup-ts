@@ -273,27 +273,23 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
     );
   }
 
-  /** private below here  */
-
-  encodeTestVectorInputShare({
+  encodeInputShare({
     wireMeasurementShare,
     wireProofShare,
     blind,
-  }: InputShare): string {
-    return Buffer.concat([
-      wireMeasurementShare,
-      wireProofShare,
-      blind,
-    ]).toString("hex");
+  }: InputShare): Buffer {
+    return Buffer.concat([wireMeasurementShare, wireProofShare, blind]);
   }
 
-  encodeTestVectorPublicShare({ jointRandParts }: PublicShare): string {
-    return Buffer.concat(jointRandParts).toString("hex");
+  encodePublicShare({ jointRandParts }: PublicShare): Buffer {
+    return Buffer.concat(jointRandParts);
   }
 
-  encodeTestVectorAggregatorShare(aggregatorShare: bigint[]): string {
-    return Buffer.from(this.field.encode(aggregatorShare)).toString("hex");
+  encodeAggregatorShare(aggregatorShare: bigint[]): Buffer {
+    return Buffer.from(this.field.encode(aggregatorShare));
   }
+
+  /** for test vectors **/
 
   encodeTestVectorPreparationShare({
     jointRandomnessPart,
@@ -318,6 +314,8 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
       ),
     );
   }
+
+  /** private below here  */
 
   private async deriveSeed(
     seed: Buffer,

@@ -15,32 +15,33 @@ describe("DAP Report", () => {
   it("encodes as expected", () => {
     const reportId = ReportId.random();
 
-    const ciphertext1 = new HpkeCiphertext(
+    const leaderCiphertext = new HpkeCiphertext(
       1,
       Buffer.alloc(5, 1),
       Buffer.alloc(5, 1),
     );
 
-    const ciphertext2 = new HpkeCiphertext(
+    const helperCiphertext = new HpkeCiphertext(
       2,
       Buffer.alloc(2, 2),
       Buffer.alloc(2, 2),
     );
 
     const reportMetadata = new ReportMetadata(reportId, 0);
-    const report = new Report(reportMetadata, Buffer.alloc(0), [
-      ciphertext1,
-      ciphertext2,
-    ]);
+    const report = new Report(
+      reportMetadata,
+      Buffer.alloc(0),
+      leaderCiphertext,
+      helperCiphertext,
+    );
 
     assert.deepEqual(
       report.encode(),
       Buffer.from([
         ...reportMetadata.encode(), // tested below
         ...[0, 0, 0, 0], // length of the (empty) public share
-        ...[0, 0, 0, 17 + 11], // length of the combined ciphertext encodings
-        ...ciphertext1.encode(), // tested in ciphertext.spec
-        ...ciphertext2.encode(),
+        ...leaderCiphertext.encode(), // tested in ciphertext.spec
+        ...helperCiphertext.encode(),
       ]),
     );
   });
@@ -100,11 +101,11 @@ describe("DAP InputShareInfo", () => {
   it("encodes as expected", () => {
     assert.deepEqual(
       new InputShareInfo(Role.Helper).encode(),
-      Buffer.from([...Buffer.from("dap-04 input share"), 1, 3]),
+      Buffer.from([...Buffer.from("dap-07 input share"), 1, 3]),
     );
     assert.deepEqual(
       new InputShareInfo(Role.Leader).encode(),
-      Buffer.from([...Buffer.from("dap-04 input share"), 1, 2]),
+      Buffer.from([...Buffer.from("dap-07 input share"), 1, 2]),
     );
   });
 });
