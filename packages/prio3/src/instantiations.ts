@@ -19,10 +19,22 @@ export class Prio3Sum extends Prio3<number | bigint, number | bigint> {
   }
 }
 
+interface HistogramArgs {
+  shares: number;
+  length: number;
+  chunkLength: number;
+}
 export class Prio3Histogram extends Prio3<number, number[]> {
-  public readonly buckets: number[];
-  constructor({ shares, buckets }: { shares: number; buckets: number[] }) {
-    super(XofShake128, new FlpGeneric(new Histogram(buckets)), shares, 2);
-    this.buckets = buckets;
+  public readonly chunkLength: number;
+  public readonly length: number;
+  constructor({ shares, length, chunkLength }: HistogramArgs) {
+    super(
+      XofShake128,
+      new FlpGeneric(new Histogram(length, chunkLength)),
+      shares,
+      3,
+    );
+    this.chunkLength = chunkLength;
+    this.length = length;
   }
 }

@@ -1,52 +1,99 @@
 import { Circuit } from "../circuit.js";
 import { Field128 } from "@divviup/field";
-import { PolyEval } from "../gadgets/polyEval.js";
+import { Mul } from "../gadgets/mul.js";
+import { arr } from "@divviup/common";
+import { ParallelSum } from "../gadgets/parallelSum.js";
+import type { Gadget } from "../gadget.js";
 
 export class Histogram extends Circuit<number, number[]> {
-  gadgets = [new PolyEval([0n, -1n, 1n])];
+  gadgets: Gadget[];
   jointRandLen = 2;
   field = new Field128();
 
   gadgetCalls: number[];
-  inputLen: number;
+  measurementLen: number;
   outputLen: number;
 
-  buckets: number[];
+  length: number;
+  chunkLength: number;
 
-  constructor(buckets: number[]) {
+  constructor(length: number, chunkLength: number) {
     super();
-    this.buckets = buckets;
-    this.gadgetCalls = [buckets.length + 1];
-    this.inputLen = buckets.length + 1;
-    this.outputLen = buckets.length + 1;
+
+    if (
+      typeof length !== "number" ||
+      Math.trunc(length) !== length ||
+      length <= 0
+    ) {
+      throw new Error("invalid histogram length");
+    }
+    if (
+      typeof chunkLength !== "number" ||
+      Math.trunc(chunkLength) !== chunkLength ||
+      chunkLength <= 0
+    ) {
+      throw new Error("invalid histogram chunk length");
+    }
+    this.gadgets = [new ParallelSum(new Mul(), chunkLength)];
+    this.length = length;
+    this.chunkLength = chunkLength;
+    this.gadgetCalls = [Math.floor((length + chunkLength - 1) / chunkLength)];
+    this.measurementLen = length;
+    this.outputLen = length;
   }
 
-  eval(input: bigint[], jointRand: bigint[], shares: number): bigint {
-    this.ensureValidEval(input, jointRand);
+  eval(
+    encodedMeasurement: bigint[],
+    jointRand: bigint[],
+    shares: number,
+  ): bigint {
+    this.ensureValidEval(encodedMeasurement, jointRand);
     const [firstRand, secondRand] = jointRand;
     const [gadget] = this.gadgets;
-    const f = this.field;
+    const [gadgetCalls] = this.gadgetCalls;
+    const { field } = this;
+    const { chunkLength } = this;
+    const sharesInv = field.exp(BigInt(shares), -1n);
 
-    const rangeCheck = f.sum(input, (value, index) =>
-      f.mul(f.exp(firstRand, BigInt(index + 1)), gadget.eval(f, [value])),
+    const rangeCheck = arr(gadgetCalls, (gadgetCall) =>
+      arr(chunkLength, (chunk) => {
+        const index = gadgetCall * chunkLength + chunk;
+        const measurementElement = encodedMeasurement[index] || 0n;
+        return [
+          field.mul(
+            field.exp(firstRand, BigInt(index + 1)),
+            measurementElement,
+          ),
+          field.sub(measurementElement, sharesInv),
+        ];
+      }).flat(),
+    ).reduce((sum, input) => field.add(sum, gadget.eval(field, input)), 0n);
+
+    const sumCheck = encodedMeasurement.reduce(
+      (sumCheck, measurement) => field.add(sumCheck, measurement),
+      -1n * sharesInv,
     );
 
-    const sumCheck = f.sum(
-      [...input, f.mul(-1n, f.exp(BigInt(shares), -1n))],
-      (n) => n,
-    );
-
-    return f.add(
-      f.mul(secondRand, rangeCheck),
-      f.mul(f.exp(secondRand, 2n), sumCheck),
+    return field.add(
+      field.mul(secondRand, rangeCheck),
+      field.mul(field.exp(secondRand, 2n), sumCheck),
     );
   }
 
   encode(measurement: number): bigint[] {
-    const boundaries = [...this.buckets, Infinity];
-    const encoded = boundaries.map(() => 0n);
-    encoded[boundaries.findIndex((b) => measurement <= b)] = 1n;
-    return encoded;
+    if (
+      typeof measurement === "number" &&
+      measurement === Math.trunc(measurement) &&
+      measurement >= 0 &&
+      measurement < this.length
+    ) {
+      return arr(this.length, (i) => (i === measurement ? 1n : 0n));
+    } else {
+      throw new Error(`Measurement ${measurement} must an integer in [0, ${this.length}).
+
+Note: As of VDAF-07, Histogram now takes the bucket *index*, not the raw value.
+`);
+    }
   }
 
   truncate(input: bigint[]): bigint[] {

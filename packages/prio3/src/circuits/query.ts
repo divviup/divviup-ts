@@ -2,17 +2,17 @@ import { Circuit } from "../circuit.js";
 import { Field } from "@divviup/field";
 import { nextPowerOf2 } from "@divviup/common";
 import { Query as QueryGadget } from "../gadgets/query.js";
-
 export class Query<M, AR> extends Circuit<M, AR> {
   gadgets: QueryGadget[];
   circuit: Circuit<M, AR>;
+  [key: string]: unknown;
 
   get gadgetCalls(): number[] {
     return this.circuit.gadgetCalls;
   }
 
-  get inputLen(): number {
-    return this.circuit.inputLen;
+  get measurementLen(): number {
+    return this.circuit.measurementLen;
   }
 
   get outputLen(): number {
@@ -45,6 +45,11 @@ export class Query<M, AR> extends Circuit<M, AR> {
 
   constructor(circuit: Circuit<M, AR>, proof: bigint[]) {
     super();
+    for (const key in circuit) {
+      if (!(key in this)) {
+        this[key] = circuit[key as keyof typeof circuit];
+      }
+    }
 
     this.circuit = circuit;
     let proofIndex = 0;

@@ -6,7 +6,7 @@ import { arr } from "@divviup/common";
 export class Sum extends Circuit<number | bigint, bigint> {
   gadgets = [new PolyEval([0n, -1n, 1n])];
   gadgetCalls: number[];
-  inputLen: number;
+  measurementLen: number;
   jointRandLen = 1;
   outputLen = 1;
   field = new Field128();
@@ -18,7 +18,7 @@ export class Sum extends Circuit<number | bigint, bigint> {
     }
 
     this.gadgetCalls = [bits];
-    this.inputLen = bits;
+    this.measurementLen = bits;
   }
 
   eval(input: bigint[], jointRand: bigint[], _shares: number): bigint {
@@ -42,7 +42,7 @@ export class Sum extends Circuit<number | bigint, bigint> {
     ) {
       throw new Error(
         `measurement ${measurement} was not an integer in [0, ${
-          2 ** this.inputLen
+          2 ** this.measurementLen
         })`,
       );
     }
@@ -51,17 +51,17 @@ export class Sum extends Circuit<number | bigint, bigint> {
 
     if (
       bigintMeasurement < 0n ||
-      bigintMeasurement >= BigInt(2 ** this.inputLen)
+      bigintMeasurement >= BigInt(2 ** this.measurementLen)
     ) {
       throw new Error(
         `measurement ${bigintMeasurement} was not an integer in [0, ${
-          2 ** this.inputLen
+          2 ** this.measurementLen
         })`,
       );
     }
 
     return arr(
-      this.inputLen,
+      this.measurementLen,
       (index) => (bigintMeasurement >> BigInt(index)) & 1n,
     );
   }

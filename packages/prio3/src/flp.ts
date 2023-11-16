@@ -4,7 +4,7 @@ export interface Flp<Measurement, AggResult> {
   jointRandLen: number;
   proveRandLen: number;
   queryRandLen: number;
-  inputLen: number;
+  measurementLen: number;
   outputLen: number;
   proofLen: number;
   verifierLen: number;
@@ -12,19 +12,23 @@ export interface Flp<Measurement, AggResult> {
 
   encode(measurement: Measurement): bigint[];
 
-  prove(input: bigint[], proveRand: bigint[], jointRand: bigint[]): bigint[];
+  prove(
+    encodedMeasurement: bigint[],
+    proveRand: bigint[],
+    jointRand: bigint[],
+  ): bigint[];
 
   query(
-    input: bigint[],
+    encodedMeasurement: bigint[],
     proof: bigint[],
     queryRand: bigint[],
     jointRand: bigint[],
     shares: number,
   ): bigint[];
 
-  decide(input: bigint[]): boolean;
+  decide(verifier: bigint[]): boolean;
 
-  truncate(input: bigint[]): bigint[];
+  truncate(encodedMeasurement: bigint[]): bigint[];
 
-  decode(output: bigint[], num_measurements: number): AggResult;
+  decode(output: bigint[], numMeasurements: number): AggResult;
 }

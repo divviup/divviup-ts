@@ -2,21 +2,20 @@ import { arr, randomBytes } from "@divviup/common";
 import { Buffer } from "buffer";
 
 /** @internal */
-export const VDAF_VERSION_NUMBER = 5;
-export const VDAF_VERSION = "vdaf-05";
-
-export type Shares = {
-  publicShare: Buffer;
-  inputShares: Buffer[];
-};
+export const VDAF_VERSION_NUMBER = 7;
+export const VDAF_VERSION = "vdaf-07";
 
 export abstract class Vdaf<
   Measurement,
   AggregationParameter,
-  PrepareState,
-  AggregatorShare,
-  AggregationResult,
+  PublicShare,
+  InputShare,
   OutputShare,
+  AggregatorShare,
+  AggregateResult,
+  PreparationState,
+  PreparationShare,
+  PreparationMessage,
 > {
   abstract id: number;
   abstract shares: number;
@@ -29,39 +28,47 @@ export abstract class Vdaf<
     measurement: Measurement,
     nonce: Buffer,
     rand: Buffer,
-  ): Promise<Shares>;
+  ): Promise<{ publicShare: PublicShare; inputShares: InputShare[] }>;
 
-  abstract initialPrepareState(
+  abstract isValid(
+    aggregationParameter: AggregationParameter,
+    previousAggregationParameters: AggregationParameter[],
+  ): boolean;
+
+  abstract prepareInit(
     verifyKey: Buffer,
-    aggId: number,
-    aggParam: AggregationParameter,
+    aggregatorId: number,
+    aggregationParameter: AggregationParameter,
     nonce: Buffer,
-    publicShare: Buffer,
-    inputShare: Buffer,
-  ): Promise<PrepareState>;
+    publicShare: PublicShare,
+    inputShare: InputShare,
+  ): Promise<{
+    preparationState: PreparationState;
+    preparationShare: PreparationShare;
+  }>;
 
   abstract prepareNext(
-    prepareState: PrepareState,
-    inbound: Buffer | null,
+    preparationState: PreparationState,
+    preparationMessage: PreparationMessage,
   ):
-    | { prepareState: PrepareState; prepareShare: Buffer }
+    | { preparationState: PreparationState; preparationShare: PreparationShare }
     | { outputShare: OutputShare };
 
-  abstract prepSharesToPrepareMessage(
-    aggParam: AggregationParameter,
-    prepShares: Buffer[],
-  ): Promise<Buffer>;
+  abstract unshardPreparationShares(
+    aggregationParameter: AggregationParameter,
+    preparationShares: PreparationShare[],
+  ): Promise<PreparationMessage>;
 
-  abstract outputSharesToAggregatorShare(
-    aggParam: AggregationParameter,
-    outShares: OutputShare[],
+  abstract aggregate(
+    aggregationParameter: AggregationParameter,
+    outputShares: OutputShare[],
   ): AggregatorShare;
 
-  abstract aggregatorSharesToResult(
-    aggParam: AggregationParameter,
-    aggShares: AggregatorShare[],
+  abstract unshard(
+    aggregationParameter: AggregationParameter,
+    aggregatorShares: AggregatorShare[],
     measurementCount: number,
-  ): AggregationResult;
+  ): AggregateResult;
 
   domainSeparationTag(usage: number): Buffer {
     return formatDomainSeparationTag(0, this.id, usage);
@@ -79,15 +86,7 @@ export abstract class Vdaf<
     verifyKey?: Buffer;
     nonces?: Buffer[];
     rands?: Buffer[];
-  }): Promise<
-    TestVector<
-      AggregationParameter,
-      Measurement,
-      OutputShare,
-      AggregatorShare,
-      AggregationResult
-    >
-  > {
+  }): Promise<TestVector<AggregationParameter, Measurement, AggregateResult>> {
     return runVdaf({
       vdaf: this,
       verifyKey,
@@ -101,26 +100,60 @@ export abstract class Vdaf<
   async test(
     aggregationParameter: AggregationParameter,
     measurements: Measurement[],
-  ): Promise<AggregationResult> {
+  ): Promise<AggregateResult> {
     return (await this.run({ aggregationParameter, measurements })).agg_result;
+  }
+
+  encodeTestVectorInputShare(inputShare: InputShare): string {
+    inputShare;
+    return "";
+  }
+  encodeTestVectorPublicShare(publicShare: PublicShare): string {
+    publicShare;
+    return "";
+  }
+  encodeTestVectorAggregatorShare(aggregatorShare: AggregatorShare): string {
+    aggregatorShare;
+    return "";
+  }
+  encodeTestVectorPreparationShare(preparationShare: PreparationShare): string {
+    preparationShare;
+    return "";
+  }
+  encodeTestVectorPreparationMessage(
+    preparationMessage: PreparationMessage,
+  ): string {
+    preparationMessage;
+    return "";
+  }
+  encodeTestVectorOutputShare(outputShare: OutputShare): string[] {
+    outputShare;
+    return [];
   }
 }
 
-export interface ClientVdaf<Measurement> {
+export interface ClientVdaf<Measurement, PublicShare, InputShare> {
   shares: number;
   rounds: number;
   randSize: number;
   nonceSize: number;
 
-  shard(measurement: Measurement, nonce: Buffer, rand: Buffer): Promise<Shares>;
+  shard(
+    measurement: Measurement,
+    nonce: Buffer,
+    rand: Buffer,
+  ): Promise<{
+    publicShare: PublicShare;
+    inputShare: InputShare[];
+  }>;
 }
 
 function hex(b: Buffer): string {
   return b.toString("hex");
 }
 
-interface RunVdafArguments<M, AP, P, AS, AR, OS> {
-  vdaf: Vdaf<M, AP, P, AS, AR, OS>;
+interface RunVdafArguments<M, AP, PuSh, IS, OS, AS, AR, PrSt, PrSh, PM> {
+  vdaf: Vdaf<M, AP, PuSh, IS, OS, AS, AR, PrSt, PrSh, PM>;
   aggregationParameter: AP;
   measurements: M[];
   verifyKey?: Buffer;
@@ -128,19 +161,20 @@ interface RunVdafArguments<M, AP, P, AS, AR, OS> {
   rands?: Buffer[];
 }
 
-export async function runVdaf<M, AP, P, AS, AR, OS>(
-  args: RunVdafArguments<M, AP, P, AS, AR, OS>,
-): Promise<TestVector<AP, M, OS, AS, AR>> {
+export async function runVdaf<M, AP, PuSh, IS, OS, AS, AR, PrSt, PrSh, PM>(
+  args: RunVdafArguments<M, AP, PuSh, IS, OS, AS, AR, PrSt, PrSh, PM>,
+): Promise<TestVector<AP, M, AR>> {
   const { vdaf, aggregationParameter, measurements } = args;
   const { verifyKeySize, randSize, nonceSize, rounds, shares } = vdaf;
 
   const verifyKey = args.verifyKey ?? Buffer.from(randomBytes(verifyKeySize));
 
-  const testVector: Omit<TestVector<AP, M, OS, AS, AR>, "agg_result"> = {
+  const testVector: Omit<TestVector<AP, M, AR>, "agg_result"> = {
     agg_param: aggregationParameter,
-    agg_shares: [] as AS[],
+    agg_shares: [],
     prep: [],
-    verify_key: hex(Buffer.from(verifyKey)),
+    verify_key: hex(verifyKey),
+    shares,
   };
 
   const outShares = await Promise.all(
@@ -153,61 +187,79 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
         rand,
       );
 
-      const prepTestVector: PrepTestVector<M, OS> = {
-        input_shares: inputShares.map(hex),
+      const prepTestVector: PrepTestVector<M> = {
+        input_shares: inputShares.map((inputShare) =>
+          vdaf.encodeTestVectorInputShare(inputShare),
+        ),
         measurement,
         nonce: hex(nonce),
         out_shares: [],
         prep_messages: [],
         prep_shares: arr(rounds, () => []),
-        public_share: hex(publicShare),
+        public_share: vdaf.encodeTestVectorPublicShare(publicShare),
+        rand: hex(rand),
       };
 
-      const prepStates: P[] = await Promise.all(
-        arr(shares, (aggregatorId) =>
-          vdaf.initialPrepareState(
-            Buffer.from(verifyKey),
+      let prepare = await Promise.all(
+        inputShares.map((inputShare, aggregatorId) =>
+          vdaf.prepareInit(
+            verifyKey,
             aggregatorId,
             aggregationParameter,
             nonce,
             publicShare,
-            inputShares[aggregatorId],
+            inputShare,
           ),
         ),
       );
 
-      let inbound: Buffer | null = null;
-      for (let round = 0; round < rounds; round++) {
-        const outbound: Buffer[] = prepStates.map(
-          (state, aggregatorId, states) => {
-            const out = vdaf.prepareNext(state, inbound);
-            if (!("prepareState" in out) || !("prepareShare" in out)) {
-              throw new Error("expected prepareState and prepareShare");
-            }
-            states[aggregatorId] = out.prepareState;
-            return out.prepareShare;
-          },
-        );
+      prepTestVector.prep_shares[0] = prepare.map(({ preparationShare }) =>
+        vdaf.encodeTestVectorPreparationShare(preparationShare),
+      );
 
-        prepTestVector.prep_shares[round] = outbound.map(hex);
-
-        inbound = await vdaf.prepSharesToPrepareMessage(
+      for (let round = 0; round < rounds - 1; round++) {
+        const preparationMessage = await vdaf.unshardPreparationShares(
           aggregationParameter,
-          outbound,
+          prepare.map(({ preparationShare }) => preparationShare),
         );
+        prepTestVector.prep_messages.push(
+          vdaf.encodeTestVectorPreparationMessage(preparationMessage),
+        );
+        prepare = prepare.map(({ preparationState }) => {
+          const out = vdaf.prepareNext(preparationState, preparationMessage);
+          if ("outputShare" in out) {
+            throw new Error("expected preparationState and preparationShare");
+          }
+          return out;
+        });
 
-        prepTestVector.prep_messages = [hex(inbound)];
+        prepTestVector.prep_shares[round] = prepare.map(
+          ({ preparationShare }) =>
+            vdaf.encodeTestVectorPreparationShare(preparationShare),
+        );
       }
 
-      prepTestVector.out_shares = prepStates.map((state) => {
-        const out = vdaf.prepareNext(state, inbound);
-        if (!("outputShare" in out)) {
+      const preparationMessage = await vdaf.unshardPreparationShares(
+        aggregationParameter,
+        prepare.map(({ preparationShare }) => preparationShare),
+      );
+      prepTestVector.prep_messages.push(
+        vdaf.encodeTestVectorPreparationMessage(preparationMessage),
+      );
+
+      const outputShares = prepare.map(({ preparationState }) => {
+        const out = vdaf.prepareNext(preparationState, preparationMessage);
+        if ("preparationState" in out) {
           throw new Error("expected outputShare for the last share");
         }
         return out.outputShare;
       });
+
+      prepTestVector.out_shares = outputShares.map((outputShare) =>
+        vdaf.encodeTestVectorOutputShare(outputShare),
+      );
       testVector.prep.push(prepTestVector);
-      return prepTestVector.out_shares;
+      return outputShares;
     }),
   );
 
@@ -217,16 +269,18 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
       [] as OS[],
     );
 
-    const aggregatorShare = vdaf.outputSharesToAggregatorShare(
+    const aggregatorShare = vdaf.aggregate(
       aggregationParameter,
       aggregatorOutShares,
     );
 
-    testVector.agg_shares.push(aggregatorShare);
+    testVector.agg_shares.push(
+      vdaf.encodeTestVectorAggregatorShare(aggregatorShare),
+    );
     return aggregatorShare;
   });
 
-  const agg_result = vdaf.aggregatorSharesToResult(
+  const agg_result = vdaf.unshard(
     aggregationParameter,
     aggregatorShares,
     measurements.length,
@@ -235,22 +289,24 @@ export async function runVdaf<M, AP, P, AS, AR, OS>(
   return { ...testVector, agg_result };
 }
 
-export interface TestVector<AP, M, OS, AS, AR> {
+export interface TestVector<AP, M, AR> {
   verify_key: string;
+  shares: number;
   agg_param: AP;
-  prep: PrepTestVector<M, OS>[];
-  agg_shares: AS[];
+  prep: PrepTestVector<M>[];
+  agg_shares: string[];
   agg_result: AR;
 }
 
-export interface PrepTestVector<M, OS> {
+export interface PrepTestVector<M> {
   input_shares: string[];
   measurement: M;
   nonce: string;
-  out_shares: OS[];
+  out_shares: string[][];
   prep_messages: string[];
   prep_shares: string[][];
   public_share: string;
+  rand: string;
 }
 
 export function formatDomainSeparationTag(

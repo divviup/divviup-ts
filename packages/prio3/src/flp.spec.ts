@@ -1,18 +1,32 @@
 import assert from "assert";
 import { Field, Field128 } from "@divviup/field";
 import type { Flp } from "./flp.js";
+import { fill, zip } from "@divviup/common";
 
 export function runFlp<M, AR>(
   flp: Flp<M, AR>,
-  input: bigint[],
+  encodedMeasurement: bigint[],
   shares: number,
 ): boolean {
-  const jointRand = flp.field.fillRandom(flp.jointRandLen);
-  const proveRand = flp.field.fillRandom(flp.proveRandLen);
-  const queryRand = flp.field.fillRandom(flp.queryRandLen);
+  const { field } = flp;
+  const jointRand = field.fillRandom(flp.jointRandLen);
+  const proveRand = field.fillRandom(flp.proveRandLen);
+  const queryRand = field.fillRandom(flp.queryRandLen);
 
-  const proof = flp.prove(input, proveRand, jointRand);
-  const verifier = flp.query(input, proof, queryRand, jointRand, shares);
+  const proof = flp.prove(encodedMeasurement, proveRand, jointRand);
+  const measurementShares = field.additiveSecretShare(
+    encodedMeasurement,
+    shares,
+  );
+  const proofShares = field.additiveSecretShare(proof, shares);
+  const verifierShares = zip(measurementShares, proofShares).map(
+    ([measurementShare, proofShare]) =>
+      flp.query(measurementShare, proofShare, queryRand, jointRand, shares),
+  );
+  const verifier = verifierShares.reduce(
+    (verifier, share) => field.vecAdd(verifier, share),
+    fill(verifierShares[0].length, 0n),
+  );
 
   return flp.decide(verifier);
 }
@@ -21,7 +35,7 @@ class TestFlp implements Flp<number, number> {
   jointRandLen = 1;
   proveRandLen = 2;
   queryRandLen = 3;
-  inputLen = 2;
+  measurementLen = 2;
   outputLen = 1;
   proofLen = 2;
   verifierLen = 2;

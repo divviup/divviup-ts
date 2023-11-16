@@ -20,8 +20,8 @@ export class FlpGeneric<M, AR> implements Flp<M, AR> {
     return this.circuit.queryRandLen;
   }
 
-  get inputLen(): number {
-    return this.circuit.inputLen;
+  get measurementLen(): number {
+    return this.circuit.measurementLen;
   }
 
   get outputLen(): number {

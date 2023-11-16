@@ -4,10 +4,48 @@ import { Prio3Count, Prio3Histogram, Prio3Sum } from "./instantiations.js";
 import { TestFlp128 } from "./flp.spec.js";
 import { XofShake128 } from "@divviup/xof";
 import type { TestVector } from "@divviup/vdaf";
-import { arr } from "@divviup/common";
 import countTestVector0 from "./testVectors/Prio3Count_0.json" assert { type: "json" };
+import countTestVector1 from "./testVectors/Prio3Count_1.json" assert { type: "json" };
 import histogramTestVector0 from "./testVectors/Prio3Histogram_0.json" assert { type: "json" };
+import histogramTestVector1 from "./testVectors/Prio3Histogram_1.json" assert { type: "json" };
 import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type: "json" };
+import sumTestVector1 from "./testVectors/Prio3Sum_1.json" assert { type: "json" };
+
+async function assertCountTestVector(
+  testVector: TestVector<null, number | boolean, number>,
+) {
+  const instantiation = new Prio3Count({ shares: testVector.shares });
+  for (const prep of testVector.prep) {
+    prep.measurement = prep.measurement !== 0;
+  }
+  await assertPrio3TestVector(testVector, instantiation);
+}
+
+async function assertSumTestVector(
+  testVector: TestVector<null, number, number> & { bits: number },
+) {
+  const { shares, bits } = testVector;
+  const instantiation = new Prio3Sum({ shares: shares, bits: bits });
+  await assertPrio3TestVector(testVector, instantiation, { bits });
+}
+
+async function assertHistogramTestVector(
+  testVector: TestVector<null, number, number[]> & {
+    length: number;
+    chunk_length: number;
+  },
+) {
+  const { shares, length, chunk_length } = testVector;
+  const instantiation = new Prio3Histogram({
+    shares,
+    chunkLength: chunk_length,
+    length,
+  });
+  await assertPrio3TestVector(testVector, instantiation, {
+    length,
+    chunk_length,
+  });
+}
 
 describe("prio3 vdaf", () => {
   it("test flp", async () => {
@@ -15,105 +53,85 @@ describe("prio3 vdaf", () => {
     assert.equal(await testFlp.test(null, [1, 2, 3, 4, 4]), 14);
   });
 
-  it("count", async () => {
-    const count = new Prio3Count({ shares: 2 });
-    assert.equal(await count.test(null, [false, true, true, false, true]), 3);
-
-    assert.equal(await count.test(null, [true]), 1);
-
-    await assertPrio3TestVector(
-      {
-        ...countTestVector0,
-        prep: countTestVector0.prep.map((prep) => ({
-          ...prep,
-          measurement: prep.measurement !== 0,
-        })),
-      },
-      count,
-    );
-  });
-
-  it("sum", async () => {
-    const sum = new Prio3Sum({ shares: 2, bits: 8 });
-    assert.equal(await sum.test(null, [0n, 147n, 1n, 0n, 11n, 0n]), 159);
-    assert.equal(await sum.test(null, [100n]), 100);
-
-    await assertPrio3TestVector(sumTestVector0, sum, { bits: sum.bits });
-  });
-
-  it("histogram", async () => {
-    const histogram = new Prio3Histogram({
-      shares: 2,
-      buckets: [1, 10, 100],
+  describe("count", () => {
+    it("passes tests", async () => {
+      const count = new Prio3Count({ shares: 2 });
+      assert.equal(await count.test(null, [false, true, true, false, true]), 3);
+      assert.equal(await count.test(null, [true]), 1);
     });
-    assert.deepEqual(await histogram.test(null, [0]), [1, 0, 0, 0]);
-    assert.deepEqual(await histogram.test(null, [5]), [0, 1, 0, 0]);
-    assert.deepEqual(await histogram.test(null, [10]), [0, 1, 0, 0]);
-    assert.deepEqual(await histogram.test(null, [15]), [0, 0, 1, 0]);
-    assert.deepEqual(await histogram.test(null, [100]), [0, 0, 1, 0]);
-    assert.deepEqual(await histogram.test(null, [101]), [0, 0, 0, 1]);
-    assert.deepEqual(
-      await histogram.test(null, [0, 1, 5, 10, 15, 100, 101, 101]),
-      [2, 2, 2, 2],
-    );
-    assert.deepEqual(await histogram.test(null, [50]), [0, 0, 1, 0]);
 
-    await assertPrio3TestVector(histogramTestVector0, histogram, {
-      buckets: histogram.buckets,
+    it("conforms to test vector 0", async () => {
+      await assertCountTestVector(countTestVector0);
+    });
+
+    it("conforms to test vector 1", async () => {
+      await assertCountTestVector(countTestVector1);
+    });
+  });
+
+  describe("sum", () => {
+    it("passes tests", async () => {
+      const sum = new Prio3Sum({ shares: 2, bits: 8 });
+      assert.equal(await sum.test(null, [0n, 147n, 1n, 0n, 11n, 0n]), 159);
+      assert.equal(await sum.test(null, [100n]), 100);
+    });
+
+    it("conforms to test vector 0", async () => {
+      await assertSumTestVector(sumTestVector0);
+    });
+
+    it("conforms to test vector 1", async () => {
+      await assertSumTestVector(sumTestVector1);
+    });
+  });
+
+  describe("histogram", () => {
+    it("passes tests", async () => {
+      const histogram = new Prio3Histogram({
+        shares: 2,
+        length: 4,
+        chunkLength: 2,
+      });
+      assert.deepEqual(await histogram.test(null, [0]), [1, 0, 0, 0]);
+      assert.deepEqual(await histogram.test(null, [1]), [0, 1, 0, 0]);
+      assert.deepEqual(await histogram.test(null, [2]), [0, 0, 1, 0]);
+      assert.deepEqual(await histogram.test(null, [3]), [0, 0, 0, 1]);
+      assert.deepEqual(
+        await histogram.test(null, [0, 0, 1, 1, 2, 2, 3, 3]),
+        [2, 2, 2, 2],
+      );
+    });
+    it("conforms to test vector 0", async () => {
+      await assertHistogramTestVector(histogramTestVector0);
+    });
+
+    it("conforms to test vector 1", async () => {
+      await assertHistogramTestVector(histogramTestVector1);
     });
   });
 });
 
-type JsonTestVector<Measurement, AggregationResult> = TestVector<
-  null,
-  Measurement,
-  string[],
-  string,
-  AggregationResult
->;
-
-function deterministicRandom(length: number): Uint8Array {
-  return Uint8Array.from(arr(length, (i) => i % 256));
-}
-
-async function runPrio3<M, AR>(
+function runPrio3<M, AR>(
   instantiation: Prio3<M, AR>,
   measurements: M[],
   nonces: Buffer[],
   verifyKey: Buffer,
   rands: Buffer[],
-): Promise<JsonTestVector<M, AR>> {
+): Promise<TestVector<null, M, AR>> {
   const aggregationParameter = null;
-  const testVector = await instantiation.run({
+  return instantiation.run({
     aggregationParameter,
     nonces,
     measurements,
     verifyKey,
     rands,
   });
-  const { field } = instantiation.flp;
-
-  return {
-    ...testVector,
-    agg_shares: testVector.agg_shares.map((x) =>
-      Buffer.from(field.encode(x)).toString("hex"),
-    ),
-
-    prep: testVector.prep.map((prep) => ({
-      ...prep,
-      out_shares: prep.out_shares.map((outShare) =>
-        outShare.map((bigNumber) =>
-          Buffer.from(field.encode([bigNumber])).toString("hex"),
-        ),
-      ),
-    })),
-  };
 }
 
 async function assertPrio3TestVector<
   Measurement,
   AggregationResult,
-  TestVectorJson extends JsonTestVector<Measurement, AggregationResult>,
+  TestVectorJson extends TestVector<null, Measurement, AggregationResult>,
   Prio3Instantiation extends Prio3<Measurement, AggregationResult>,
 >(
   expectedTestVector: TestVectorJson,
@@ -125,8 +143,8 @@ async function assertPrio3TestVector<
   );
   const verifyKey = Buffer.from(expectedTestVector.verify_key, "hex");
   const measurements = expectedTestVector.prep.map((prep) => prep.measurement);
-  const rands = measurements.map((_) =>
-    Buffer.from(deterministicRandom(instantiation.randSize)),
+  const rands = expectedTestVector.prep.map((prep) =>
+    Buffer.from(prep.rand, "hex"),
   );
 
   const actualTestVector = await runPrio3(

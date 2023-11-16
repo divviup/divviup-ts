@@ -14,7 +14,7 @@ import { DAPError } from "./errors.js";
 import { CONTENT_TYPES, DAP_VERSION } from "./constants.js";
 import { Aggregator } from "./aggregator.js";
 import { Prio3Count, Prio3Histogram, Prio3Sum } from "@divviup/prio3";
-import { randomBytes } from "@divviup/common";
+import { randomBytes, zip } from "@divviup/common";
 
 export { TaskId } from "./taskId.js";
 
@@ -168,7 +168,7 @@ export class Task<
     await this.fetchKeyConfiguration();
     const reportId = ReportId.random();
     const rand = Buffer.from(randomBytes(this.#vdaf.randSize));
-    const { publicShare, inputShares } = await this.#vdaf.shard(
+    const { publicShare, measurementShares } = await this.#vdaf.shard(
       measurement,
       reportId.encode(),
       rand,
@@ -178,11 +178,12 @@ export class Task<
     const metadata = new ReportMetadata(reportId, time);
     const aad = new InputShareAad(this.id, metadata, publicShare);
     const ciphertexts = await Promise.all(
-      this.#aggregators.map((aggregator, i) =>
-        aggregator.seal(
-          new PlaintextInputShare(this.#extensions, inputShares[i]),
-          aad,
-        ),
+      zip(this.#aggregators, measurementShares).map(
+        ([aggregator, measurementShare]) =>
+          aggregator.seal(
+            new PlaintextInputShare(this.#extensions, measurementShare),
+            aad,
+          ),
       ),
     );
 
