@@ -6,9 +6,10 @@ import { spawnSync } from "node:child_process";
 import { Server } from "node:http";
 
 const JANUS_INTEROP_AGGREGATOR_IMAGE =
-  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_aggregator:0.5.2@sha256:15394dcc4d6eacf4e2112ef0d15a972328a7d805cb39ba9fc607b6a3e62fa9df";
+  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_aggregator@sha256:8cc873f7a8be459fe2dbecdf78561806b514ac98b4d644dc9a7f6bb25bb9df02";
+
 const JANUS_INTEROP_COLLECTOR_IMAGE =
-  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_collector:0.5.2@sha256:085a627ae221d64bfab655b574992bb2a13aa2dd837075c7da3b0695af385979";
+  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_collector@sha256:982110bc29842639355830339b95fac77432cbbcc28df0cd07daf91551570602";
 
 const IDENTIFIER_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -622,9 +623,27 @@ describe("interoperation test", function () {
       const clientPort = (server.address() as AddressInfo).port;
       await runIntegrationTestWithHostClient(
         clientPort,
-        { type: "Prio3Histogram", buckets: ["10", "100", "1000"] },
-        ["67", "216", "2012", "52", "10"],
+        { type: "Prio3Histogram", length: "4", chunk_length: "2" },
+        ["0", "1", "3", "1", "2"],
         [1, 2, 1, 1],
+      );
+    } finally {
+      server.close();
+    }
+  });
+
+  it("Prio3SumVec is compatible with Janus", async () => {
+    const server: Server = await startServer();
+    try {
+      const clientPort = (server.address() as AddressInfo).port;
+      await runIntegrationTestWithHostClient(
+        clientPort,
+        { type: "Prio3SumVec", length: "5", bits: "32", chunk_length: "3" },
+        [
+          ["67", "216", "2012", "52", "10"],
+          ["100", "0", "0", "1", "0"],
+        ],
+        [167, 216, 2012, 53, 10],
       );
     } finally {
       server.close();
