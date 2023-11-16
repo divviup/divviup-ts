@@ -25,7 +25,7 @@ type PreparationShare = {
   jointRandomnessPart: Buffer;
 };
 type PreparationMessage = { jointRand: Buffer };
-type Share = InputShare & { jointRandSeed: Buffer };
+type Share = InputShare & { jointRandPart: Buffer };
 
 enum Usage {
   MeasurementShare = 1,
@@ -110,7 +110,7 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
       proof,
       partialLeaderShare,
       helperShares,
-    ).map(({ jointRandSeed: _, ...share }) => share);
+    ).map(({ jointRandPart: _, ...share }) => share);
 
     return { inputShares, publicShare };
   }
@@ -339,7 +339,7 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
         (helperShares.length * 3 + 1) * xof.seedSize,
       );
 
-      const jointRandSeed = await this.deriveSeed(blind, Usage.JointRandPart, [
+      const jointRandPart = await this.deriveSeed(blind, Usage.JointRandPart, [
         Uint8Array.of(0),
         nonce,
         field.encode(measurementShare),
@@ -349,14 +349,14 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
         blind,
         measurementShare,
         wireMeasurementShare,
-        jointRandSeed,
+        jointRandPart,
       };
     } else {
       return {
         blind: Buffer.alloc(0),
         measurementShare,
         wireMeasurementShare,
-        jointRandSeed: Buffer.alloc(0),
+        jointRandPart: Buffer.alloc(0),
       };
     }
   }
@@ -424,7 +424,7 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
           wireProofShare,
           shareId,
         );
-        const jointRandSeed = this.useJointRand()
+        const jointRandPart = this.useJointRand()
           ? await this.deriveSeed(blind, Usage.JointRandPart, [
               shareId,
               nonce,
@@ -438,7 +438,7 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
           wireMeasurementShare,
           wireProofShare,
           proofShare,
-          jointRandSeed,
+          jointRandPart,
         };
       }),
     );
@@ -481,13 +481,13 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
   }
 
   private async jointRand(
-    shares: { jointRandSeed: Buffer }[],
+    shares: { jointRandPart: Buffer }[],
   ): Promise<{ jointRand: bigint[]; publicShare: PublicShare }> {
     if (!this.useJointRand()) {
       return { jointRand: [], publicShare: { jointRandParts: [] } };
     }
     const { flp, xof } = this;
-    const jointRandParts = shares.map(({ jointRandSeed }) => jointRandSeed);
+    const jointRandParts = shares.map(({ jointRandPart }) => jointRandPart);
     const jointRandSeed = await this.deriveSeed(
       Buffer.alloc(xof.seedSize),
       Usage.JointRandSeed,
