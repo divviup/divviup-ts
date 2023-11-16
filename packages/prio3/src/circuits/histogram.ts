@@ -71,7 +71,7 @@ export class Histogram extends Circuit<number, number[]> {
 
     const sumCheck = encodedMeasurement.reduce(
       (sumCheck, measurement) => field.add(sumCheck, measurement),
-      -1n * sharesInv,
+      field.mul(sharesInv, -1n),
     );
 
     return field.add(
