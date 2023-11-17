@@ -9,7 +9,7 @@ const JANUS_INTEROP_AGGREGATOR_IMAGE =
   "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_aggregator:0.6.3@sha256:8cc873f7a8be459fe2dbecdf78561806b514ac98b4d644dc9a7f6bb25bb9df02";
 
 const JANUS_INTEROP_COLLECTOR_IMAGE =
-  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_collector@sha256:982110bc29842639355830339b95fac77432cbbcc28df0cd07daf91551570602";
+  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_collector:0.6.3@sha256:982110bc29842639355830339b95fac77432cbbcc28df0cd07daf91551570602";
 
 const IDENTIFIER_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 
