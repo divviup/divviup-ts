@@ -10,7 +10,7 @@
     "./packages/interop-test-client"
   ],
   "scripts": {
-    "test": "npm test -ws --if-present",
+    "test": "mocha packages/*/src/**/*.spec.ts",
     "build": "npm run -ws --if-present build",
     "build:clean": "npm run -ws --if-present build:clean",
     "test:coverage": "c8 npm test",
