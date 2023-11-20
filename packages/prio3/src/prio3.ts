@@ -275,22 +275,22 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
     return Buffer.from(this.field.encode(aggregatorShare));
   }
 
-  /** for test vectors **/
-
-  encodeTestVectorPreparationShare({
+  encodePreparationShare({
     jointRandomnessPart,
     verifierShare,
-  }: PreparationShare): string {
+  }: PreparationShare): Buffer {
     return Buffer.concat([
       this.field.encode(verifierShare),
       jointRandomnessPart,
-    ]).toString("hex");
+    ]);
   }
 
-  encodeTestVectorPreparationMessage({
-    jointRand,
-  }: PreparationMessage): string {
-    return jointRand.toString("hex");
+  encodePreparationMessage({ jointRand }: PreparationMessage): Buffer {
+    return jointRand;
+  }
+
+  encodeAggregationParameter(_: null): Buffer {
+    return Buffer.alloc(0);
   }
 
   encodeTestVectorOutputShare(outputShare: bigint[]): string[] {

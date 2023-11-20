@@ -115,21 +115,16 @@ export abstract class Vdaf<
     });
   }
 
-  encodeInputShare(inputShare: InputShare): Buffer {
-    inputShare;
-    return Buffer.alloc(0);
-  }
-
-  encodePublicShare(publicShare: PublicShare): Buffer {
-    publicShare;
-    return Buffer.alloc(0);
-  }
-
-  encodeAggregatorShare(aggregatorShare: AggregatorShare): Buffer {
-    aggregatorShare;
-    return Buffer.alloc(0);
-  }
-
+  abstract encodeInputShare(inputShare: InputShare): Buffer;
+  abstract encodePublicShare(publicShare: PublicShare): Buffer;
+  abstract encodeAggregatorShare(aggregatorShare: AggregatorShare): Buffer;
+  abstract encodeAggregationParameter(
+    aggregationParameter: AggregationParameter,
+  ): Buffer;
+  abstract encodePreparationShare(preparationShare: PreparationShare): Buffer;
+  abstract encodePreparationMessage(
+    preparationMessage: PreparationMessage,
+  ): Buffer;
   async test(
     aggregationParameter: AggregationParameter,
     measurements: Measurement[],
@@ -147,14 +142,12 @@ export abstract class Vdaf<
     return this.encodeAggregatorShare(aggregatorShare).toString("hex");
   }
   encodeTestVectorPreparationShare(preparationShare: PreparationShare): string {
-    preparationShare;
-    return "";
+    return this.encodePreparationShare(preparationShare).toString("hex");
   }
   encodeTestVectorPreparationMessage(
     preparationMessage: PreparationMessage,
   ): string {
-    preparationMessage;
-    return "";
+    return this.encodePreparationMessage(preparationMessage).toString("hex");
   }
   encodeTestVectorOutputShare(outputShare: OutputShare): string[] {
     outputShare;
