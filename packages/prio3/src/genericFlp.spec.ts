@@ -7,7 +7,7 @@ import { FlpGeneric } from "./genericFlp.js";
 import { runFlp } from "./flp.spec.js";
 import type { GenericCircuit } from "./circuit.js";
 import { Circuit } from "./circuit.js";
-import { arr, nextPowerOf2 } from "@divviup/common";
+import { arr, fill, nextPowerOf2 } from "@divviup/common";
 import assert from "assert";
 import { PolyEval } from "./gadgets/polyEval.js";
 import { Mul } from "./gadgets/mul.js";
@@ -35,7 +35,7 @@ function testCircuit<M, AR>(
   input: bigint[],
   expected: boolean,
 ) {
-  assert.equal(input.length, circuit.inputLen);
+  assert.equal(input.length, circuit.measurementLen);
   assert.equal(circuit.truncate(input).length, circuit.outputLen);
   const jointRand = circuit.field.fillRandom(circuit.jointRandLen);
   const v = circuit.eval(input, jointRand, 1);
@@ -48,7 +48,7 @@ class TestMultiGadget extends Circuit<number, number> {
   field = new Field64();
   gadgets = [new Mul(), new Mul()];
   gadgetCalls = [1, 2];
-  inputLen = 1;
+  measurementLen = 1;
   jointRandLen = 0;
   outputLen = 1;
 
@@ -117,14 +117,17 @@ describe("flp generic", () => {
   });
 
   describe("Histogram", () => {
-    const histogram = new Histogram([0, 10, 20]);
+    const histogram = new Histogram(4, 2);
     it("gadgets", () => {
       testCircuitGadgets(histogram);
     });
     it("examples", () => {
       testCircuit(histogram, histogram.encode(0), true);
-      testCircuit(histogram, histogram.encode(13), true);
-      testCircuit(histogram, histogram.encode(2 ** 10 - 1), true);
+      testCircuit(histogram, histogram.encode(1), true);
+      testCircuit(histogram, histogram.encode(2), true);
+      testCircuit(histogram, histogram.encode(3), true);
+      testCircuit(histogram, fill(4, 0n), false);
+      testCircuit(histogram, fill(4, 1n), false);
       testCircuit(histogram, histogram.field.fillRandom(4), false);
     });
   });

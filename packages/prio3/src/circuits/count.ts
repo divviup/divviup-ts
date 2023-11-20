@@ -5,7 +5,7 @@ import { Mul } from "../gadgets/mul.js";
 export class Count extends Circuit<boolean, number> {
   gadgets = [new Mul()];
   gadgetCalls = [1];
-  inputLen = 1;
+  measurementLen = 1;
   jointRandLen = 0;
   outputLen = 1;
   field = new Field64();

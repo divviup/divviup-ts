@@ -7,6 +7,7 @@ import express from "express";
 import type { ReportOptions } from "@divviup/dap";
 import Task from "@divviup/dap";
 
+import { inspect } from "node:util";
 import * as url from "node:url";
 import * as fs from "node:fs";
 try {
@@ -26,12 +27,24 @@ interface SumVdafObject {
 
 interface HistogramVdafObject {
   type: "Prio3Histogram";
-  buckets: string[];
+  length: number;
+  chunk_length: number;
 }
 
-type VdafObject = CountVdafObject | SumVdafObject | HistogramVdafObject;
+interface SumVecVdafObject {
+  type: "Prio3SumVec";
+  length: number;
+  chunk_length: number;
+  bits: number;
+}
 
-type Measurement = number | string | string[];
+type VdafObject =
+  | CountVdafObject
+  | SumVdafObject
+  | HistogramVdafObject
+  | SumVecVdafObject;
+
+type Measurement = number | number[] | string | string[];
 
 interface UploadRequest {
   task_id: string;
@@ -136,7 +149,7 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
 
   switch (vdaf.type) {
     case "Prio3Count":
-      measurement = Number(body.measurement);
+      measurement = fetchNumber(body, "measurement");
       if (measurement !== 0 && measurement !== 1) {
         throw new Error("Measurement is not 0 or 1");
       }
@@ -147,62 +160,32 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
       break;
 
     case "Prio3Sum":
-      {
-        let bits;
-        if (!("bits" in vdaf)) {
-          throw new Error("VDAF definition is missing number of bits");
-        }
-        if (typeof vdaf.bits === "number") {
-          bits = vdaf.bits;
-        } else if (typeof vdaf.bits == "string") {
-          bits = parseInt(vdaf.bits, 10);
-          if (isNaN(bits)) {
-            throw new Error(
-              "VDAF definition's `bits` parameter is not a valid base 10 integer",
-            );
-          }
-        } else {
-          throw new Error(
-            "VDAF definition's `bits` parameter is not a number or string",
-          );
-        }
-        if (typeof body.measurement !== "string") {
-          throw new Error("Measurement is not a string");
-        }
-
-        vdafObject = {
-          type: vdaf.type,
-          bits: bits,
-        };
-        measurement = body.measurement;
-      }
+      vdafObject = {
+        type: vdaf.type,
+        bits: fetchNumber(vdaf, "bits"),
+      };
+      measurement = fetchNumber(body, "measurement");
       break;
 
     case "Prio3Histogram":
-      if (!("buckets" in vdaf)) {
-        throw new Error("VDAF definition is missing buckets");
-      }
-      if (!Array.isArray(vdaf.buckets)) {
-        throw new Error(
-          "VDAF definition's `buckets` parameter is not an array",
-        );
-      }
-      for (const bucketBoundary of vdaf.buckets) {
-        if (typeof bucketBoundary !== "string") {
-          throw new Error(
-            "VDAF defeinition's `buckets` parameter is not an array of strings",
-          );
-        }
-      }
-      if (typeof body.measurement !== "string") {
-        throw new Error("Measurement is not a string");
-      }
-
       vdafObject = {
         type: vdaf.type,
-        buckets: vdaf.buckets as string[],
+        length: fetchNumber(vdaf, "length"),
+        chunk_length: fetchNumber(vdaf, "chunk_length"),
       };
-      measurement = body.measurement;
+      measurement = fetchNumber(body, "measurement");
+      break;
+
+    case "Prio3SumVec":
+      vdafObject = {
+        type: vdaf.type,
+        length: fetchNumber(vdaf, "length"),
+        chunk_length: fetchNumber(vdaf, "chunk_length"),
+        bits: fetchNumber(vdaf, "bits"),
+      };
+      measurement = (body.measurement as unknown[]).map((n) =>
+        parseNumber(n, "measurement"),
+      );
       break;
 
     default:
@@ -218,6 +201,40 @@ function sanitizeRequest(rawBody: unknown): UploadRequest {
     time: time,
     time_precision: body.time_precision,
   };
+}
+
+function fetchProperty(
+  obj: { [key: string]: unknown },
+  property: string,
+): unknown {
+  if (!(property in obj)) {
+    throw new Error(`missing property ${property} from ${inspect(obj)}`);
+  }
+  return obj[property];
+}
+
+function fetchNumber(
+  obj: { [key: string]: unknown },
+  property: string,
+): number {
+  return parseNumber(fetchProperty(obj, property), property);
+}
+
+function parseNumber(input: unknown, name: string): number {
+  if (typeof input === "number") {
+    return input;
+  } else if (typeof input == "string") {
+    const returnValue = parseInt(input, 10);
+    if (isNaN(returnValue)) {
+      throw new Error(
+        `${name} is not a valid base 10 integer (was ${inspect(input)})`,
+      );
+    }
+    return returnValue;
+  } else
+    throw new Error(
+      `${name} is not a valid base 10 integer (was ${inspect(input)})`,
+    );
 }
 
 function assertUnreachable(_: never): never {
@@ -259,7 +276,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
           timePrecisionSeconds: body.time_precision,
           type: "sum",
           bits: body.vdaf.bits,
-        }).sendMeasurement(BigInt(body.measurement as string), options);
+        }).sendMeasurement(body.measurement as number, options);
         break;
 
       case "Prio3Histogram":
@@ -269,8 +286,22 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
           helper: body.helper,
           timePrecisionSeconds: body.time_precision,
           type: "histogram",
-          buckets: body.vdaf.buckets.map(Number),
-        }).sendMeasurement(Number(body.measurement), options);
+          length: body.vdaf.length,
+          chunkLength: body.vdaf.chunk_length,
+        }).sendMeasurement(body.measurement as number, options);
+        break;
+
+      case "Prio3SumVec":
+        await new Task({
+          id: body.task_id,
+          leader: body.leader,
+          helper: body.helper,
+          timePrecisionSeconds: body.time_precision,
+          type: "sumVec",
+          bits: body.vdaf.bits,
+          length: body.vdaf.length,
+          chunkLength: body.vdaf.chunk_length,
+        }).sendMeasurement(body.measurement as number[], options);
         break;
 
       default:

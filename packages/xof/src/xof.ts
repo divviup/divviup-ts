@@ -1,10 +1,10 @@
 import { Field } from "@divviup/field";
 import { nextPowerOf2Big, octetStringToIntegerLE } from "@divviup/common";
 
-export abstract class Prg {
+export abstract class Xof {
   abstract next(_length: number): Promise<Uint8Array>;
   static deriveSeed(
-    this: PrgConstructor,
+    this: XofConstructor,
     seed: Uint8Array,
     dst: Uint8Array,
     binder: Uint8Array,
@@ -26,7 +26,7 @@ export abstract class Prg {
   }
 
   static async expandIntoVec(
-    this: PrgConstructor,
+    this: XofConstructor,
     field: Field,
     seed: Uint8Array,
     dst: Uint8Array,
@@ -37,9 +37,9 @@ export abstract class Prg {
   }
 }
 
-export interface PrgConstructor {
+export interface XofConstructor {
   seedSize: number;
-  new (seed: Uint8Array, dst: Uint8Array, binder: Uint8Array): Prg;
+  new (seed: Uint8Array, dst: Uint8Array, binder: Uint8Array): Xof;
   deriveSeed(
     seed: Uint8Array,
     dst: Uint8Array,

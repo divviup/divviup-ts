@@ -13,7 +13,12 @@ import { Extension } from "./extension.js";
 import { DAPError } from "./errors.js";
 import { CONTENT_TYPES, DAP_VERSION } from "./constants.js";
 import { Aggregator } from "./aggregator.js";
-import { Prio3Count, Prio3Histogram, Prio3Sum } from "@divviup/prio3";
+import {
+  Prio3Count,
+  Prio3Histogram,
+  Prio3Sum,
+  Prio3SumVec,
+} from "@divviup/prio3";
 import { randomBytes } from "@divviup/common";
 
 export { TaskId } from "./taskId.js";
@@ -55,12 +60,12 @@ type Fetch = (
   init?: RequestInit | undefined,
 ) => Promise<Response>;
 
-interface KnownVdafs {
+export interface KnownVdafs {
   sum: typeof Prio3Sum;
   count: typeof Prio3Count;
   histogram: typeof Prio3Histogram;
+  sumVec: typeof Prio3SumVec;
 }
-
 type KnownVdafNames = keyof KnownVdafs;
 export type KnownVdafSpec = {
   [Key in KnownVdafNames]: Omit<
@@ -71,7 +76,7 @@ export type KnownVdafSpec = {
 type KnownVdaf<Spec extends KnownVdafSpec> = KnownVdafs[Spec["type"]];
 type VdafInstance<Spec extends KnownVdafSpec> = InstanceType<KnownVdaf<Spec>>;
 export type VdafMeasurement<Spec extends KnownVdafSpec> = Parameters<
-  VdafInstance<Spec>["measurementToInputShares"]
+  VdafInstance<Spec>["shard"]
 >[0];
 function vdafFromSpec<Spec extends KnownVdafSpec>(
   spec: Spec,
@@ -87,6 +92,8 @@ function vdafFromSpec<Spec extends KnownVdafSpec>(
       }) as VdafInstance<Spec>;
     case "sum":
       return new Prio3Sum({ ...spec, shares }) as VdafInstance<Spec>;
+    case "sumVec":
+      return new Prio3SumVec({ ...spec, shares }) as VdafInstance<Spec>;
   }
 }
 
@@ -104,7 +111,8 @@ export class Task<
 > {
   #vdaf: ClientVdaf<Measurement>;
   #id: TaskId;
-  #aggregators: Aggregator[];
+  #leader: Aggregator;
+  #helper: Aggregator;
   #timePrecisionSeconds: number;
   #extensions: Extension[] = [];
   #fetch: Fetch = globalThis.fetch.bind(globalThis);
@@ -119,7 +127,8 @@ export class Task<
   constructor(parameters: ClientParameters & Spec) {
     this.#vdaf = vdafFromSpec(parameters) as ClientVdaf<Measurement>;
     this.#id = idFromDefinition(parameters.id);
-    this.#aggregators = aggregatorsFromParameters(parameters);
+    this.#leader = Aggregator.leader(parameters.leader);
+    this.#helper = Aggregator.helper(parameters.helper);
     if (typeof parameters.timePrecisionSeconds !== "number") {
       throw new Error("timePrecisionSeconds must be a number");
     }
@@ -129,7 +138,7 @@ export class Task<
   /** @internal */
   //this exists for testing, and should not be considered part of the public api.
   get aggregators(): Aggregator[] {
-    return this.#aggregators;
+    return [this.#leader, this.#helper];
   }
 
   /** @internal */
@@ -168,26 +177,28 @@ export class Task<
     await this.fetchKeyConfiguration();
     const reportId = ReportId.random();
     const rand = Buffer.from(randomBytes(this.#vdaf.randSize));
-    const { publicShare, inputShares } =
-      await this.#vdaf.measurementToInputShares(
-        measurement,
-        reportId.encode(),
-        rand,
-      );
+    const {
+      publicShare,
+      inputShares: [leaderShare, helperShare],
+    } = await this.#vdaf.shardEncoded(measurement, reportId.encode(), rand);
 
     const time = roundedTime(this.#timePrecisionSeconds, options?.timestamp);
     const metadata = new ReportMetadata(reportId, time);
     const aad = new InputShareAad(this.id, metadata, publicShare);
-    const ciphertexts = await Promise.all(
-      this.#aggregators.map((aggregator, i) =>
-        aggregator.seal(
-          new PlaintextInputShare(this.#extensions, inputShares[i]),
-          aad,
-        ),
-      ),
+    const leaderCiphertext = await this.#leader.seal(
+      new PlaintextInputShare(this.#extensions, leaderShare),
+      aad,
     );
-
-    return new Report(metadata, publicShare, ciphertexts);
+    const helperCiphertext = await this.#helper.seal(
+      new PlaintextInputShare(this.#extensions, helperShare),
+      aad,
+    );
+    return new Report(
+      metadata,
+      publicShare,
+      leaderCiphertext,
+      helperCiphertext,
+    );
   }
 
   /**
@@ -199,7 +210,7 @@ export class Task<
    */
   async sendReport(report: Report) {
     const body = report.encode();
-    const leader = this.#aggregators[0];
+    const leader = this.#leader;
     const id = this.#id.toString();
     const response = await this.#fetch(
       new URL(`tasks/${id}/reports`, leader.url).toString(),
@@ -216,7 +227,7 @@ export class Task<
   }
 
   private hasKeyConfiguration(): boolean {
-    return this.#aggregators.every((aggregator) => !!aggregator.hpkeConfigList);
+    return !!this.#leader.hpkeConfigList && !!this.#helper.hpkeConfigList;
   }
 
   /**
@@ -258,9 +269,8 @@ export class Task<
 
   invalidateHpkeConfig() {
     this.#hpkeConfigsWereInvalid = true;
-    for (const aggregator of this.#aggregators) {
-      delete aggregator.hpkeConfigList;
-    }
+    delete this.#leader.hpkeConfigList;
+    delete this.#helper.hpkeConfigList;
   }
 
   /**
@@ -274,7 +284,7 @@ export class Task<
   async fetchKeyConfiguration(): Promise<void> {
     if (this.hasKeyConfiguration()) return;
     await Promise.all(
-      this.#aggregators.map(async (aggregator) => {
+      this.aggregators.map(async (aggregator) => {
         const url = new URL("hpke_config", aggregator.url);
         url.searchParams.append("task_id", this.#id.toString());
 
@@ -305,13 +315,6 @@ export class Task<
       }),
     );
   }
-}
-
-function aggregatorsFromParameters({
-  leader,
-  helper,
-}: ClientParameters): Aggregator[] {
-  return [Aggregator.leader(leader), Aggregator.helper(helper)];
 }
 
 function idFromDefinition(idDefinition: Buffer | TaskId | string): TaskId {

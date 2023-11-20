@@ -5,7 +5,7 @@ import { nextPowerOf2 } from "@divviup/common";
 export interface GenericCircuit {
   field: Field;
   jointRandLen: number;
-  inputLen: number;
+  measurementLen: number;
   outputLen: number;
   proveRandLen: number;
   queryRandLen: number;
@@ -23,7 +23,7 @@ export interface GenericCircuit {
 export abstract class Circuit<M, AR> implements GenericCircuit {
   abstract field: Field;
   abstract jointRandLen: number;
-  abstract inputLen: number;
+  abstract measurementLen: number;
   abstract outputLen: number;
   abstract gadgets: Gadget[];
   abstract gadgetCalls: number[];
@@ -53,10 +53,10 @@ export abstract class Circuit<M, AR> implements GenericCircuit {
     return this.gadgets.reduce((sum, gadget) => sum + gadget.arity + 1, 1);
   }
 
-  ensureValidEval(input: bigint[], jointRand: bigint[]) {
-    if (input.length != this.inputLen) {
+  ensureValidEval(encodedMeasurement: bigint[], jointRand: bigint[]) {
+    if (encodedMeasurement.length != this.measurementLen) {
       throw new Error(
-        `expected input length to be ${this.inputLen} but it was ${input.length}`,
+        `expected measurement length to be ${this.measurementLen} but it was ${encodedMeasurement.length}`,
       );
     }
 

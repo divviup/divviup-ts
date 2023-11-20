@@ -6,7 +6,12 @@ import { TaskId } from "./taskId.js";
 import { DAPError } from "./errors.js";
 import { zip } from "@divviup/common";
 import { encodeOpaque32 } from "./encoding.js";
-import { Prio3Count, Prio3Histogram, Prio3Sum } from "@divviup/prio3";
+import {
+  Prio3Count,
+  Prio3Histogram,
+  Prio3Sum,
+  Prio3SumVec,
+} from "@divviup/prio3";
 import { inspect } from "node:util";
 import { KdfId, AeadId, CipherSuite } from "hpke-js";
 import { DhkemP256HkdfSha256 } from "@hpke/core";
@@ -134,7 +139,8 @@ describe("Task", () => {
     it("can build a histogram vdaf", () => {
       const task = new Task({
         type: "histogram",
-        buckets: [10, 20, 30],
+        length: 4,
+        chunkLength: 1,
         helper: "http://helper",
         leader: "http://leader",
         id: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
@@ -168,6 +174,21 @@ describe("Task", () => {
       });
 
       assert(task.vdaf instanceof Prio3Count);
+    });
+
+    it("can build a sumvec vdaf", () => {
+      const task = new Task({
+        type: "sumVec",
+        bits: 8,
+        length: 6,
+        chunkLength: 6,
+        helper: "http://helper",
+        leader: "http://leader",
+        id: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
+        timePrecisionSeconds: 3600,
+      });
+
+      assert(task.vdaf instanceof Prio3SumVec);
     });
 
     it("throws if the timePrecisionSeconds is not a number", () => {
@@ -294,7 +315,7 @@ describe("Task", () => {
       }
 
       const report = await task.generateReport(21);
-      assert.equal(report.encryptedInputShares.length, 2);
+
       assert(
         Math.floor(Date.now() / 1000) - Number(report.metadata.time) <
           2 /*2 second delta, double the minimum batch duration*/,
@@ -306,12 +327,12 @@ describe("Task", () => {
         encodeOpaque32(report.publicShare),
       ]);
 
-      for (const [[privateKey, role], share] of zip(
-        privateKeys,
-        report.encryptedInputShares,
-      )) {
+      for (const [[privateKey, role], share] of zip(privateKeys, [
+        report.leaderCiphertext,
+        report.helperCiphertext,
+      ])) {
         const info = Buffer.from([
-          ...Buffer.from("dap-04 input share"),
+          ...Buffer.from("dap-07 input share"),
           1,
           role,
         ]);

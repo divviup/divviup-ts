@@ -1,7 +1,7 @@
 import { Buffer } from "buffer";
 import { TaskId } from "./taskId.js";
 import type { Encodable } from "./encoding.js";
-import { encodeArray32, encodeArray16, encodeOpaque32 } from "./encoding.js";
+import { encodeArray16, encodeOpaque32 } from "./encoding.js";
 import { ReportId } from "./reportId.js";
 import { HpkeCiphertext } from "./ciphertext.js";
 import { DAP_VERSION, Role } from "./constants.js";
@@ -25,14 +25,16 @@ export class Report implements Encodable {
   constructor(
     public metadata: ReportMetadata,
     public publicShare: Buffer,
-    public encryptedInputShares: HpkeCiphertext[],
+    public leaderCiphertext: HpkeCiphertext,
+    public helperCiphertext: HpkeCiphertext,
   ) {}
 
   encode(): Buffer {
     return Buffer.concat([
       this.metadata.encode(),
       encodeOpaque32(this.publicShare),
-      encodeArray32(this.encryptedInputShares),
+      this.leaderCiphertext.encode(),
+      this.helperCiphertext.encode(),
     ]);
   }
 }

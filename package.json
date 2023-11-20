@@ -3,7 +3,7 @@
   "workspaces": [
     "./packages/common",
     "./packages/field",
-    "./packages/prg",
+    "./packages/xof",
     "./packages/vdaf",
     "./packages/prio3",
     "./packages/dap",

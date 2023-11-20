@@ -94,6 +94,20 @@ function testField(field: Field, name: string) {
         assert.deepEqual(interpolated, poly);
       }
     });
+
+    describe("additive secret sharing", () => {
+      for (let numShares = 2; numShares < 15; numShares += 3) {
+        it(`always sums to the provided input when splitting into ${numShares} shares`, () => {
+          const input = field.fillRandom(1);
+          const shares = field.additiveSecretShare(input, numShares);
+          assert.equal(shares.length, numShares);
+          assert.deepEqual(
+            input,
+            shares.reduce((all, share) => field.vecAdd(all, share)),
+          );
+        });
+      }
+    });
   });
 }
 

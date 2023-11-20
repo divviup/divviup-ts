@@ -1,24 +1,27 @@
 import jsSHA from "jssha";
-import type { PrgConstructor } from "./prg.js";
-import { Prg } from "./prg.js";
+import type { XofConstructor } from "./xof.js";
+import { Xof } from "./xof.js";
 
-export const PrgSha3: PrgConstructor = class PrgSha3 extends Prg {
+export const XofShake128: XofConstructor = class XofShake128 extends Xof {
   static seedSize = 16;
   #sha: jsSHA;
   #cacheSize = 512;
   #cache = new Uint8Array();
   #offset = 0;
+
   constructor(seed: Uint8Array, dst: Uint8Array, binder: Uint8Array) {
     super();
-    if (seed.length !== PrgSha3.seedSize) {
+    if (seed.length !== XofShake128.seedSize) {
       throw new Error(
-        `PrgSha3 seed length must be exactly ${PrgSha3.seedSize}`,
+        `XofShake128 seed length must be exactly ${XofShake128.seedSize}`,
       );
     }
-    this.#sha = new jsSHA("CSHAKE128", "UINT8ARRAY", {
-      customization: { value: dst, format: "UINT8ARRAY" },
-    });
-
+    if (dst.length > 255) {
+      throw new Error("dst length must be one byte");
+    }
+    this.#sha = new jsSHA("SHAKE128", "UINT8ARRAY");
+    this.#sha.update(Uint8Array.of(dst.length));
+    this.#sha.update(dst);
     this.#sha.update(seed);
     this.#sha.update(binder);
   }
