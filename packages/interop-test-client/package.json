@@ -13,7 +13,7 @@
     "test:coverage": "c8 npm test"
   },
   "dependencies": {
-    "@divviup/dap": "^0.2.0",
+    "@divviup/dap": "*",
     "express": "^4.18.2"
   },
   "devDependencies": {
