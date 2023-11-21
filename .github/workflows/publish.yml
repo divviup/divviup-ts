@@ -22,6 +22,8 @@ jobs:
         run: npm run build
       - name: Test
         run: npm run test
+      - name: Copy README.md into packages if none exists
+        run: for DIR in packages/*; do cp -n ./README.md $DIR; done
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
