@@ -11,7 +11,7 @@
   "scripts": {
     "clean": "rm -rf dist/*",
     "build:clean": "npm run clean && npm run build",
-    "build": "tsc -p ./tsconfig.json",
+    "build": "tsc -p ./tsconfig.json && npm run build:browser",
     "build:browser": "esbuild --minify --bundle src/browser.ts --sourcemap --outdir=dist --tree-shaking=true",
     "docs": "typedoc src",
     "test": "mocha \"src/**/*.spec.ts\"",
