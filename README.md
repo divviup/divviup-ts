@@ -7,20 +7,29 @@
 
 ## Protocol Versions and Release Branches
 
-The `main` branch is under continuous development and will usually be partway between DAP and VDAF drafts. divviup-ts uses stable release branches to maintain implementations of different draft versions. Artifacts for some draft version are published from a corresponding `release/dap-draft-xy` branch. Only supported release branches receive dependency updates and backports.
+The `main` branch is under continuous development and will usually be partway between DAP and VDAF
+drafts. divviup-ts uses stable release branches to maintain implementations of different draft
+versions. Artifacts for some draft version are published from a corresponding `release/dap-draft-xy`
+branch. Only supported release branches receive dependency updates and backports.
 
-| Package version | Git branch | Protocol version | Conforms to specification? | Status |
-| --------------- | ---------- | ------------- | -------------------------- | ------ |
-| N/A | `release/dap-draft-02` | [`draft-ietf-ppm-dap-02`][dap-02] | Yes | Unmaintained |
-| N/A | `release/dap-draft-03` | [`draft-ietf-ppm-dap-03`][dap-03] | Yes | Unmaintained as of May 22, 2023 |
-| 0.1 | `release/dap-draft-04` | [`draft-ietf-ppm-dap-04`][dap-04] | Yes | Supported |
-| 0.2 | `main` | [`draft-ietf-ppm-dap-07`][dap-07] | [Partially][dap-07-issue] | Supported |
+### DAP
 
-[dap-02]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/02/
-[dap-03]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/03/
-[dap-04]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/04/
-[dap-07]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/07/
-[dap-07-issue]: https://github.com/divviup/divviup-ts/issues/359
+| Package version      | Git branch                          | Protocol version                  | Conforms to specification? | Status                          |
+| -------------------- | ----------------------------------- | --------------------------------- | -------------------------- | ------------------------------- |
+| N/A                  | [`release-dap-draft-02`][branch-02] | [`draft-ietf-ppm-dap-02`][dap-02] | Yes                        | Unmaintained                    |
+| N/A                  | [`release-dap-draft-03`][branch-03] | [`draft-ietf-ppm-dap-03`][dap-03] | Yes                        | Unmaintained as of May 22, 2023 |
+| [0.1][npm-dap-0.1.0] | [`release-dap-draft-04`][branch-04] | [`draft-ietf-ppm-dap-04`][dap-04] | Yes                        | Supported                       |
+| [0.7][npm-dap-0.7.0] | [`release-dap-draft-07`][branch-07] | [`draft-ietf-ppm-dap-07`][dap-07] | Yes                        | Supported                       |
+|                      | [`main`][main]                      | [`draft-ietf-ppm-dap-08`][dap-08] |                            |                                 |
+
+### VDAF and Prio3
+
+| VDAF Package          | Prio3 Package          | Git branch                          | Protocol version                     | Conforms to specification? | Status                          |
+| --------------------- | ---------------------- | ----------------------------------- | ------------------------------------ | -------------------------- | ------------------------------- |
+| N/A                   | N/A                    | [`release/dap-draft-03`][branch-03] | [`draft-irtf-cfrg-vdaf-03`][vdaf-03] | Yes                        | Unmaintained as of May 22, 2023 |
+| [0.1][npm-vdaf-0.1.0] | [0.1][npm-prio3-0.1.0] | [`release/dap-draft-04`][branch-04] | [`draft-irtf-cfrg-vdaf-05`][vdaf-05] | Yes                        | Supported                       |
+| [0.7][npm-vdaf-0.7.0] | [0.7][npm-prio3-0.7.0] | [`release/dap-draft-07`][branch-07] | [`draft-irtf-cfrg-vdaf-07`][vdaf-07] | Yes                        | Supported                       |
+|                       |                        | [`main`][main]                      | [`draft-irtf-cfrg-vdaf-08`][vdaf-08] |                            |                                 |
 
 ## Usage
 
@@ -38,3 +47,24 @@ const task = new Task({
 
 await task.sendMeasurement(42);
 ```
+
+[npm-vdaf-0.1.0]: https://www.npmjs.com/package/@divviup/vdaf/v/0.1.0
+[npm-vdaf-0.7.0]: https://www.npmjs.com/package/@divviup/vdaf/v/0.7.0
+[npm-prio3-0.1.0]: https://www.npmjs.com/package/@divviup/prio3/v/0.1.0
+[npm-prio3-0.7.0]: https://www.npmjs.com/package/@divviup/prio3/v/0.7.0
+[npm-dap-0.1.0]: https://www.npmjs.com/package/@divviup/dap/v/0.1.0
+[npm-dap-0.7.0]: https://www.npmjs.com/package/@divviup/dap/v/0.7.0
+[vdaf-03]: https://datatracker.ietf.org/doc/draft-irtf-cfrg-vdaf/03/
+[vdaf-05]: https://datatracker.ietf.org/doc/draft-irtf-cfrg-vdaf/05/
+[vdaf-07]: https://datatracker.ietf.org/doc/draft-irtf-cfrg-vdaf/07/
+[vdaf-08]: https://datatracker.ietf.org/doc/draft-irtf-cfrg-vdaf/08/
+[dap-02]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/02/
+[dap-03]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/03/
+[dap-04]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/04/
+[dap-07]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/07/
+[dap-08]: https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/08/
+[branch-02]: https://github.com/divviup/divviup-ts/tree/release/dap-draft-02
+[branch-03]: https://github.com/divviup/divviup-ts/tree/release/dap-draft-03
+[branch-04]: https://github.com/divviup/divviup-ts/tree/release/dap-draft-04
+[branch-07]: https://github.com/divviup/divviup-ts/tree/release/dap-draft-07
+[main]: https://github.com/divviup/divviup-ts/tree/main
