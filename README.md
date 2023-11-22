@@ -31,7 +31,11 @@ branch. Only supported release branches receive dependency updates and backports
 | [`@divviup/vdaf@0.7`][npm-vdaf-0.7.0] | [`@divviup/prio3@0.7`][npm-prio3-0.7.0] | [`release/dap-draft-07`][branch-07] | [`draft-irtf-cfrg-vdaf-07`][vdaf-07] | Yes                        | Supported                       |
 |                                       |                                         | [`main`][main]                      | [`draft-irtf-cfrg-vdaf-08`][vdaf-08] |                            |                                 |
 
-## Usage
+## Bundling into an npm application
+
+```
+$ npm add @divviup/dap
+```
 
 ```typescript
 import Task from "@divviup/dap";
@@ -40,13 +44,36 @@ const task = new Task({
   type: "sum",
   bits: 8,
   id: "3XTBHxTtUAtI516GeXZsVIKjBPYVNIYmF94vEBb4jcY",
-  leader: "http://localhost:8080",
-  helper: "http://localhost:8081",
+  leader: "https://dap.api.divviup.org",
+  helper: "https://dap.example.com",
   timePrecisionSeconds: 3600,
 });
 
 await task.sendMeasurement(42);
 ```
+
+## CDN URLs
+
+DivviUp publishes bundled and minified builds suitable for use from a script tag. `Task` will be available on globalThis as `divviup.dap.Task`.
+
+### [JsDelivr](https://www.jsdelivr.com/)
+```html
+<script
+    src="https://cdn.jsdelivr.net/npm/@divviup/dap@0.7.0/dist/browser.js"
+    crossorigin="anonymous"
+    integrity="sha384-vDbUcIcXsbrWLhKwkF/wwM0cnW+5y9fiPA695EnPd58okNZwWuLsR0NF98zzyNkT">
+</script>
+```
+
+### [UNPKG](https://unpkg.com/)
+```html
+<script
+    src="https://unpkg.com/@divviup/dap@0.7.0/dist/browser.js"
+    crossorigin="anonymous"
+    integrity="sha384-vDbUcIcXsbrWLhKwkF/wwM0cnW+5y9fiPA695EnPd58okNZwWuLsR0NF98zzyNkT">
+</script>
+```
+
 
 [npm-vdaf-0.1.0]: https://www.npmjs.com/package/@divviup/vdaf/v/0.1.0
 [npm-vdaf-0.7.0]: https://www.npmjs.com/package/@divviup/vdaf/v/0.7.0
