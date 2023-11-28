@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.2",
-    "@types/chai": "^4.3.10",
+    "@types/chai": "^4.3.11",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.10.0",
@@ -41,7 +41,7 @@
     "tsconfig-paths": "^4.2.0",
     "typedoc": "^0.25.4",
     "typedoc-plugin-missing-exports": "^2.1.0",
-    "typescript": "^5.0.4",
+    "typescript": "^5.3.2",
     "typescript-eslint-language-service": "^5.0.5"
   }
 }
