@@ -20,7 +20,7 @@
     "upgrade-interactive": "npm exec -ws npm-upgrade",
     "docs": "typedoc",
     "check": "npm run -ws --if-present check",
-    "interop-test-client": "npm start -w interop-test-client"
+    "interop-test-client": "npm start -w @divviup/interop-test-client"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.2",

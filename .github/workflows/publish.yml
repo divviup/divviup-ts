@@ -30,9 +30,4 @@ jobs:
         run: |-
           npm publish \
             --access public \
-            -w packages/common \
-            -w packages/field \
-            -w packages/prg \
-            -w packages/vdaf \
-            -w packages/prio3 \
-            -w packages/dap
+            --workspaces

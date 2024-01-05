@@ -1,6 +1,6 @@
 {
-  "name": "interop-test-client",
-  "version": "0.0.0",
+  "name": "@divviup/interop-test-client",
+  "version": "0.1.0",
   "private": true,
   "main": "src/index.ts",
   "type": "module",
