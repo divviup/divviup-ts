@@ -64,7 +64,7 @@ data that might not have been allocated for <code>Buffer</code>s.</p>
 <p>A <code>TypeError</code> will be thrown if <code>size</code> is not a number.</p>
 <p>The <code>Buffer</code> module pre-allocates an internal <code>Buffer</code> instance of
 size <code>Buffer.poolSize</code> that is used as a pool for the fast allocation of new<code>Buffer</code> instances created using <code>Buffer.allocUnsafe()</code>, <code>Buffer.from(array)</code>,
-and <code>Buffer.concat()</code> only when <code>size</code> is less than or equal to<code>Buffer.poolSize &gt;&gt; 1</code> (floor of <code>Buffer.poolSize</code> divided by two).</p>
+and <code>Buffer.concat()</code> only when <code>size</code> is less than<code>Buffer.poolSize &gt;&gt;&gt; 1</code> (floor of <code>Buffer.poolSize</code> divided by two).</p>
 <p>Use of this pre-allocated internal memory pool is a key difference between
 calling <code>Buffer.alloc(size, fill)</code> vs. <code>Buffer.allocUnsafe(size).fill(fill)</code>.
 Specifically, <code>Buffer.alloc(size, fill)</code> will <em>never</em> use the internal <code>Buffer</code>pool, while <code>Buffer.allocUnsafe(size).fill(fill)</code><em>will</em> use the internal<code>Buffer</code> pool if <code>size</code> is less
