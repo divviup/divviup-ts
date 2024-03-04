@@ -24,12 +24,12 @@
     "@divviup/common": "^0.2.1",
     "@divviup/prio3": "^0.7.0",
     "@divviup/vdaf": "^0.7.0",
-    "hpke-js": "^1.2.4"
+    "hpke-js": "^1.2.7"
   },
   "devDependencies": {
-    "@hpke/chacha20poly1305": "^1.2.4",
-    "@hpke/core": "^1.2.4",
-    "@hpke/dhkem-x25519": "^1.2.4",
+    "@hpke/chacha20poly1305": "^1.2.7",
+    "@hpke/core": "^1.2.7",
+    "@hpke/dhkem-x25519": "^1.2.7",
     "esbuild": "^0.19.6"
   }
 }
