@@ -21,12 +21,35 @@ updates:
     schedule:
       interval: "weekly"
     groups:
+      eslint:
+        patterns:
+          - "*eslint*"
       hpke-js:
         patterns:
           - "hpke-js"
           - "@hpke/*"
   - package-ecosystem: "github-actions"
     target-branch: "release/dap-draft-04"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Manage dependencies on the `release/dap-draft-07` branch
+  - package-ecosystem: "npm"
+    target-branch: "release/dap-draft-07"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      eslint:
+        patterns:
+          - "*eslint*"
+      hpke-js:
+        patterns:
+          - "hpke-js"
+          - "@hpke/*"
+  - package-ecosystem: "github-actions"
+    target-branch: "release/dap-draft-07"
     directory: "/"
     schedule:
       interval: "weekly"
