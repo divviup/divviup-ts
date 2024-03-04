@@ -19,7 +19,7 @@
     "test:coverage": "c8 npm test"
   },
   "dependencies": {
-    "@divviup/common": "^0.2.0",
+    "@divviup/common": "^0.2.1",
     "one-webcrypto": "^1.0.3"
   }
 }
