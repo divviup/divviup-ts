@@ -41,7 +41,7 @@
     "tsconfig-paths": "^4.2.0",
     "typedoc": "^0.25.3",
     "typedoc-plugin-missing-exports": "^2.2.0",
-    "typescript": "^5.0.4",
+    "typescript": "^5.4.2",
     "typescript-eslint-language-service": "^5.0.5"
   }
 }
