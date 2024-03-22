@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     groups:
       eslint:
         patterns:
@@ -15,14 +15,14 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
 
   # Manage dependencies on the `release/dap-draft-04` branch
   - package-ecosystem: "npm"
     target-branch: "release/dap-draft-04"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     groups:
       eslint:
         patterns:
@@ -35,14 +35,14 @@ updates:
     target-branch: "release/dap-draft-04"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
 
   # Manage dependencies on the `release/dap-draft-07` branch
   - package-ecosystem: "npm"
     target-branch: "release/dap-draft-07"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     groups:
       eslint:
         patterns:
@@ -55,4 +55,4 @@ updates:
     target-branch: "release/dap-draft-07"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
