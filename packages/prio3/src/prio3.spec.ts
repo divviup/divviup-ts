@@ -7,7 +7,7 @@ import {
   Prio3SumVec,
 } from "./instantiations.js";
 import { TestFlp128 } from "./flp.spec.js";
-import { XofShake128 } from "@divviup/xof";
+import { XofTurboShake128 } from "@divviup/xof";
 import type { TestVector } from "@divviup/vdaf";
 import countTestVector0 from "./testVectors/Prio3Count_0.json" assert { type: "json" };
 import countTestVector1 from "./testVectors/Prio3Count_1.json" assert { type: "json" };
@@ -77,7 +77,7 @@ async function assertHistogramTestVector(
 
 describe("prio3 vdaf", () => {
   it("test flp", async () => {
-    const testFlp = new Prio3(XofShake128, new TestFlp128(), 2, 255);
+    const testFlp = new Prio3(XofTurboShake128, new TestFlp128(), 2, 255);
     assert.equal(await testFlp.test(null, [1, 2, 3, 4, 4]), 14);
   });
 
