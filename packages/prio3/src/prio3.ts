@@ -58,11 +58,15 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
     public readonly xof: XofConstructor,
     public readonly flp: Flp<Measurement, AggregateResult>,
     public readonly shares: number,
+    public readonly proofs: number,
     public readonly id: number,
   ) {
     super();
     if (shares < 2 || Math.trunc(shares) !== shares || shares > 255) {
       throw new Error("shares must be an integer in [2, 256)");
+    }
+    if (proofs < 1 || Math.trunc(proofs) !== proofs || proofs > 255) {
+      throw new Error("proofs must be an integer in [1, 256)");
     }
     this.verifyKeySize = xof.seedSize;
     this.randSize =
@@ -82,7 +86,7 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
     nonce: Buffer,
     rand: Buffer,
   ): Promise<{ publicShare: PublicShare; inputShares: InputShare[] }> {
-    const { flp } = this;
+    const { flp, proofs } = this;
 
     if (rand.length !== this.randSize) {
       throw new Error(
@@ -99,15 +103,27 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
       rand,
     );
 
-    const { publicShare, jointRand } = await this.jointRand([
+    const { publicShare, jointRands } = await this.jointRands([
       partialLeaderShare,
       ...helperShares,
     ]);
 
-    const proveRand = await this.proveRand(rand);
-    const proof = flp.prove(encodedMeasurement, proveRand, jointRand);
+    const proveRands = await this.proveRands(rand);
+
+    const leaderProofs = arr(proofs, (proof) => {
+      const jointRand = jointRands.slice(
+        proof * flp.jointRandLen,
+        (proof + 1) * flp.jointRandLen,
+      );
+      const proveRand = proveRands.slice(
+        proof * flp.proveRandLen,
+        (proof + 1) * flp.proveRandLen,
+      );
+      return flp.prove(encodedMeasurement, proveRand, jointRand);
+    }).flat();
+
     const inputShares = this.addProof(
-      proof,
+      leaderProofs,
       partialLeaderShare,
       helperShares,
     ).map(({ jointRandPart: _, ...share }) => share);
@@ -382,7 +398,7 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
   }
 
   private buildHelperShares(nonce: Buffer, rand: Buffer): Promise<Share[]> {
-    const { flp, xof, field } = this;
+    const { flp, xof, field, proofs } = this;
     const { proofLen, measurementLen } = flp;
 
     return Promise.all(
@@ -419,10 +435,10 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
         );
 
         const proofShare = await this.pseudorandom(
-          proofLen,
+          proofLen * proofs,
           Usage.ProofShare,
           wireProofShare,
-          shareId,
+          Buffer.from([proofs, share + 1]),
         );
         const jointRandPart = this.useJointRand()
           ? await this.deriveSeed(blind, Usage.JointRandPart, [
@@ -466,39 +482,41 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
     return this.flp.field;
   }
 
-  private proveRand(rand: Buffer): Promise<bigint[]> {
-    const { shares, flp, xof } = this;
+  private proveRands(rand: Buffer): Promise<bigint[]> {
+    const { shares, flp, xof, proofs } = this;
     const { seedSize } = xof;
     const proveIndex = this.useJointRand()
       ? (shares - 1) * 3 + 1
       : (shares - 1) * 2;
 
     return this.pseudorandom(
-      flp.proveRandLen,
+      flp.proveRandLen * proofs,
       Usage.ProveRandomness,
       rand.subarray(proveIndex * seedSize, (proveIndex + 1) * seedSize),
+      proofs,
     );
   }
 
-  private async jointRand(
+  private async jointRands(
     shares: { jointRandPart: Buffer }[],
-  ): Promise<{ jointRand: bigint[]; publicShare: PublicShare }> {
+  ): Promise<{ jointRands: bigint[]; publicShare: PublicShare }> {
     if (!this.useJointRand()) {
-      return { jointRand: [], publicShare: { jointRandParts: [] } };
+      return { jointRands: [], publicShare: { jointRandParts: [] } };
     }
-    const { flp, xof } = this;
+    const { flp, xof, proofs } = this;
     const jointRandParts = shares.map(({ jointRandPart }) => jointRandPart);
     const jointRandSeed = await this.deriveSeed(
       Buffer.alloc(xof.seedSize),
       Usage.JointRandSeed,
       jointRandParts,
     );
-    const jointRand = await this.pseudorandom(
-      flp.jointRandLen,
+    const jointRands = await this.pseudorandom(
+      flp.jointRandLen * proofs,
       Usage.JointRandomness,
       jointRandSeed,
+      proofs,
     );
 
-    return { jointRand, publicShare: { jointRandParts } };
+    return { jointRands, publicShare: { jointRandParts } };
   }
 }

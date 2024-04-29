@@ -8,14 +8,14 @@ import { SumVec } from "./circuits/sumVec.js";
 
 export class Prio3Count extends Prio3<boolean, number> {
   constructor({ shares }: { shares: number }) {
-    super(XofTurboShake128, new FlpGeneric(new Count()), shares, 0);
+    super(XofTurboShake128, new FlpGeneric(new Count()), shares, 1, 0);
   }
 }
 
 export class Prio3Sum extends Prio3<number | bigint, number | bigint> {
   public readonly bits: number;
   constructor({ shares, bits }: { shares: number; bits: number }) {
-    super(XofTurboShake128, new FlpGeneric(new Sum(bits)), shares, 1);
+    super(XofTurboShake128, new FlpGeneric(new Sum(bits)), shares, 1, 1);
     this.bits = bits;
   }
 }
@@ -33,6 +33,7 @@ export class Prio3Histogram extends Prio3<number, number[]> {
       XofTurboShake128,
       new FlpGeneric(new Histogram(length, chunkLength)),
       shares,
+      1,
       3,
     );
     this.chunkLength = chunkLength;
@@ -56,6 +57,7 @@ export class Prio3SumVec extends Prio3<number[], number[]> {
       XofTurboShake128,
       new FlpGeneric(new SumVec(length, bits, chunkLength)),
       shares,
+      1,
       2,
     );
     this.chunkLength = chunkLength;

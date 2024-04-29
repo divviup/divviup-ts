@@ -77,7 +77,7 @@ async function assertHistogramTestVector(
 
 describe("prio3 vdaf", () => {
   it("test flp", async () => {
-    const testFlp = new Prio3(XofTurboShake128, new TestFlp128(), 2, 255);
+    const testFlp = new Prio3(XofTurboShake128, new TestFlp128(), 2, 1, 255);
     assert.equal(await testFlp.test(null, [1, 2, 3, 4, 4]), 14);
   });
 
