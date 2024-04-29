@@ -2,8 +2,8 @@ import { arr, randomBytes } from "@divviup/common";
 import { Buffer } from "buffer";
 
 /** @internal */
-export const VDAF_VERSION_NUMBER = 7;
-export const VDAF_VERSION = "vdaf-07";
+export const VDAF_VERSION_NUMBER = 8;
+export const VDAF_VERSION = "vdaf-08";
 
 export abstract class Vdaf<
   Measurement,
