@@ -17,6 +17,8 @@ import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type: "json"
 import sumTestVector1 from "./testVectors/Prio3Sum_1.json" assert { type: "json" };
 import sumVecTestVector0 from "./testVectors/Prio3SumVec_0.json" assert { type: "json" };
 import sumVecTestVector1 from "./testVectors/Prio3SumVec_1.json" assert { type: "json" };
+import { FlpGeneric } from "./genericFlp.js";
+import { SumVec } from "./circuits/sumVec.js";
 
 async function assertCountTestVector(
   testVector: TestVector<null, number | boolean, number>,
@@ -150,6 +152,24 @@ describe("prio3 vdaf", () => {
       assert.deepEqual(
         await sumVec.test(null, [[1, 61, 86, 61, 23, 0, 255, 3, 2, 1]]),
         [1, 61, 86, 61, 23, 0, 255, 3, 2, 1],
+      );
+    });
+
+    it("passes multiproof test", async () => {
+      const sumVecMultiproof = new Prio3(
+        XofTurboShake128,
+        new FlpGeneric(new SumVec(20, 2, 4)),
+        2,
+        2,
+        0xffff0000,
+      );
+      assert.deepEqual(
+        await sumVecMultiproof.test(null, [
+          [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1],
+          [0, 2, 0, 0, 1, 0, 0, 0, 1, 1, 1, 3, 0, 3, 0, 0, 0, 1, 0, 0],
+          [1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+        ]),
+        [1, 3, 1, 0, 3, 1, 0, 1, 2, 2, 3, 3, 1, 5, 1, 2, 1, 3, 0, 2],
       );
     });
 
