@@ -407,14 +407,14 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
     helpers: Share[],
   ): Share[] {
     const { field } = this;
-    const proofShare = helpers.reduce(
-      (proofShare, helper) => field.vecSub(proofShare, helper.proofsShare),
+    const proofsShare = helpers.reduce(
+      (proofsShare, helper) => field.vecSub(proofsShare, helper.proofsShare),
       proof,
     );
 
-    const wireProofShare = Buffer.from(field.encode(proofShare));
+    const wireProofShare = Buffer.from(field.encode(proofsShare));
 
-    return [{ ...leader, wireProofShare, proofsShare: proofShare }, ...helpers];
+    return [{ ...leader, wireProofShare, proofsShare }, ...helpers];
   }
 
   private useJointRand(): boolean {

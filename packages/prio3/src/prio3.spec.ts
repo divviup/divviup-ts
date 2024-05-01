@@ -17,6 +17,7 @@ import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type: "json"
 import sumTestVector1 from "./testVectors/Prio3Sum_1.json" assert { type: "json" };
 import sumVecTestVector0 from "./testVectors/Prio3SumVec_0.json" assert { type: "json" };
 import sumVecTestVector1 from "./testVectors/Prio3SumVec_1.json" assert { type: "json" };
+import sumVecMultiproofTestVector0 from "./testVectors/Prio3SumVecField128Multiproof_0.json" assert { type: "json" };
 import { FlpGeneric } from "./genericFlp.js";
 import { SumVec } from "./circuits/sumVec.js";
 
@@ -155,7 +156,17 @@ describe("prio3 vdaf", () => {
       );
     });
 
-    it("passes multiproof test", async () => {
+    it("conforms to test vector 0", async () => {
+      await assertSumVecTestVector(sumVecTestVector0);
+    });
+
+    it("conforms to test vector 1", async () => {
+      await assertSumVecTestVector(sumVecTestVector1);
+    });
+  });
+
+  describe("SumVecMultiproof", () => {
+    it("passes tests", async () => {
       const sumVecMultiproof = new Prio3(
         XofTurboShake128,
         new FlpGeneric(new SumVec(20, 2, 4)),
@@ -174,11 +185,27 @@ describe("prio3 vdaf", () => {
     });
 
     it("conforms to test vector 0", async () => {
-      await assertSumVecTestVector(sumVecTestVector0);
-    });
-
-    it("conforms to test vector 1", async () => {
-      await assertSumVecTestVector(sumVecTestVector1);
+      // TODO(#784): Replace this vector with one using a smaller field size. It's not really
+      // pertinent for exercising raw multiproof functionality, but it is the intent of multiproof
+      // to be used with a smaller field.
+      const { shares, length, bits, chunk_length } =
+        sumVecMultiproofTestVector0;
+      const sumVecMultiproof = new Prio3(
+        XofTurboShake128,
+        new FlpGeneric(new SumVec(length, bits, chunk_length)),
+        shares,
+        3,
+        0xffffffff,
+      );
+      await assertPrio3TestVector(
+        sumVecMultiproofTestVector0,
+        sumVecMultiproof,
+        {
+          length,
+          chunk_length,
+          bits,
+        },
+      );
     });
   });
 });
