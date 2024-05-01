@@ -1,6 +1,12 @@
 import { Vdaf } from "@divviup/vdaf";
 import type { XofConstructor } from "@divviup/xof";
-import { fill, arr, concat, integerToOctetStringLE } from "@divviup/common";
+import {
+  fill,
+  arr,
+  concat,
+  integerToOctetStringLE,
+  slice,
+} from "@divviup/common";
 import { Field } from "@divviup/field";
 import type { Flp } from "./flp.js";
 import { Buffer } from "buffer";
@@ -110,17 +116,12 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
 
     const proveRands = await this.proveRands(rand);
 
-    const leaderProofs = arr(proofs, (proof) => {
-      const jointRand = jointRands.slice(
-        proof * flp.jointRandLen,
-        (proof + 1) * flp.jointRandLen,
-      );
-      const proveRand = proveRands.slice(
-        proof * flp.proveRandLen,
-        (proof + 1) * flp.proveRandLen,
-      );
-      return flp.prove(encodedMeasurement, proveRand, jointRand);
-    }).flat();
+    const leaderProofs = [];
+    for (let proof = 0; proof < proofs; proof++) {
+      const jointRand = slice(flp.jointRandLen, proof, jointRands);
+      const proveRand = slice(flp.proveRandLen, proof, proveRands);
+      leaderProofs.push(...flp.prove(encodedMeasurement, proveRand, jointRand));
+    }
 
     const inputShares = this.addProof(
       leaderProofs,
@@ -183,27 +184,21 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
       correctedJointRandSeed = Buffer.alloc(0);
     }
 
-    const verifiersShare = arr(proofs, (proof) => {
-      const queryRand = queryRands.slice(
-        proof * flp.queryRandLen,
-        (proof + 1) * flp.queryRandLen,
+    const verifiersShare = [];
+    for (let proof = 0; proof < proofs; proof++) {
+      const jointRand = slice(flp.jointRandLen, proof, jointRands);
+      const queryRand = slice(flp.queryRandLen, proof, queryRands);
+      const proofShare = slice(flp.proofLen, proof, proofsShare);
+      verifiersShare.push(
+        ...flp.query(
+          measurementShare,
+          proofShare,
+          queryRand,
+          jointRand,
+          shares,
+        ),
       );
-      const proofShare = proofsShare.slice(
-        proof * flp.proofLen,
-        (proof + 1) * flp.proofLen,
-      );
-      const jointRand = jointRands.slice(
-        proof * flp.jointRandLen,
-        (proof + 1) * flp.jointRandLen,
-      );
-      return flp.query(
-        measurementShare,
-        proofShare,
-        queryRand,
-        jointRand,
-        shares,
-      );
-    }).flat();
+    }
 
     return {
       preparationShare: {
@@ -251,10 +246,7 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
     );
 
     for (let proof = 0; proof < proofs; proof++) {
-      const verifier = verifiers.slice(
-        proof * flp.verifierLen,
-        (proof + 1) * flp.verifierLen,
-      );
+      const verifier = slice(flp.verifierLen, proof, verifiers);
       if (!flp.decide(verifier)) {
         throw new Error("Verify error");
       }
