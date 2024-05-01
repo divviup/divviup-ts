@@ -17,9 +17,11 @@ import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type: "json"
 import sumTestVector1 from "./testVectors/Prio3Sum_1.json" assert { type: "json" };
 import sumVecTestVector0 from "./testVectors/Prio3SumVec_0.json" assert { type: "json" };
 import sumVecTestVector1 from "./testVectors/Prio3SumVec_1.json" assert { type: "json" };
-import sumVecMultiproofTestVector0 from "./testVectors/Prio3SumVecField128Multiproof_0.json" assert { type: "json" };
+import sumVecMultiproofTestVector0 from "./testVectors/Prio3SumVecField64Multiproof_0.json" assert { type: "json" };
+import sumVecMultiproofTestVector1 from "./testVectors/Prio3SumVecField64Multiproof_1.json" assert { type: "json" };
 import { FlpGeneric } from "./genericFlp.js";
 import { SumVec } from "./circuits/sumVec.js";
+import { Field64 } from "@divviup/field";
 
 async function assertCountTestVector(
   testVector: TestVector<null, number | boolean, number>,
@@ -169,7 +171,7 @@ describe("prio3 vdaf", () => {
     it("passes tests", async () => {
       const sumVecMultiproof = new Prio3(
         XofTurboShake128,
-        new FlpGeneric(new SumVec(20, 2, 4)),
+        new FlpGeneric(new SumVec(new Field64(), 20, 2, 4)),
         2,
         2,
         0xffff0000,
@@ -185,20 +187,38 @@ describe("prio3 vdaf", () => {
     });
 
     it("conforms to test vector 0", async () => {
-      // TODO(#784): Replace this vector with one using a smaller field size. It's not really
-      // pertinent for exercising raw multiproof functionality, but it is the intent of multiproof
-      // to be used with a smaller field.
       const { shares, length, bits, chunk_length } =
         sumVecMultiproofTestVector0;
       const sumVecMultiproof = new Prio3(
         XofTurboShake128,
-        new FlpGeneric(new SumVec(length, bits, chunk_length)),
+        new FlpGeneric(new SumVec(new Field64(), length, bits, chunk_length)),
         shares,
         3,
         0xffffffff,
       );
       await assertPrio3TestVector(
         sumVecMultiproofTestVector0,
+        sumVecMultiproof,
+        {
+          length,
+          chunk_length,
+          bits,
+        },
+      );
+    });
+
+    it("conforms to test vector 1", async () => {
+      const { shares, length, bits, chunk_length } =
+        sumVecMultiproofTestVector1;
+      const sumVecMultiproof = new Prio3(
+        XofTurboShake128,
+        new FlpGeneric(new SumVec(new Field64(), length, bits, chunk_length)),
+        shares,
+        3,
+        0xffffffff,
+      );
+      await assertPrio3TestVector(
+        sumVecMultiproofTestVector1,
         sumVecMultiproof,
         {
           length,

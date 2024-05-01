@@ -5,17 +5,30 @@ import { Count } from "./circuits/count.js";
 import { Histogram } from "./circuits/histogram.js";
 import { Sum } from "./circuits/sum.js";
 import { SumVec } from "./circuits/sumVec.js";
+import { Field128, Field64 } from "@divviup/field";
 
 export class Prio3Count extends Prio3<boolean, number> {
   constructor({ shares }: { shares: number }) {
-    super(XofTurboShake128, new FlpGeneric(new Count()), shares, 1, 0);
+    super(
+      XofTurboShake128,
+      new FlpGeneric(new Count(new Field64())),
+      shares,
+      1,
+      0,
+    );
   }
 }
 
 export class Prio3Sum extends Prio3<number | bigint, number | bigint> {
   public readonly bits: number;
   constructor({ shares, bits }: { shares: number; bits: number }) {
-    super(XofTurboShake128, new FlpGeneric(new Sum(bits)), shares, 1, 1);
+    super(
+      XofTurboShake128,
+      new FlpGeneric(new Sum(new Field128(), bits)),
+      shares,
+      1,
+      1,
+    );
     this.bits = bits;
   }
 }
@@ -31,7 +44,7 @@ export class Prio3Histogram extends Prio3<number, number[]> {
   constructor({ shares, length, chunkLength }: HistogramArgs) {
     super(
       XofTurboShake128,
-      new FlpGeneric(new Histogram(length, chunkLength)),
+      new FlpGeneric(new Histogram(new Field128(), length, chunkLength)),
       shares,
       1,
       3,
@@ -55,7 +68,7 @@ export class Prio3SumVec extends Prio3<number[], number[]> {
   constructor({ shares, length, chunkLength, bits }: SumVecArgs) {
     super(
       XofTurboShake128,
-      new FlpGeneric(new SumVec(length, bits, chunkLength)),
+      new FlpGeneric(new SumVec(new Field128(), length, bits, chunkLength)),
       shares,
       1,
       2,

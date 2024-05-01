@@ -1,5 +1,5 @@
 import { Circuit } from "../circuit.js";
-import { Field64 } from "@divviup/field";
+import { Field } from "@divviup/field";
 import { Mul } from "../gadgets/mul.js";
 
 export class Count extends Circuit<boolean, number> {
@@ -8,7 +8,10 @@ export class Count extends Circuit<boolean, number> {
   measurementLen = 1;
   jointRandLen = 0;
   outputLen = 1;
-  field = new Field64();
+
+  constructor(public readonly field: Field) {
+    super();
+  }
 
   eval(input: bigint[], jointRand: bigint[], _shares: number): bigint {
     this.ensureValidEval(input, jointRand);

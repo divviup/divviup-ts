@@ -1,5 +1,5 @@
 import { Circuit } from "../circuit.js";
-import { Field128 } from "@divviup/field";
+import { Field } from "@divviup/field";
 import { Mul } from "../gadgets/mul.js";
 import { arr } from "@divviup/common";
 import { ParallelSum } from "../gadgets/parallelSum.js";
@@ -8,7 +8,6 @@ import type { Gadget } from "../gadget.js";
 export class Histogram extends Circuit<number, number[]> {
   gadgets: Gadget[];
   jointRandLen = 2;
-  field = new Field128();
 
   gadgetCalls: number[];
   measurementLen: number;
@@ -17,7 +16,11 @@ export class Histogram extends Circuit<number, number[]> {
   length: number;
   chunkLength: number;
 
-  constructor(length: number, chunkLength: number) {
+  constructor(
+    public readonly field: Field,
+    length: number,
+    chunkLength: number,
+  ) {
     super();
 
     if (

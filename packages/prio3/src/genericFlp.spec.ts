@@ -83,7 +83,7 @@ class TestMultiGadget extends Circuit<number, number> {
 
 describe("flp generic", () => {
   describe("count", () => {
-    const count = new Count();
+    const count = new Count(new Field64());
 
     it("gadgets", () => {
       testCircuitGadgets(count);
@@ -103,7 +103,7 @@ describe("flp generic", () => {
   });
 
   describe("Sum", () => {
-    const circuit = new Sum(10);
+    const circuit = new Sum(new Field128(), 10);
     it("gadgets", () => {
       testCircuitGadgets(circuit);
     });
@@ -117,7 +117,7 @@ describe("flp generic", () => {
   });
 
   describe("Histogram", () => {
-    const histogram = new Histogram(4, 2);
+    const histogram = new Histogram(new Field128(), 4, 2);
     it("gadgets", () => {
       testCircuitGadgets(histogram);
     });
