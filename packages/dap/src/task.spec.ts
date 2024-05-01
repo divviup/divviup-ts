@@ -332,7 +332,7 @@ describe("Task", () => {
         report.helperCiphertext,
       ])) {
         const info = Buffer.from([
-          ...Buffer.from("dap-07 input share"),
+          ...Buffer.from("dap-09 input share"),
           1,
           role,
         ]);
