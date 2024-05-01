@@ -6,10 +6,10 @@ import { spawnSync } from "node:child_process";
 import { Server } from "node:http";
 
 const JANUS_INTEROP_AGGREGATOR_IMAGE =
-  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_aggregator:0.6.3@sha256:8cc873f7a8be459fe2dbecdf78561806b514ac98b4d644dc9a7f6bb25bb9df02";
+  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_aggregator:0.7.7@sha256:a2eb2de55ec89ef70981e1b5590b4df065bbeb01aebf38d0ecd68991271dd944";
 
 const JANUS_INTEROP_COLLECTOR_IMAGE =
-  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_collector:0.6.3@sha256:982110bc29842639355830339b95fac77432cbbcc28df0cd07daf91551570602";
+  "us-west2-docker.pkg.dev/divviup-artifacts-public/janus/janus_interop_collector:0.7.7@sha256:a3034cc6746bb5a47878e901324eb99be5c57865076f618953909d8c26b4ebb3";
 
 const IDENTIFIER_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -353,7 +353,7 @@ function sleep(ms: number): Promise<void> {
 
 /** Polls and waits for an interop API server listening on a given port to be ready. */
 async function waitForReady(port: number) {
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 60; i++) {
     try {
       const response = await fetch(
         `http://127.0.0.1:${port}/internal/test/ready`,

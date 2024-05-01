@@ -2,7 +2,7 @@
    The protocol version for this DAP implementation. Usually of the
    form `dap-{nn}`.
 */
-export const DAP_VERSION = Object.freeze("dap-07");
+export const DAP_VERSION = Object.freeze("dap-09");
 
 export const CONTENT_TYPES = Object.freeze({
   REPORT: "application/dap-report",
