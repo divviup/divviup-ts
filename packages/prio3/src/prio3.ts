@@ -5,7 +5,7 @@ import {
   arr,
   concat,
   integerToOctetStringLE,
-  slice,
+  chunk,
 } from "@divviup/common";
 import { Field } from "@divviup/field";
 import type { Flp } from "./flp.js";
@@ -118,8 +118,8 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
 
     const leaderProofs = [];
     for (let proof = 0; proof < proofs; proof++) {
-      const jointRand = slice(flp.jointRandLen, proof, jointRands);
-      const proveRand = slice(flp.proveRandLen, proof, proveRands);
+      const jointRand = chunk(flp.jointRandLen, proof, jointRands);
+      const proveRand = chunk(flp.proveRandLen, proof, proveRands);
       leaderProofs.push(...flp.prove(encodedMeasurement, proveRand, jointRand));
     }
 
@@ -186,9 +186,9 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
 
     const verifiersShare = [];
     for (let proof = 0; proof < proofs; proof++) {
-      const jointRand = slice(flp.jointRandLen, proof, jointRands);
-      const queryRand = slice(flp.queryRandLen, proof, queryRands);
-      const proofShare = slice(flp.proofLen, proof, proofsShare);
+      const jointRand = chunk(flp.jointRandLen, proof, jointRands);
+      const queryRand = chunk(flp.queryRandLen, proof, queryRands);
+      const proofShare = chunk(flp.proofLen, proof, proofsShare);
       verifiersShare.push(
         ...flp.query(
           measurementShare,
@@ -246,7 +246,7 @@ export class Prio3<Measurement, AggregateResult> extends Vdaf<
     );
 
     for (let proof = 0; proof < proofs; proof++) {
-      const verifier = slice(flp.verifierLen, proof, verifiers);
+      const verifier = chunk(flp.verifierLen, proof, verifiers);
       if (!flp.decide(verifier)) {
         throw new Error("Verify error");
       }

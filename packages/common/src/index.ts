@@ -57,7 +57,7 @@ export function arr<T>(length: number, mapper: (n: number) => T): T[] {
 }
 
 /** @internal */
-export function slice<T>(length: number, index: number, values: T[]): T[] {
+export function chunk<T>(length: number, index: number, values: T[]): T[] {
   return values.slice(index * length, (index + 1) * length);
 }
 
