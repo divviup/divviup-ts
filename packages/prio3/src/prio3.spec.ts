@@ -7,7 +7,7 @@ import {
   Prio3SumVec,
 } from "./instantiations.js";
 import { TestFlp128 } from "./flp.spec.js";
-import { XofShake128 } from "@divviup/xof";
+import { XofTurboShake128 } from "@divviup/xof";
 import type { TestVector } from "@divviup/vdaf";
 import countTestVector0 from "./testVectors/Prio3Count_0.json" assert { type: "json" };
 import countTestVector1 from "./testVectors/Prio3Count_1.json" assert { type: "json" };
@@ -17,6 +17,9 @@ import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type: "json"
 import sumTestVector1 from "./testVectors/Prio3Sum_1.json" assert { type: "json" };
 import sumVecTestVector0 from "./testVectors/Prio3SumVec_0.json" assert { type: "json" };
 import sumVecTestVector1 from "./testVectors/Prio3SumVec_1.json" assert { type: "json" };
+import sumVecMultiproofTestVector0 from "./testVectors/Prio3SumVecField128Multiproof_0.json" assert { type: "json" };
+import { FlpGeneric } from "./genericFlp.js";
+import { SumVec } from "./circuits/sumVec.js";
 
 async function assertCountTestVector(
   testVector: TestVector<null, number | boolean, number>,
@@ -77,7 +80,7 @@ async function assertHistogramTestVector(
 
 describe("prio3 vdaf", () => {
   it("test flp", async () => {
-    const testFlp = new Prio3(XofShake128, new TestFlp128(), 2, 255);
+    const testFlp = new Prio3(XofTurboShake128, new TestFlp128(), 2, 1, 255);
     assert.equal(await testFlp.test(null, [1, 2, 3, 4, 4]), 14);
   });
 
@@ -159,6 +162,50 @@ describe("prio3 vdaf", () => {
 
     it("conforms to test vector 1", async () => {
       await assertSumVecTestVector(sumVecTestVector1);
+    });
+  });
+
+  describe("SumVecMultiproof", () => {
+    it("passes tests", async () => {
+      const sumVecMultiproof = new Prio3(
+        XofTurboShake128,
+        new FlpGeneric(new SumVec(20, 2, 4)),
+        2,
+        2,
+        0xffff0000,
+      );
+      assert.deepEqual(
+        await sumVecMultiproof.test(null, [
+          [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1],
+          [0, 2, 0, 0, 1, 0, 0, 0, 1, 1, 1, 3, 0, 3, 0, 0, 0, 1, 0, 0],
+          [1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+        ]),
+        [1, 3, 1, 0, 3, 1, 0, 1, 2, 2, 3, 3, 1, 5, 1, 2, 1, 3, 0, 2],
+      );
+    });
+
+    it("conforms to test vector 0", async () => {
+      // TODO(#784): Replace this vector with one using a smaller field size. It's not really
+      // pertinent for exercising raw multiproof functionality, but it is the intent of multiproof
+      // to be used with a smaller field.
+      const { shares, length, bits, chunk_length } =
+        sumVecMultiproofTestVector0;
+      const sumVecMultiproof = new Prio3(
+        XofTurboShake128,
+        new FlpGeneric(new SumVec(length, bits, chunk_length)),
+        shares,
+        3,
+        0xffffffff,
+      );
+      await assertPrio3TestVector(
+        sumVecMultiproofTestVector0,
+        sumVecMultiproof,
+        {
+          length,
+          chunk_length,
+          bits,
+        },
+      );
     });
   });
 });

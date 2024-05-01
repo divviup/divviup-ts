@@ -57,6 +57,11 @@ export function arr<T>(length: number, mapper: (n: number) => T): T[] {
 }
 
 /** @internal */
+export function chunk<T>(length: number, index: number, values: T[]): T[] {
+  return values.slice(index * length, (index + 1) * length);
+}
+
+/** @internal */
 export function fill<T>(length: number, value: T): T[] {
   return new Array(length).fill(value) as T[];
 }
