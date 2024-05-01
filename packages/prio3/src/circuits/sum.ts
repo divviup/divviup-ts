@@ -1,5 +1,5 @@
 import { Circuit } from "../circuit.js";
-import { Field128 } from "@divviup/field";
+import { Field } from "@divviup/field";
 import { PolyEval } from "../gadgets/polyEval.js";
 import { arr } from "@divviup/common";
 
@@ -9,9 +9,11 @@ export class Sum extends Circuit<number | bigint, bigint> {
   measurementLen: number;
   jointRandLen = 1;
   outputLen = 1;
-  field = new Field128();
 
-  constructor(bits: number) {
+  constructor(
+    public readonly field: Field,
+    bits: number,
+  ) {
     super();
     if (2n ** BigInt(bits) >= this.field.modulus) {
       throw new Error("bit size exceeds field modulus");

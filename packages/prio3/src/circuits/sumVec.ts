@@ -1,5 +1,5 @@
 import { Circuit } from "../circuit.js";
-import { Field128 } from "@divviup/field";
+import { Field } from "@divviup/field";
 import { Mul } from "../gadgets/mul.js";
 import { arr } from "@divviup/common";
 import { ParallelSum } from "../gadgets/parallelSum.js";
@@ -8,7 +8,6 @@ import type { Gadget } from "../gadget.js";
 export class SumVec extends Circuit<number[], number[]> {
   gadgets: Gadget[];
   jointRandLen = 1;
-  field = new Field128();
 
   gadgetCalls: number[];
   measurementLen: number;
@@ -19,7 +18,12 @@ export class SumVec extends Circuit<number[], number[]> {
   length: number;
   chunkLength: number;
 
-  constructor(length: number, bits: number, chunkLength: number) {
+  constructor(
+    public readonly field: Field,
+    length: number,
+    bits: number,
+    chunkLength: number,
+  ) {
     super();
 
     if (typeof bits !== "number" || Math.trunc(bits) !== bits || bits <= 0) {
