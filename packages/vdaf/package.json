@@ -1,6 +1,6 @@
 {
   "name": "@divviup/vdaf",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
     "format": "prettier -w src"
   },
   "dependencies": {
-    "@divviup/common": "^0.2.1",
+    "@divviup/common": "^0.2.2",
     "buffer": "^6.0.3"
   }
 }
