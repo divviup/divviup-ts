@@ -1,6 +1,6 @@
 {
   "name": "@divviup/xof",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "test:coverage": "c8 npm test"
   },
   "dependencies": {
-    "@divviup/common": "^0.2.1",
+    "@divviup/common": "^0.2.2",
     "@divviup/field": "^0.2.1",
     "@noble/hashes": "^1.4.0",
     "jssha": "^3.3.1"
