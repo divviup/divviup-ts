@@ -9,14 +9,22 @@ import {
 import { TestFlp128 } from "./flp.spec.js";
 import { XofShake128 } from "@divviup/xof";
 import type { TestVector } from "@divviup/vdaf";
-import countTestVector0 from "./testVectors/Prio3Count_0.json" assert { type: "json" };
-import countTestVector1 from "./testVectors/Prio3Count_1.json" assert { type: "json" };
-import histogramTestVector0 from "./testVectors/Prio3Histogram_0.json" assert { type: "json" };
-import histogramTestVector1 from "./testVectors/Prio3Histogram_1.json" assert { type: "json" };
-import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type: "json" };
-import sumTestVector1 from "./testVectors/Prio3Sum_1.json" assert { type: "json" };
-import sumVecTestVector0 from "./testVectors/Prio3SumVec_0.json" assert { type: "json" };
-import sumVecTestVector1 from "./testVectors/Prio3SumVec_1.json" assert { type: "json" };
+import countTestVector0 from "./testVectors/Prio3Count_0.json" assert { type:
+  "json" };
+import countTestVector1 from "./testVectors/Prio3Count_1.json" assert { type:
+  "json" };
+import histogramTestVector0 from "./testVectors/Prio3Histogram_0.json" assert { type:
+  "json" };
+import histogramTestVector1 from "./testVectors/Prio3Histogram_1.json" assert { type:
+  "json" };
+import sumTestVector0 from "./testVectors/Prio3Sum_0.json" assert { type:
+  "json" };
+import sumTestVector1 from "./testVectors/Prio3Sum_1.json" assert { type:
+  "json" };
+import sumVecTestVector0 from "./testVectors/Prio3SumVec_0.json" assert { type:
+  "json" };
+import sumVecTestVector1 from "./testVectors/Prio3SumVec_1.json" assert { type:
+  "json" };
 
 async function assertCountTestVector(
   testVector: TestVector<null, number | boolean, number>,
