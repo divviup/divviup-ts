@@ -1,7 +1,8 @@
 import { assert } from "chai";
 import { XofTurboShake128 } from "./index.js";
 import { Field128, Field64 } from "@divviup/field";
-import XofTurboShake128TestVector from "./testVectors/XofTurboShake128.json" assert { type: "json" };
+import XofTurboShake128TestVector from "./testVectors/XofTurboShake128.json" assert { type:
+  "json" };
 
 function assertBuffersEqual(x: Uint8Array, y: Uint8Array) {
   assert.equal(Buffer.from(x).toString("hex"), Buffer.from(y).toString("hex"));
