@@ -1,8 +1,7 @@
 import { assert } from "chai";
 import { PrgSha3 } from "./index.js";
 import { Field128, Field64 } from "@divviup/field";
-import PrgSha3TestVector from "./testVectors/PrgSha3.json" assert { type:
-  "json" };
+import PrgSha3TestVector from "./testVectors/PrgSha3.json" assert { type: "json" };
 
 function assertBuffersEqual(x: Uint8Array, y: Uint8Array) {
   assert.equal(Buffer.from(x).toString("hex"), Buffer.from(y).toString("hex"));
