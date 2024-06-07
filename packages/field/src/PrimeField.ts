@@ -291,9 +291,7 @@ export class PrimeField {
     const aValues = a.toValues().slice(),
       bValues = b.toValues();
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     let apos = lastNonZeroIndex(aValues)!;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const bpos = lastNonZeroIndex(bValues)!;
     if (apos < bpos) {
       throw new Error("Cannot divide by polynomial of higher order");

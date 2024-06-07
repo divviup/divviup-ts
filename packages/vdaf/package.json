@@ -12,7 +12,7 @@
     "build:clean": "npm run clean && npm run build",
     "build": "tsc -p ./tsconfig.json",
     "docs": "typedoc src",
-    "lint": "eslint src --ext .ts && prettier -c src",
+    "lint": "eslint && prettier -c src",
     "check": "tsc --noEmit -p ./tsconfig.json",
     "format": "prettier -w src"
   },

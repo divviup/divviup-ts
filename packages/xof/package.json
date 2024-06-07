@@ -14,7 +14,7 @@
     "docs": "typedoc src",
     "check": "tsc --noEmit -p ./tsconfig.json",
     "test": "mocha \"src/**/*.spec.ts\"",
-    "lint": "eslint src --ext .ts && prettier -c src --ignore-path ../../.prettierignore",
+    "lint": "eslint && prettier -c src --ignore-path ../../.prettierignore",
     "format": "prettier -w src",
     "test:coverage": "c8 npm test"
   },
