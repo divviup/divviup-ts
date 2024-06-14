@@ -355,11 +355,11 @@ describe("Task", () => {
       const task = await withHpkeConfigs(new Task(buildParams()));
       const fetch = mockFetch({});
       task.fetch = fetch;
-      const timestamp = new Date(0);
+      const timestamp = new Date("2000-01-01T00:00:00");
       const report = await task.generateReport(1, {
         timestamp,
       });
-      assert.equal(report.metadata.time, timestamp.getTime());
+      assert.equal(report.metadata.time, timestamp.getTime() / 1000);
     });
 
     it("fails if the measurement is not valid", async () => {

@@ -253,7 +253,7 @@ async function uploadHandler(req: Request, res: Response): Promise<void> {
 
   const options: ReportOptions = {};
   if (body.time !== undefined) {
-    options.timestamp = new Date(body.time);
+    options.timestamp = new Date(body.time * 1000);
   }
 
   try {
