@@ -18,8 +18,8 @@ branch. Only supported release branches receive dependency updates and backports
 | ----------------------------------- | ----------------------------------- | --------------------------------- | -------------------------- | ------------------------------- |
 | N/A                                 | [`release-dap-draft-02`][branch-02] | [`draft-ietf-ppm-dap-02`][dap-02] | Yes                        | Unmaintained                    |
 | N/A                                 | [`release-dap-draft-03`][branch-03] | [`draft-ietf-ppm-dap-03`][dap-03] | Yes                        | Unmaintained as of May 22, 2023 |
-| [`@divviup/dap@0.1`][npm-dap-0.1.0] | [`release-dap-draft-04`][branch-04] | [`draft-ietf-ppm-dap-04`][dap-04] | Yes                        | Supported                       |
-| [`@divviup/dap@0.7`][npm-dap-0.7.0] | [`release-dap-draft-07`][branch-07] | [`draft-ietf-ppm-dap-07`][dap-07] | Yes                        | Supported                       |
+| [`@divviup/dap@0.1`][npm-dap-0.1.0] | [`release-dap-draft-04`][branch-04] | [`draft-ietf-ppm-dap-04`][dap-04] | Yes                        | Unmaintained as of June 24, 2024 |
+| [`@divviup/dap@0.7`][npm-dap-0.7.0] | [`release-dap-draft-07`][branch-07] | [`draft-ietf-ppm-dap-07`][dap-07] | Yes                        | Unmaintained as of June 24, 2024 |
 | [`@divviup/dap@0.9`][npm-dap-0.9.0] | [`main`][main]                      | [`draft-ietf-ppm-dap-09`][dap-09] | Yes                        | Supported                       |
 
 ### VDAF and Prio3
@@ -27,8 +27,8 @@ branch. Only supported release branches receive dependency updates and backports
 | VDAF Package                          | Prio3 Package                           | Git branch                          | Protocol version                     | Conforms to specification? | Status                          |
 | ------------------------------------- | --------------------------------------- | ----------------------------------- | ------------------------------------ | -------------------------- | ------------------------------- |
 | N/A                                   | N/A                                     | [`release/dap-draft-03`][branch-03] | [`draft-irtf-cfrg-vdaf-03`][vdaf-03] | Yes                        | Unmaintained as of May 22, 2023 |
-| [`@divviup/vdaf@0.1`][npm-vdaf-0.1.0] | [`@divviup/prio3@0.1`][npm-prio3-0.1.0] | [`release/dap-draft-04`][branch-04] | [`draft-irtf-cfrg-vdaf-05`][vdaf-05] | Yes                        | Supported                       |
-| [`@divviup/vdaf@0.7`][npm-vdaf-0.7.0] | [`@divviup/prio3@0.7`][npm-prio3-0.7.0] | [`release/dap-draft-07`][branch-07] | [`draft-irtf-cfrg-vdaf-07`][vdaf-07] | Yes                        | Supported                       |
+| [`@divviup/vdaf@0.1`][npm-vdaf-0.1.0] | [`@divviup/prio3@0.1`][npm-prio3-0.1.0] | [`release/dap-draft-04`][branch-04] | [`draft-irtf-cfrg-vdaf-05`][vdaf-05] | Yes                        | Unmaintained as of June 24, 2024 |
+| [`@divviup/vdaf@0.7`][npm-vdaf-0.7.0] | [`@divviup/prio3@0.7`][npm-prio3-0.7.0] | [`release/dap-draft-07`][branch-07] | [`draft-irtf-cfrg-vdaf-07`][vdaf-07] | Yes                        | Unmaintained as of June 24, 2024 |
 | [`@divviup/vdaf@0.8`][npm-vdaf-0.8.0] | [`@divviup/prio3@0.8`][npm-prio3-0.8.0] | [`main`][main]                      | [`draft-irtf-cfrg-vdaf-08`][vdaf-08] | Yes                        | Supported                       |
 
 ## Bundling into an npm application
