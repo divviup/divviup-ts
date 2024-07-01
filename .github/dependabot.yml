@@ -12,6 +12,10 @@ updates:
         patterns:
           - "hpke-js"
           - "@hpke/*"
+      typedoc:
+        patterns:
+          - "typedoc"
+          - "typedoc-*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
