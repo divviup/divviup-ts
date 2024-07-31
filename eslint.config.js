@@ -22,7 +22,7 @@ export default tseslint.config(
     languageOptions: {
       sourceType: "module",
       parserOptions: {
-        project: ["./tsconfig.json", "./packages/*/tsconfig.json"],
+        projectService: true,
       }
     },
     rules: {
