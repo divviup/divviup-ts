@@ -15,7 +15,7 @@
     "build:browser": "esbuild --minify --bundle src/browser.ts --sourcemap --outdir=dist --tree-shaking=true",
     "docs": "typedoc src",
     "test": "mocha \"src/**/*.spec.ts\"",
-    "lint": "eslint src --ext .ts && prettier -c src",
+    "lint": "eslint && prettier -c src",
     "check": "tsc --noEmit -p ./tsconfig.json",
     "format": "prettier -w src",
     "test:coverage": "c8 npm test"

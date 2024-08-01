@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { expect } from "chai";
 import { PrimeField } from "./PrimeField.js";
 import { Vector } from "./Vector.js";

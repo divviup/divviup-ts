@@ -149,8 +149,7 @@ export abstract class Vdaf<
   ): string {
     return this.encodePreparationMessage(preparationMessage).toString("hex");
   }
-  encodeTestVectorOutputShare(outputShare: OutputShare): string[] {
-    outputShare;
+  encodeTestVectorOutputShare(_outputShare: OutputShare): string[] {
     return [];
   }
 }
