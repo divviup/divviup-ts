@@ -55,10 +55,7 @@ export interface ClientParameters {
   timePrecisionSeconds: number;
 }
 
-type Fetch = (
-  input: RequestInfo,
-  init?: RequestInit | undefined,
-) => Promise<Response>;
+type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>;
 
 export interface KnownVdafs {
   sum: typeof Prio3Sum;

@@ -17,7 +17,7 @@ import { KdfId, AeadId, CipherSuite } from "hpke-js";
 import { DhkemP256HkdfSha256 } from "@hpke/core";
 
 interface Fetch {
-  (input: RequestInfo, init?: RequestInit | undefined): Promise<Response>;
+  (input: RequestInfo, init?: RequestInit): Promise<Response>;
   calls: [RequestInfo, RequestInit | undefined][];
 }
 
@@ -30,7 +30,7 @@ interface ResponseSpec {
 function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
   function fakeFetch(
     input: RequestInfo,
-    init?: RequestInit | undefined,
+    init?: RequestInit,
   ): Promise<Response> {
     fakeFetch.calls.push([input, init]);
 
