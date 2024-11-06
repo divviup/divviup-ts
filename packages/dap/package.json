@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@hpke/chacha20poly1305": "^1.5.0",
-    "@hpke/core": "^1.5.0",
+    "@hpke/core": "^1.7.0",
     "@hpke/dhkem-x25519": "^1.5.0",
     "esbuild": "^0.24.0"
   }
