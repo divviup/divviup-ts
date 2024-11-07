@@ -6,6 +6,7 @@ let F: PrimeField;
 
 Object.assign(BigInt.prototype, {
   toJSON() {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     return String(this) + "n";
   },
 });
