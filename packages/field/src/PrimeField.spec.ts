@@ -418,7 +418,6 @@ describe("PrimeField;", () => {
               expect(F.addVectorElements(fv1, fv2).values).to.deep.equal(
                 vr.map((n) => F.mod(n)),
               );
-              expect(false); // XXX
             });
           });
 
