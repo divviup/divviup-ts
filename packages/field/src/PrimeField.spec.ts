@@ -6,6 +6,7 @@ let F: PrimeField;
 
 Object.assign(BigInt.prototype, {
   toJSON() {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     return String(this) + "n";
   },
 });
@@ -417,6 +418,7 @@ describe("PrimeField;", () => {
               expect(F.addVectorElements(fv1, fv2).values).to.deep.equal(
                 vr.map((n) => F.mod(n)),
               );
+              expect(false); // XXX
             });
           });
 
