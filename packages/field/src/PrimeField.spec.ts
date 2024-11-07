@@ -5,8 +5,7 @@ import { Vector } from "./Vector.js";
 let F: PrimeField;
 
 Object.assign(BigInt.prototype, {
-  toJSON() {
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+  toJSON(this: bigint) {
     return String(this) + "n";
   },
 });
