@@ -1,6 +1,6 @@
 {
   "name": "@divviup/dap",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "",
   "browser": "dist/browser.js",
   "main": "dist/index.js",
