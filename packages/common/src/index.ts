@@ -1,4 +1,4 @@
-import { webcrypto } from "one-webcrypto";
+import { webcrypto } from "@storacha/one-webcrypto";
 
 /** @internal */
 export function integerToOctetStringBE(i: bigint, len: number): Uint8Array {
