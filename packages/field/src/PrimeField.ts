@@ -1,5 +1,5 @@
 /// source: https://github.com/GuildOfWeavers/galois
-import { webcrypto } from "one-webcrypto";
+import { webcrypto } from "@storacha/one-webcrypto";
 import { Vector } from "./Vector.js";
 import { octetStringToIntegerBE } from "@divviup/common";
 

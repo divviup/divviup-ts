@@ -5,14 +5,15 @@
     "sourceMap": true,
     "target": "ES2022",
     "lib": ["dom", "es2020"],
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "strict": true,
     "verbatimModuleSyntax": true,
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "declaration": true,
     "declarationMap": true,
+    "moduleDetection": "force",
     "plugins": [
       {
         "name": "typescript-eslint-language-service"

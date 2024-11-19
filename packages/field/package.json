@@ -20,6 +20,6 @@
   },
   "dependencies": {
     "@divviup/common": "^0.2.2",
-    "one-webcrypto": "^1.0.3"
+    "@storacha/one-webcrypto": "^1.0.1"
   }
 }
