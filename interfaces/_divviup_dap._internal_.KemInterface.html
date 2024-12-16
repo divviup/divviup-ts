@@ -54,7 +54,7 @@ by the holder of the private key corresponding to <code>pkR</code>.</p>
 are <a href="../variables/_divviup_dap._internal_.CryptoKey-1.html" class="tsd-kind-variable">CryptoKey</a> format, you have to use this function to convert provided keys
 to <a href="../variables/_divviup_dap._internal_.CryptoKey-1.html" class="tsd-kind-variable">CryptoKey</a>.</p>
 <p>Basically, this is a thin wrapper function of
-<a href="https://www.w3.org/TR/WebCryptoAPI/#dfn-SubtleCrypto-method-importKey" target="_blank" class="external">SubtleCrypto.importKey</a>.</p>
+<a href="https://www.w3.org/TR/WebCryptoAPI/#dfn-SubtleCrypto-method-importKey">SubtleCrypto.importKey</a>.</p>
 <p>If the error occurred, throws DeserializeError.</p>
 </div><div class="tsd-parameters"><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameter-list"><li><span><span class="tsd-kind-parameter">format</span>: <span class="tsd-signature-type">&quot;raw&quot;</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;jwk&quot;</span></span><div class="tsd-comment tsd-typography"><p>For now, <code>'raw'</code> and <code>'jwk'</code> are supported.</p>
 </div><div class="tsd-comment tsd-typography"></div></li><li><span><span class="tsd-kind-parameter">key</span>: <span class="tsd-signature-type">ArrayBuffer</span> <span class="tsd-signature-symbol">|</span> <a href="_divviup_dap._internal_.JsonWebKey.html" class="tsd-signature-type tsd-kind-interface">JsonWebKey</a></span><div class="tsd-comment tsd-typography"><p>A byte string of a raw key or A <a href="_divviup_dap._internal_.JsonWebKey.html" class="tsd-kind-interface">JsonWebKey</a> object.</p>
