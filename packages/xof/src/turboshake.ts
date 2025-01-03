@@ -6,7 +6,7 @@ import type { Keccak } from "@noble/hashes/sha3";
 
 export const XofTurboShake128: XofConstructor = class XofTurboShake128 extends Xof {
   static seedSize = 16;
-  #hash: HashXOF<HashXOF<Keccak>>;
+  #hash: HashXOF<HashXOF<HashXOF<Keccak>>>;
 
   constructor(seed: Uint8Array, dst: Uint8Array, binder: Uint8Array) {
     super();
