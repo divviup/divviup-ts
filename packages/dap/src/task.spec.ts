@@ -52,8 +52,16 @@ function mockFetch(mocks: { [url: string]: ResponseSpec[] }): Fetch {
       );
     }
 
+    let body;
+    if (response.body === null || response.body === undefined) {
+      body = Buffer.from("");
+    } else if (typeof response.body === "string") {
+      body = Buffer.from(response.body);
+    } else {
+      body = Buffer.from(response.body);
+    }
     return Promise.resolve(
-      new Response(Buffer.from(response.body || ""), {
+      new Response(body, {
         status: response.status || 200,
         headers: { "Content-Type": response.contentType || "text/plain" },
       }),
