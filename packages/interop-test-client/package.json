@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@divviup/dap": "*",
-    "express": "^4.21.2"
+    "express": "^5.1.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
