@@ -17,7 +17,7 @@
     "express": "^5.1.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.1",
+    "@types/express": "^5.0.2",
     "@types/mocha": "^10.0.10"
   }
 }
