@@ -35,7 +35,7 @@
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
     "mocha": "^11.7.1",
-    "prettier": "^3.6.1",
+    "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typedoc": "^0.28.5",
