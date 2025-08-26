@@ -1,8 +1,8 @@
-import { turboshake128 } from "@noble/hashes/sha3-addons";
+import { turboshake128 } from "@noble/hashes/sha3-addons.js";
 import type { XofConstructor } from "./xof.js";
 import { Xof } from "./xof.js";
-import type { HashXOF } from "@noble/hashes/utils";
-import type { Keccak } from "@noble/hashes/sha3";
+import type { HashXOF } from "@noble/hashes/utils.js";
+import type { Keccak } from "@noble/hashes/sha3.js";
 
 export const XofTurboShake128: XofConstructor = class XofTurboShake128 extends Xof {
   static seedSize = 16;
