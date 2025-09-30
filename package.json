@@ -34,7 +34,7 @@
     "chai": "^6.2.0",
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
-    "mocha": "^11.7.2",
+    "mocha": "^11.7.3",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
