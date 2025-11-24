@@ -95,7 +95,7 @@ class Container {
   async sendRequest(
     apiEndpoint: string,
     requestBody: object,
-  ): Promise<object & Record<"status", unknown>> {
+  ): Promise<Record<"status", unknown>> {
     const response = await fetch(
       `http://127.0.0.1:${this.port}/internal/test/${apiEndpoint}`,
       {
@@ -114,7 +114,7 @@ class Container {
  * response body otherwise. */
 async function checkResponseError(
   response: Response,
-): Promise<object & Record<"status", unknown>> {
+): Promise<Record<"status", unknown>> {
   if (response.status !== 200) {
     const body = await response.text();
     throw new Error(
