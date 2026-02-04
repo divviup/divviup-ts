@@ -24,7 +24,7 @@
     "interop-test-client": "npm start -w @divviup/interop-test-client"
   },
   "devDependencies": {
-    "@tsconfig/node20": "^20.1.8",
+    "@tsconfig/node20": "^20.1.9",
     "@types/chai": "^5.2.3",
     "@types/eslint": "^9.6.1",
     "@types/eslint-config-prettier": "^6.11.3",
