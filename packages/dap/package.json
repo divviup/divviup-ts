@@ -30,7 +30,7 @@
     "@hpke/chacha20poly1305": "^1.7.1",
     "@hpke/core": "^1.7.4",
     "@hpke/dhkem-x25519": "^1.6.4",
-    "esbuild": "^0.27.2"
+    "esbuild": "^0.27.3"
   },
   "exports": {
     ".": {
