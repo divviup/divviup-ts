@@ -39,10 +39,7 @@ interface SumVecVdafObject {
 }
 
 type VdafObject =
-  | CountVdafObject
-  | SumVdafObject
-  | HistogramVdafObject
-  | SumVecVdafObject;
+  CountVdafObject | SumVdafObject | HistogramVdafObject | SumVecVdafObject;
 
 type Measurement = number | number[] | string | string[];
 
