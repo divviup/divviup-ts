@@ -22,6 +22,6 @@
     "@divviup/common": "^0.2.2",
     "@divviup/field": "^0.2.1",
     "@noble/hashes": "^2.2.0",
-    "jssha": "^3.3.1"
+    "jssha": "^3.3.2"
   }
 }
