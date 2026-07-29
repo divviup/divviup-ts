@@ -48,6 +48,9 @@ export class Proof<M, AR> extends Circuit<M, AR> {
 
     for (const key in circuit) {
       if (!(key in this)) {
+        // This should only copy data, not methods, representing circuit
+        // parameters.
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         this[key] = circuit[key as keyof typeof circuit];
       }
     }
