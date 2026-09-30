@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@tsconfig/node20": "^20.1.9",
+    "@tsconfig/node20": "^20.1.10",
     "@types/chai": "^5.2.3",
     "@types/eslint": "^9.6.1",
     "@types/eslint-config-prettier": "^6.11.3",
