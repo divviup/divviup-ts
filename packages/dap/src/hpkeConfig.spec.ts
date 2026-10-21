@@ -3,6 +3,7 @@ import assert from "assert";
 import { KemId, KdfId, AeadId } from "hpke-js";
 import { DhkemX25519HkdfSha256 } from "@hpke/dhkem-x25519";
 import { DhkemP256HkdfSha256 } from "@hpke/core";
+import { XWing } from "@hpke/hybridkem-x-wing";
 
 describe("DAP HpkeConfigList", () => {
   it("encodes as expected", () => {
@@ -283,6 +284,37 @@ describe("DAP HpkeConfig", () => {
 
     it("generates a valid DhP256HkdfSha256 HpkeCiphertext if the ids are valid", async () => {
       const kem = new DhkemP256HkdfSha256();
+      const { publicKey, privateKey } = await kem.generateKeyPair();
+      const key = await kem.serializePublicKey(publicKey);
+
+      const config = new HpkeConfig(
+        100,
+        kem.id,
+        KdfId.HkdfSha256,
+        AeadId.Aes128Gcm,
+        Buffer.from(key),
+      );
+
+      const info = Buffer.from("info");
+      const aad = Buffer.from("aad");
+      const plaintext = Buffer.from("plaintext");
+      const hpkeCipherText = await config.seal(info, plaintext, aad);
+
+      const decrypted = await config.cipherSuite().open(
+        {
+          recipientKey: privateKey,
+          enc: hpkeCipherText.encapsulatedContext,
+          info,
+        },
+        hpkeCipherText.payload,
+        aad,
+      );
+
+      assert.deepEqual(Buffer.from(decrypted), plaintext);
+    });
+
+    it("generates a valid X-Wing HpkeCiphertext if the ids are valid", async () => {
+      const kem = new XWing();
       const { publicKey, privateKey } = await kem.generateKeyPair();
       const key = await kem.serializePublicKey(publicKey);
 

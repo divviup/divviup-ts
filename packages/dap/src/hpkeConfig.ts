@@ -3,6 +3,7 @@ import { CipherSuite, KemId, KdfId, AeadId } from "hpke-js";
 import type { ParseSource, Encodable } from "./encoding.js";
 import { Parser, encodeArray16 } from "./encoding.js";
 import { HpkeCiphertext } from "./ciphertext.js";
+import { XWing } from "@hpke/hybridkem-x-wing";
 
 export class HpkeConfigList implements Encodable {
   #selectedConfig?: HpkeConfig;
@@ -110,7 +111,7 @@ export class HpkeConfig implements Encodable {
     return new CipherSuite({
       aead,
       kdf,
-      kem,
+      kem: kem === KemId.XWing ? new XWing() : kem,
     });
   }
 
