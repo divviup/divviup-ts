@@ -7,6 +7,7 @@
     "lib": ["dom", "es2020"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
+    "types": ["node", "mocha"],
     "strict": true,
     "verbatimModuleSyntax": true,
     "preserveConstEnums": true,

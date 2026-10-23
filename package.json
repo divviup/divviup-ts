@@ -12,15 +12,15 @@
   "type": "module",
   "scripts": {
     "test": "mocha packages/*/src/**/*.spec.ts",
-    "build": "npm run -ws --if-present build",
-    "build:clean": "npm run -ws --if-present build:clean",
+    "build": "npm run --workspaces --if-present build",
+    "build:clean": "npm run --workspaces --if-present build:clean",
     "test:coverage": "c8 npm test",
-    "lint": "npm run -ws --if-present lint",
-    "clean": "npm run -ws clean",
+    "lint": "npm run --workspaces --if-present lint",
+    "clean": "npm run --workspaces clean",
     "ci": "npm run build && npm run lint && npm run test:coverage",
-    "upgrade-interactive": "npm exec -ws npm-upgrade",
+    "upgrade-interactive": "npm exec --workspaces npm-upgrade",
     "docs": "typedoc",
-    "check": "npm run -ws --if-present check",
+    "check": "npm run --workspaces --if-present check",
     "interop-test-client": "npm start -w @divviup/interop-test-client"
   },
   "devDependencies": {
