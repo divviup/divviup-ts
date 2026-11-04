@@ -15,6 +15,7 @@
     "declaration": true,
     "declarationMap": true,
     "moduleDetection": "force",
+    "types": ["node", "mocha"],
     "plugins": [
       {
         "name": "typescript-eslint-language-service"
