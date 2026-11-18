@@ -25,10 +25,7 @@ Therefore, the following cryptographic algorithms are not supported for now:</p>
 <li><code>DHKEM(X448, HKDF-SHA512)</code></li>
 <li><code>ChaCha20Poly1305</code></li>
 </ul>
-<p>In addtion, the HKDF functions contained in this <code>CipherSuiteNative</code>
-class can only derive keys of the same length as the <code>hashSize</code>.</p>
-<p>If you want to use the unsupported cryptographic algorithms
-above or derive keys longer than the <code>hashSize</code>,
+<p>If you want to use the unsupported cryptographic algorithms above,
 please use <a href="https://jsr.io/@hpke/hpke-js/doc/~/CipherSuite">hpke-js#CipherSuite</a>.</p>
 <p>This class provides following functions:</p>
 <ul>
@@ -68,7 +65,7 @@ point for HPKE operations for both senders and recipients.</p>
 <ul class="tsd-hierarchy">
 <li class="tsd-hierarchy-item"><a href="_divviup_dap._internal_.CipherSuite.html" class="tsd-signature-type tsd-kind-class">CipherSuite</a></li></ul></li></ul></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in node_modules/@hpke/core/esm/src/native.d.ts:69</li></ul></aside>
+<li>Defined in node_modules/@hpke/core/esm/src/native.d.ts:65</li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -208,11 +205,14 @@ point for HPKE operations for both senders and recipients.</p>
 
 <div class="tsd-comment tsd-typography">
 <div class="tsd-tag-throws">
-<h4 class="tsd-anchor-link" id="throws-1">Throws<a href="#throws-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>DecapError, DeserializeError, ValidationError</p>
+<h4 class="tsd-anchor-link" id="throws-1">Throws<a href="#throws-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>NotSupportedError if the KEM does not support authentication.</p>
+</div>
+<div class="tsd-tag-throws">
+<h4 class="tsd-anchor-link" id="throws-2">Throws<a href="#throws-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>DecapError, DeserializeError, ValidationError</p>
 </div></div><aside class="tsd-sources">
 <p>Inherited from <a href="_divviup_dap._internal_.CipherSuiteNative.html">CipherSuiteNative</a>.<a href="_divviup_dap._internal_.CipherSuiteNative.html#createrecipientcontext">createRecipientContext</a></p>
 <ul>
-<li>Defined in node_modules/@hpke/core/esm/src/cipherSuiteNative.d.ts:115</li></ul></aside></div></li></ul></section>
+<li>Defined in node_modules/@hpke/core/esm/src/cipherSuiteNative.d.ts:117</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited tsd-is-external">
 <h3 class="tsd-anchor-link" id="createsendercontext"><span>create<wbr/>Sender<wbr/>Context</span><a href="#createsendercontext" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited tsd-is-external">
@@ -232,11 +232,14 @@ point for HPKE operations for both senders and recipients.</p>
 
 <div class="tsd-comment tsd-typography">
 <div class="tsd-tag-throws">
-<h4 class="tsd-anchor-link" id="throws-2">Throws<a href="#throws-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>EncapError, ValidationError</p>
+<h4 class="tsd-anchor-link" id="throws-3">Throws<a href="#throws-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>NotSupportedError if the KEM does not support authentication.</p>
+</div>
+<div class="tsd-tag-throws">
+<h4 class="tsd-anchor-link" id="throws-4">Throws<a href="#throws-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>EncapError, ValidationError</p>
 </div></div><aside class="tsd-sources">
 <p>Inherited from <a href="_divviup_dap._internal_.CipherSuiteNative.html">CipherSuiteNative</a>.<a href="_divviup_dap._internal_.CipherSuiteNative.html#createsendercontext">createSenderContext</a></p>
 <ul>
-<li>Defined in node_modules/@hpke/core/esm/src/cipherSuiteNative.d.ts:104</li></ul></aside></div></li></ul></section>
+<li>Defined in node_modules/@hpke/core/esm/src/cipherSuiteNative.d.ts:105</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited tsd-is-external">
 <h3 class="tsd-anchor-link" id="open"><span>open</span><a href="#open" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited tsd-is-external">
@@ -262,11 +265,11 @@ point for HPKE operations for both senders and recipients.</p>
 
 <div class="tsd-comment tsd-typography">
 <div class="tsd-tag-throws">
-<h4 class="tsd-anchor-link" id="throws-3">Throws<a href="#throws-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>DecapError, DeserializeError, OpenError, ValidationError</p>
+<h4 class="tsd-anchor-link" id="throws-5">Throws<a href="#throws-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>DecapError, DeserializeError, OpenError, ValidationError</p>
 </div></div><aside class="tsd-sources">
 <p>Inherited from <a href="_divviup_dap._internal_.CipherSuiteNative.html">CipherSuiteNative</a>.<a href="_divviup_dap._internal_.CipherSuiteNative.html#open">open</a></p>
 <ul>
-<li>Defined in node_modules/@hpke/core/esm/src/cipherSuiteNative.d.ts:139</li></ul></aside></div></li></ul></section>
+<li>Defined in node_modules/@hpke/core/esm/src/cipherSuiteNative.d.ts:141</li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member tsd-is-inherited tsd-is-external">
 <h3 class="tsd-anchor-link" id="seal"><span>seal</span><a href="#seal" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-is-inherited tsd-is-external">
@@ -292,11 +295,11 @@ point for HPKE operations for both senders and recipients.</p>
 
 <div class="tsd-comment tsd-typography">
 <div class="tsd-tag-throws">
-<h4 class="tsd-anchor-link" id="throws-4">Throws<a href="#throws-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>EncapError, MessageLimitReachedError, SealError, ValidationError</p>
+<h4 class="tsd-anchor-link" id="throws-6">Throws<a href="#throws-6" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>EncapError, MessageLimitReachedError, SealError, ValidationError</p>
 </div></div><aside class="tsd-sources">
 <p>Inherited from <a href="_divviup_dap._internal_.CipherSuiteNative.html">CipherSuiteNative</a>.<a href="_divviup_dap._internal_.CipherSuiteNative.html#seal">seal</a></p>
 <ul>
-<li>Defined in node_modules/@hpke/core/esm/src/cipherSuiteNative.d.ts:127</li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in node_modules/@hpke/core/esm/src/cipherSuiteNative.d.ts:129</li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
